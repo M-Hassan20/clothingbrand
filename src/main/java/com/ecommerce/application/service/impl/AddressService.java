@@ -1,8 +1,11 @@
 package com.ecommerce.application.service.impl;
 
+import com.ecommerce.application.dto.request.AddressRequest;
+import com.ecommerce.application.dto.response.AddressResponse;
 import com.ecommerce.application.entity.Address;
 import com.ecommerce.application.entity.User;
 import com.ecommerce.application.exception.ResourceNotFoundException;
+import com.ecommerce.application.mapper.AddressMapper;
 import com.ecommerce.application.repository.AddressRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,26 +19,38 @@ import java.util.List;
 public class AddressService {
     private final AddressRepository addressRepository;
     private final UserService userService;
+    private final AddressMapper addressMapper;
 
-    public Address getAddressById(Long id) {
-        return addressRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Address", "id", id));
+    public AddressResponse getAddressById(Long id) {
+        return addressMapper.toResponse(addressRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Address", "id", id)));
     }
-    public List<Address> getUserAddresses(Long userId) {
+    public Address getAddressEntityById(Long id) {
+        return addressRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Address", "ID", id));
+    }
+    public List<AddressResponse> getUserAddresses(Long userId) {
+        return addressMapper.toResponseList(addressRepository.findByUserId(userId));
+    }
+    private List<Address> getUserAddressesEntity(Long userId) {
         return addressRepository.findByUserId(userId);
     }
 
-    public Address getDefaultAddress(Long userId) {
+    public AddressResponse getDefaultAddress(Long userId) {
+        return addressMapper.toResponse(addressRepository.findByUserIdAndIsDefaultTrue(userId).orElse(null));
+    }
+
+    private Address getDefaultAddressEntity(Long userId) {
         return addressRepository.findByUserIdAndIsDefaultTrue(userId).orElse(null);
     }
 
     // Create address
     @Transactional
-    public Address createAddress(Long userId, Address address) {
-        User user = userService.getUserById(userId);
+    public AddressResponse createAddress(Long userId, AddressRequest request) {
+        User user = userService.getUserEntityById(userId);
+        Address address = addressMapper.toEntity(request);
         address.setUser(user);
 
         // If this is the first address or marked as default, set as default
-        List<Address> existingAddresses = getUserAddresses(userId);
+        List<Address> existingAddresses = getUserAddressesEntity(userId);
         if (existingAddresses.isEmpty() || address.getIsDefault()) {
             // Remove default from other addresses
             if (address.getIsDefault()) {
@@ -50,13 +65,13 @@ public class AddressService {
             }
         }
 
-        return addressRepository.save(address);
+        return addressMapper.toResponse(addressRepository.save(address));
     }
 
     // Update address
     @Transactional
-    public Address updateAddress(Long id, Long userId, Address addressDetails) {
-        Address address = getAddressById(id);
+    public AddressResponse updateAddress(Long id, Long userId, AddressRequest addressDetails) {
+        Address address = getAddressEntityById(id);
 
         // Verify user owns this address
         if (!address.getUser().getId().equals(userId)) {
@@ -71,7 +86,7 @@ public class AddressService {
 
         // If setting as default, remove default from others
         if (addressDetails.getIsDefault() && !address.getIsDefault()) {
-            List<Address> userAddresses = getUserAddresses(userId);
+            List<Address> userAddresses = getUserAddressesEntity(userId);
             userAddresses.forEach(addr -> {
                 if (addr.getIsDefault()) {
                     addr.setIsDefault(false);
@@ -81,13 +96,13 @@ public class AddressService {
             address.setIsDefault(true);
         }
 
-        return addressRepository.save(address);
+        return addressMapper.toResponse(addressRepository.save(address));
     }
 
     // Set default address
     @Transactional
-    public Address setDefaultAddress(Long addressId, Long userId) {
-        Address address = getAddressById(addressId);
+    public AddressResponse setDefaultAddress(Long addressId, Long userId) {
+        Address address = getAddressEntityById(addressId);
 
         // Verify user owns this address
         if (!address.getUser().getId().equals(userId)) {
@@ -95,7 +110,7 @@ public class AddressService {
         }
 
         // Remove default from other addresses
-        List<Address> userAddresses = getUserAddresses(userId);
+        List<Address> userAddresses = getUserAddressesEntity(userId);
         userAddresses.forEach(addr -> {
             if (addr.getIsDefault()) {
                 addr.setIsDefault(false);
@@ -104,13 +119,13 @@ public class AddressService {
         });
 
         address.setIsDefault(true);
-        return addressRepository.save(address);
+        return addressMapper.toResponse(addressRepository.save(address));
     }
 
     // Delete address
     @Transactional
     public void deleteAddress(Long id, Long userId) {
-        Address address = getAddressById(id);
+        Address address = getAddressEntityById(id);
 
         // Verify user owns this address
         if (!address.getUser().getId().equals(userId)) {
@@ -119,7 +134,7 @@ public class AddressService {
 
         // If deleting default address, set another as default
         if (address.getIsDefault()) {
-            List<Address> userAddresses = getUserAddresses(userId);
+            List<Address> userAddresses = getUserAddressesEntity(userId);
             userAddresses.stream()
                     .filter(addr -> !addr.getId().equals(id))
                     .findFirst()

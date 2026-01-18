@@ -1,8 +1,14 @@
 package com.ecommerce.application.service.impl;
 
+import com.ecommerce.application.dto.request.OrderCreateRequest;
+import com.ecommerce.application.dto.request.OrderItemRequest;
+import com.ecommerce.application.dto.response.OrderItemResponse;
+import com.ecommerce.application.dto.response.OrderResponse;
 import com.ecommerce.application.entity.*;
 import com.ecommerce.application.enums.OrderStatus;
 import com.ecommerce.application.exception.ResourceNotFoundException;
+import com.ecommerce.application.mapper.OrderItemMapper;
+import com.ecommerce.application.mapper.OrderMapper;
 import com.ecommerce.application.repository.OrderItemRepository;
 import com.ecommerce.application.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -25,67 +32,135 @@ public class OrderService {
     private final AddressService addressService;
     private final DiscountService discountService;
     private final UserService userService;
+    private final OrderMapper orderMapper;
+    private final OrderItemMapper orderItemMapper;
 
-    public Order getOrderById(Long id) {
+    public OrderResponse getOrderById(Long id) {
+        return orderMapper.toResponse(orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", id)));
+    }
+
+    public Order getOrderEntityById(Long id) {
         return orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", id));
     }
 
-    public Page<Order> getUserOrders(Long userId, Pageable pageable) {
-        return orderRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+    public Page<OrderResponse> getUserOrders(Long userId, Pageable pageable) {
+        return orderRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable).map(orderMapper::toResponse);
     }
 
-    public Page<Order> getAllOrders(Pageable pageable) {
-        return orderRepository.findAllByOrderByCreatedAtDesc(pageable);
+    public Page<OrderResponse> getAllOrders(Pageable pageable) {
+        return orderRepository.findAllByOrderByCreatedAtDesc(pageable).map(orderMapper::toResponse);
     }
 
-    public Page<Order> getOrderByStatus(OrderStatus status, Pageable pageable) {
-        return orderRepository.findByStatusOrderByCreatedAtDesc(status, pageable);
+    public Page<OrderResponse> getOrderByStatus(OrderStatus status, Pageable pageable) {
+        return orderRepository.findByStatusOrderByCreatedAtDesc(status, pageable).map(orderMapper::toResponse);
     }
 
-    public List<Order> getPendingOrders() {
-        return orderRepository.findPendingOrders();
+    public List<OrderResponse> getPendingOrders() {
+        return orderMapper.toResponseList(orderRepository.findPendingOrders());
     }
 
-    public List<Order> getRecentOrders() {
-        return orderRepository.findTop10ByOrderByCreatedAtDesc();
+    public List<OrderResponse> getRecentOrders() {
+        return orderMapper.toResponseList(orderRepository.findTop10ByOrderByCreatedAtDesc());
     }
 
     public boolean hasUserPurchasedProduct(Long userId, Long productId) {
         return orderRepository.hasUserPurchasedProduct(userId, productId);
     }
 
+//    @Transactional
+//    public OrderResponse createOrder(Long userId, List<OrderItemRequest> orderItems,
+//                             Long shippingAddressId, Long discountId) {
+//        User user = userService.getUserEntityById(userId);
+//
+//        // Validate stock and calculate total
+//        BigDecimal totalAmount = BigDecimal.ZERO;
+//        for (OrderItemRequest item : orderItems) {
+//            ProductVariant variant = productVariantService.useEntity(
+//                    item.getProductVariantId());
+//
+//            if (variant.getStockQuantity() < item.getQuantity()) {
+//                throw new ResourceNotFoundException(
+//                        "Order Item", "Stock Quantity", item.getQuantity());
+//            }
+//
+//            // Calculate item total
+//            BigDecimal itemTotal = variant.getPrice().multiply(
+//                    BigDecimal.valueOf(item.getQuantity()));
+//            totalAmount = totalAmount.add(itemTotal);
+//
+//            // Set snapshots
+//            item.setPriceSnapshot(variant.getPrice());
+//            item.setProductNameSnapshot(variant.getProduct().getName());
+//        }
+//
+//        // Apply discount if provided
+//        if (discountId != null) {
+//            // Discount logic will be handled by DiscountService
+//            Discount discount = discountService.getDiscountById(discountId);
+//             totalAmount = discountService.applyDiscount(discount.getCode(), totalAmount);
+//        }
+//
+//        // Create order
+//        Order order = Order.builder()
+//                .user(user)
+//                .status(OrderStatus.PENDING)
+//                .totalAmount(totalAmount)
+//                .build();
+//
+//        // Set shipping address if provided
+//         order.setShippingAddress(addressService.getAddressEntityById(shippingAddressId));
+//
+//        order = orderRepository.save(order);
+//
+//        // Save order items
+//        for (OrderItem item : orderItems) {
+//            item.setOrder(order);
+//            orderItemRepository.save(item);
+//
+//            // Decrease stock
+//            productVariantService.decreaseStock(
+//                    item.getProductVariant().getId(),
+//                    item.getQuantity());
+//        }
+//
+//        return orderMapper.toResponse(order);
+//    }
+
     @Transactional
-    public Order createOrder(Long userId, List<OrderItem> orderItems,
-                             Long shippingAddressId, Long discountId) {
-        User user = userService.getUserById(userId);
+    public OrderResponse createOrder(Long userId, OrderCreateRequest request) {
+        User user = userService.getUserEntityById(userId);
 
-        // Validate stock and calculate total
+        // Convert request items to entities and validate
+        List<OrderItem> orderItems = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
-        for (OrderItem item : orderItems) {
-            ProductVariant variant = productVariantService.getVariantById(
-                    item.getProductVariant().getId());
 
-            if (variant.getStockQuantity() < item.getQuantity()) {
-                throw new ResourceNotFoundException(
-                        "Order Item", "Stock Quantity", item.getQuantity());
+        for (OrderItemRequest itemRequest : request.getItems()) {
+            ProductVariant variant = productVariantService.getVariantEntityById(
+                    itemRequest.getProductVariantId());
+
+            if (variant.getStockQuantity() < itemRequest.getQuantity()) {
+                throw new RuntimeException(
+                        "Insufficient stock for product: " + variant.getProduct().getName());
             }
 
-            // Calculate item total
             BigDecimal itemTotal = variant.getPrice().multiply(
-                    BigDecimal.valueOf(item.getQuantity()));
+                    BigDecimal.valueOf(itemRequest.getQuantity()));
             totalAmount = totalAmount.add(itemTotal);
 
-            // Set snapshots
-            item.setPriceSnapshot(variant.getPrice());
-            item.setProductNameSnapshot(variant.getProduct().getName());
+            OrderItem orderItem = OrderItem.builder()
+                    .productVariant(variant)
+                    .quantity(itemRequest.getQuantity())
+                    .priceSnapshot(variant.getPrice())
+                    .productNameSnapshot(variant.getProduct().getName())
+                    .build();
+            orderItems.add(orderItem);
         }
 
         // Apply discount if provided
-        if (discountId != null) {
-            // Discount logic will be handled by DiscountService
-            Discount discount = discountService.getDiscountById(discountId);
-             totalAmount = discountService.applyDiscount(discount.getCode(), totalAmount);
+        if (request.getDiscountCode() != null) {
+            totalAmount = discountService.applyDiscount(request.getDiscountCode(), totalAmount);
         }
 
         // Create order
@@ -95,8 +170,11 @@ public class OrderService {
                 .totalAmount(totalAmount)
                 .build();
 
-        // Set shipping address if provided
-         order.setShippingAddress(addressService.getAddressById(shippingAddressId));
+        // Set shipping address
+        if (request.getShippingAddressId() != null) {
+            Address address = addressService.getAddressEntityById(request.getShippingAddressId());
+            order.setShippingAddress(address);
+        }
 
         order = orderRepository.save(order);
 
@@ -104,19 +182,15 @@ public class OrderService {
         for (OrderItem item : orderItems) {
             item.setOrder(order);
             orderItemRepository.save(item);
-
-            // Decrease stock
-            productVariantService.decreaseStock(
-                    item.getProductVariant().getId(),
-                    item.getQuantity());
+            productVariantService.decreaseStock(item.getProductVariant().getId(), item.getQuantity());
         }
 
-        return order;
+        return orderMapper.toResponse(order);
     }
 
     @Transactional
-    public Order updateOrderStatus(Long orderId, OrderStatus newStatus) {
-        Order order = getOrderById(orderId);
+    public OrderResponse updateOrderStatus(Long orderId, OrderStatus newStatus) {
+        Order order = getOrderEntityById(orderId);
         OrderStatus oldStatus = order.getStatus();
         order.setStatus(newStatus);
 
@@ -130,12 +204,12 @@ public class OrderService {
             }
         }
 
-        return orderRepository.save(order);
+        return orderMapper.toResponse(orderRepository.save(order));
     }
 
     @Transactional
-    public Order cancelOrder(Long orderId, Long userId) {
-        Order order = getOrderById(orderId);
+    public OrderResponse cancelOrder(Long orderId, Long userId) {
+        Order order = getOrderEntityById(orderId);
 
         // Verify user owns this order
         if (!order.getUser().getId().equals(userId)) {
@@ -151,8 +225,8 @@ public class OrderService {
         return updateOrderStatus(orderId, OrderStatus.CANCELLED);
     }
 
-    public List<OrderItem> getOrderItems(Long orderId) {
-        return orderItemRepository.findByOrderId(orderId);
+    public List<OrderItemResponse> getOrderItems(Long orderId) {
+        return orderItemMapper.toResponseList(orderItemRepository.findByOrderId(orderId));
     }
 
     // Analytics

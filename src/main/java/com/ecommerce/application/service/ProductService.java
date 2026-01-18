@@ -1,5 +1,9 @@
 package com.ecommerce.application.service;
 
+import com.ecommerce.application.dto.request.ProductCreateRequest;
+import com.ecommerce.application.dto.request.ProductUpdateRequest;
+import com.ecommerce.application.dto.response.ProductResponse;
+import com.ecommerce.application.dto.response.ProductVariantResponse;
 import com.ecommerce.application.entity.Product;
 import com.ecommerce.application.entity.ProductVariant;
 import org.springframework.data.domain.Page;
@@ -13,13 +17,13 @@ public interface ProductService {
     // READ OPERATIONS
     Page<Product> getAllActiveProducts(Pageable pageable);
 
-    Product getProductById(Long productId);
+    ProductResponse getProductById(Long productId);
 
-    Page<Product> getProductsByCategory(Long categoryId, Pageable pageable);
+    Page<ProductResponse> getProductsByCategory(Long categoryId, Pageable pageable);
 
-    Page<Product> searchProducts(String keyword, Pageable pageable);
+    Page<ProductResponse> searchProducts(String keyword, Pageable pageable);
 
-    Page<Product> filterProducts(
+    Page<ProductResponse> filterProducts(
             Long categoryId,
             String brand,
             BigDecimal minPrice,
@@ -28,13 +32,13 @@ public interface ProductService {
             Pageable pageable
     );
 
-    Page<Product> getBestSellers(Pageable pageable);
+    Page<ProductResponse> getBestSellers(Pageable pageable);
 
-    Page<Product> getNewArrivals(Pageable pageable);
+    Page<ProductResponse> getNewArrivals(Pageable pageable);
 
-    Page<Product> getRelatedProducts(Long productId, Pageable pageable);
+    Page<ProductResponse> getRelatedProducts(Long productId, Pageable pageable);
 
-    List<ProductVariant> getProductVariants(Long productId);
+    List<ProductVariantResponse> getProductVariants(Long productId);
 
     List<String> getAvailableSizes(Long productId);
 
@@ -43,9 +47,9 @@ public interface ProductService {
     List<String> getAllBrands();
 
     // WRITE OPERATIONS
-    Product createProduct(Product product);
+    ProductResponse createProduct(ProductCreateRequest request);
 
-    Product updateProduct(Long id, Product productDetails);
+    ProductResponse updateProduct(Long id, ProductUpdateRequest request);
 
     void deleteProduct(Long id);
 

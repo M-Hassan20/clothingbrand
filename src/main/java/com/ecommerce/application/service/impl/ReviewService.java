@@ -1,8 +1,10 @@
 package com.ecommerce.application.service.impl;
 
+import com.ecommerce.application.dto.response.ReviewResponse;
 import com.ecommerce.application.entity.Product;
 import com.ecommerce.application.entity.Review;
 import com.ecommerce.application.entity.User;
+import com.ecommerce.application.mapper.ReviewMapper;
 import com.ecommerce.application.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,23 +24,28 @@ public class ReviewService {
     private final ProductServiceImpl productService;
     private final UserService userService;
     private final OrderService orderService;
+    private final ReviewMapper reviewMapper;
 
-    public Review getReviewById(Long id) {
+    public ReviewResponse getReviewById(Long id) {
+        return reviewMapper.toResponse(reviewRepository.findById(id).orElseThrow(() -> new RuntimeException("Review not found with id: "+ id)));
+    }
+
+    private Review getReviewEntityById(Long id) {
         return reviewRepository.findById(id).orElseThrow(() -> new RuntimeException("Review not found with id: "+ id));
     }
 
-    public Page<Review> getProductReviews(Long productId, Pageable pageable) {
-        return reviewRepository.findByProductIdAndIsApprovedTrueOrderByCreatedAtDesc(productId, pageable);
+    public Page<ReviewResponse> getProductReviews(Long productId, Pageable pageable) {
+        return reviewRepository.findByProductIdAndIsApprovedTrueOrderByCreatedAtDesc(productId, pageable).map(reviewMapper::toResponse);
     }
 
-    public Page<Review> getProductReviewsByRating(Long productId, Integer rating, Pageable pageable) {
+    public Page<ReviewResponse> getProductReviewsByRating(Long productId, Integer rating, Pageable pageable) {
         return reviewRepository.findByProductIdAndIsApprovedTrueAndRating(
-                productId, rating, pageable);
+                productId, rating, pageable).map(reviewMapper::toResponse);
     }
 
-    public Page<Review> getVerifiedProductReviews(Long productId, Pageable pageable) {
+    public Page<ReviewResponse> getVerifiedProductReviews(Long productId, Pageable pageable) {
         return reviewRepository.findByProductIdAndIsApprovedTrueAndIsVerifiedPurchaseTrueOrderByCreatedAtDesc(
-                productId, pageable);
+                productId, pageable).map(reviewMapper::toResponse);
     }
 
     public Double getAverageRating(Long productId) {
@@ -66,8 +73,8 @@ public class ReviewService {
         return distribution;
     }
 
-    public Page<Review> getUserReviews(Long userId, Pageable pageable) {
-        return reviewRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+    public Page<ReviewResponse> getUserReviews(Long userId, Pageable pageable) {
+        return reviewRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable).map(reviewMapper::toResponse);
     }
 
     public boolean hasUserReviewed(Long productId, Long userId) {
@@ -75,7 +82,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public Review createReview(Long productId, Long userId, Integer rating, String comment) {
+    public ReviewResponse createReview(Long productId, Long userId, Integer rating, String comment) {
         // Validate rating
         if (rating < 1 || rating > 5) {
             throw new RuntimeException("Rating must be between 1 and 5");
@@ -86,8 +93,8 @@ public class ReviewService {
             throw new RuntimeException("You have already reviewed this product");
         }
 
-        Product product = productService.getProductById(productId);
-        User user = userService.getUserById(userId);
+        Product product = productService.useEntityById(productId);
+        User user = userService.getUserEntityById(userId);
 
         // Check if user purchased this product
         boolean isVerifiedPurchase = orderService.hasUserPurchasedProduct(userId, productId);
@@ -100,12 +107,12 @@ public class ReviewService {
         review.setIsVerifiedPurchase(isVerifiedPurchase);
         review.setIsApproved(true); // Auto-approve or set to false for moderation
 
-        return reviewRepository.save(review);
+        return reviewMapper.toResponse(reviewRepository.save(review));
     }
 
     @Transactional
-    public Review updateReview(Long reviewId, Long userId, Integer rating, String comment) {
-        Review review = getReviewById(reviewId);
+    public ReviewResponse updateReview(Long reviewId, Long userId, Integer rating, String comment) {
+        Review review = getReviewEntityById(reviewId);
 
         // Verify user owns this review
         if (!review.getUser().getId().equals(userId)) {
@@ -123,13 +130,13 @@ public class ReviewService {
             review.setComment(comment);
         }
 
-        return reviewRepository.save(review);
+        return reviewMapper.toResponse(reviewRepository.save(review));
     }
 
     // Delete review
     @Transactional
     public void deleteReview(Long reviewId, Long userId) {
-        Review review = getReviewById(reviewId);
+        Review review = getReviewEntityById(reviewId);
 
         // Verify user owns this review
         if (!review.getUser().getId().equals(userId)) {
@@ -140,16 +147,16 @@ public class ReviewService {
     }
 
     // Admin: Get pending reviews for moderation
-    public Page<Review> getPendingReviews(Pageable pageable) {
-        return reviewRepository.findByIsApprovedFalseOrderByCreatedAtDesc(pageable);
+    public Page<ReviewResponse> getPendingReviews(Pageable pageable) {
+        return reviewRepository.findByIsApprovedFalseOrderByCreatedAtDesc(pageable).map(reviewMapper::toResponse);
     }
 
     // Admin: Approve review
     @Transactional
-    public Review approveReview(Long reviewId) {
-        Review review = getReviewById(reviewId);
+    public ReviewResponse approveReview(Long reviewId) {
+        Review review = getReviewEntityById(reviewId);
         review.setIsApproved(true);
-        return reviewRepository.save(review);
+        return reviewMapper.toResponse(reviewRepository.save(review));
     }
 
     // Admin: Reject review

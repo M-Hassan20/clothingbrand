@@ -1,6 +1,8 @@
 package com.ecommerce.application.service.impl;
 
+import com.ecommerce.application.dto.response.UserResponse;
 import com.ecommerce.application.exception.ResourceNotFoundException;
+import com.ecommerce.application.mapper.UserMapper;
 import com.ecommerce.application.repository.UserRepository;
 import com.ecommerce.application.entity.User;
 import com.ecommerce.application.enums.Role;
@@ -13,20 +15,28 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
-    public User getUserById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+    public UserResponse getUserById(Long id) {
+        return userMapper.toResponse(userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id)));
     }
 
-    public User getUserByFirebaseUid(String firebaseUid) {
-        return userRepository.findByFirebaseUid(firebaseUid)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "FirebaseUId", firebaseUid));
+    public User getUserEntityById(Long id) {
+        return userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "ID", id));
     }
 
-    public User getUserByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+    public UserResponse getUserByFirebaseUid(String firebaseUid) {
+        return userMapper.toResponse(userRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "FirebaseUId", firebaseUid)));
+    }
+    public User getUserEntityByFirebaseUid(String firebaseUid) {
+        return userRepository.findByFirebaseUid(firebaseUid).orElseThrow(() -> new ResourceNotFoundException("User", "FirebaseUId", firebaseUid));
+    }
+
+    public UserResponse getUserByEmail(String email) {
+        return userMapper.toResponse(userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email)));
     }
 
     public boolean existsByEmail(String email) {
@@ -39,7 +49,7 @@ public class UserService {
 
     // Create user (called after Firebase authentication)
     @Transactional
-    public User createUser(String firebaseUid, String email, String fullName) {
+    public UserResponse createUser(String firebaseUid, String email, String fullName) {
         if (existsByFirebaseUid(firebaseUid)) {
             throw new RuntimeException("User already exists with Firebase UID: " + firebaseUid);
         }
@@ -53,24 +63,25 @@ public class UserService {
         user.setFullName(fullName);
         user.setRole(Role.USER); // Default role
 
-        return userRepository.save(user);
+        return userMapper.toResponse(userRepository.save(user));
     }
 
     @Transactional
-    public User updateUser(Long id, String fullName, String phone) {
-        User user = getUserById(id);
+    public UserResponse updateUser(Long id, String fullName, String phone) {
+        User user = getUserEntityById(id);
         if (fullName != null) {
             user.setFullName(fullName);
         }
         if (phone != null) {
             user.setPhone(phone);
         }
-        return userRepository.save(user);
+        return userMapper.toResponse(userRepository.save(user));
     }
-
+    
     @Transactional
-    public User getOrCreateUser(String firebaseUid, String email, String fullName) {
+    public UserResponse getOrCreateUser(String firebaseUid, String email, String fullName) {
         return userRepository.findByFirebaseUid(firebaseUid)
+                .map(userMapper::toResponse)
                 .orElseGet(() -> createUser(firebaseUid, email, fullName));
     }
 

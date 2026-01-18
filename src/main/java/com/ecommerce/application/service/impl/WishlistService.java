@@ -1,9 +1,12 @@
 package com.ecommerce.application.service.impl;
 
+import com.ecommerce.application.dto.response.WishlistItemResponse;
+import com.ecommerce.application.dto.response.WishlistResponse;
 import com.ecommerce.application.entity.Wishlist;
 import com.ecommerce.application.entity.WishlistItem;
 import com.ecommerce.application.entity.ProductVariant;
 import com.ecommerce.application.entity.User;
+import com.ecommerce.application.mapper.WishlistMapper;
 import com.ecommerce.application.repository.WishlistRepository;
 import com.ecommerce.application.repository.WishlistItemRepository;
 import com.ecommerce.application.service.ProductVariantService;
@@ -21,17 +24,24 @@ public class WishlistService {
     private final WishlistRepository wishlistRepository;
     private final WishlistItemRepository wishlistItemRepository;
     private final UserService userService;
-    private final ProductVariantService productVariantService;
+    private final ProductVariantServiceImpl productVariantService;
+    private final WishlistMapper wishlistMapper;
 
     @Transactional
-    public Wishlist getUserWishlist(Long userId) {
-        return wishlistRepository.findByUserId(userId)
+    public WishlistResponse getUserWishlist(Long userId) {
+        Wishlist wishlist = wishlistRepository.findByUserId(userId)
                 .orElseGet(() -> createWishlist(userId));
+        return wishlistMapper.toResponse(wishlist);
     }
 
-    public List<WishlistItem> getWishlistItems(Long userId) {
-        Wishlist wishlist = getUserWishlist(userId);
-        return wishlistItemRepository.findByWishlistId(wishlist.getId());
+    private Wishlist getWishlistEntityFromUserId(Long userId) {
+        return wishlistRepository.findByUserId(userId).orElseGet(() -> createWishlist(userId));
+    }
+
+
+    public List<WishlistItemResponse> getWishlistItems(Long userId) {
+        Wishlist wishlist = getWishlistEntityFromUserId(userId);
+        return wishlistMapper.toWishlistItemResponseList(wishlistItemRepository.findByWishlistId(wishlist.getId()));
     }
 
     public boolean isProductInWishlist(Long userId, Long productVariantId) {
@@ -44,7 +54,7 @@ public class WishlistService {
     }
 
     private Wishlist createWishlist(Long userId) {
-        User user = userService.getUserById(userId);
+        User user = userService.getUserEntityById(userId);
         Wishlist wishlist = new Wishlist();
         wishlist.setUser(user);
         return wishlistRepository.save(wishlist);
@@ -52,8 +62,8 @@ public class WishlistService {
 
     // Add to wishlist
     @Transactional
-    public WishlistItem addToWishlist(Long userId, Long productVariantId) {
-        Wishlist wishlist = getUserWishlist(userId);
+    public WishlistItemResponse addToWishlist(Long userId, Long productVariantId) {
+        Wishlist wishlist = getWishlistEntityFromUserId(userId);
 
         // Check if already in wishlist
         if (wishlistItemRepository.existsByWishlistIdAndProductVariantId(
@@ -61,19 +71,19 @@ public class WishlistService {
             throw new RuntimeException("Product is already in your wishlist");
         }
 
-        ProductVariant productVariant = productVariantService.getVariantById(productVariantId);
+        ProductVariant productVariant = productVariantService.useEntity(productVariantId);
 
         WishlistItem item = new WishlistItem();
         item.setWishlist(wishlist);
         item.setProductVariant(productVariant);
 
-        return wishlistItemRepository.save(item);
+        return wishlistMapper.toWishlistItemResponse(wishlistItemRepository.save(item));
     }
 
     // Remove from wishlist
     @Transactional
     public void removeFromWishlist(Long userId, Long productVariantId) {
-        Wishlist wishlist = getUserWishlist(userId);
+        Wishlist wishlist = getWishlistEntityFromUserId(userId);
         wishlistItemRepository.deleteByWishlistIdAndProductVariantId(
                 wishlist.getId(), productVariantId);
     }
@@ -81,7 +91,7 @@ public class WishlistService {
     // Clear wishlist
     @Transactional
     public void clearWishlist(Long userId) {
-        Wishlist wishlist = getUserWishlist(userId);
+        Wishlist wishlist = getWishlistEntityFromUserId(userId);
         List<WishlistItem> items = wishlistItemRepository.findByWishlistId(wishlist.getId());
         wishlistItemRepository.deleteAll(items);
     }

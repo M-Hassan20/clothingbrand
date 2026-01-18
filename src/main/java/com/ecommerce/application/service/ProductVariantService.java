@@ -1,5 +1,7 @@
 package com.ecommerce.application.service;
 
+import com.ecommerce.application.dto.request.ProductVariantRequest;
+import com.ecommerce.application.dto.response.ProductVariantResponse;
 import com.ecommerce.application.entity.ProductVariant;
 
 import java.util.List;
@@ -7,24 +9,24 @@ import java.util.List;
 public interface ProductVariantService {
 
     // READ OPERATIONS
-    ProductVariant getVariantById(Long id);
+    ProductVariantResponse getVariantById(Long id);
 
-    ProductVariant getVariantBySku(String sku);
+    ProductVariantResponse getVariantBySku(String sku);
 
-    List<ProductVariant> getVariantsByProductId(Long productId);
+    List<ProductVariantResponse> getVariantsByProductId(Long productId);
 
     boolean isInStock(Long variantId);
 
-    ProductVariant findByProductAndAttributes(Long productId, String size, String color);
+    ProductVariantResponse findByProductAndAttributes(Long productId, String size, String color);
 
-    List<ProductVariant> getLowStockVariants(Integer threshold);
+    List<ProductVariantResponse> getLowStockVariants(Integer threshold);
 
     // WRITE OPERATIONS
-    ProductVariant createVariant(ProductVariant productVariant);
+    ProductVariantResponse createVariant(ProductVariantRequest request);
 
-    ProductVariant updateVariant(Long id, ProductVariant variantDetails);
+    ProductVariantResponse updateVariant(Long id, ProductVariantRequest request);
 
-    ProductVariant updateStock(Long id, Integer quantity);
+    ProductVariantResponse updateStock(Long id, Integer quantity);
 
     void decreaseStock(Long id, Integer quantity);
 

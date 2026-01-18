@@ -1,9 +1,15 @@
 package com.ecommerce.application.service.impl;
 
+import com.ecommerce.application.dto.request.ProductCreateRequest;
+import com.ecommerce.application.dto.request.ProductUpdateRequest;
+import com.ecommerce.application.dto.response.ProductResponse;
+import com.ecommerce.application.dto.response.ProductVariantResponse;
 import com.ecommerce.application.entity.Category;
 import com.ecommerce.application.entity.Product;
 import com.ecommerce.application.entity.ProductVariant;
 import com.ecommerce.application.exception.ResourceNotFoundException;
+import com.ecommerce.application.mapper.ProductMapper;
+import com.ecommerce.application.mapper.ProductVariantMapper;
 import com.ecommerce.application.repository.ProductRepository;
 import com.ecommerce.application.repository.ProductVariantRepository;
 import com.ecommerce.application.service.ProductService;
@@ -25,46 +31,64 @@ import java.util.List;
 public class ProductServiceImpl implements ProductService{
     private final ProductRepository productRepository;
     private final ProductVariantRepository productVariantRepository;
-
+    private final ProductMapper productMapper;
+    private final ProductVariantMapper productVariantMapper;
     @Cacheable(value = "products", key = "#pageable.pageNumber + '-' + #pageable.pageSize")
     public Page<Product> getAllActiveProducts(Pageable pageable) {
         return productRepository.findByIsActiveTrue(pageable);
     }
 
     @Cacheable(value = "product", key = "#id")
-    public Product getProductById(Long productId) {
-        return productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+    public ProductResponse getProductById(Long productId) {
+        Product product = productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        return productMapper.toResponse(product);
     }
 
-    public Page<Product> getProductsByCategory(Long categoryId, Pageable pageable) {
-        return productRepository.findByCategoryId(categoryId, pageable);
+    // Keep this for internal service use
+    private Product getProductEntityById(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
     }
 
-    public Page<Product> searchProducts(String keyword, Pageable pageable) {
-        return productRepository.searchProducts(keyword, pageable);
+    public Product useEntityById(Long id) {
+        return getProductEntityById(id);
     }
 
-    public Page<Product> filterProducts(Long categoryId, String brand, BigDecimal minPrice, BigDecimal maxPrice, String keyword, Pageable pageable) {
-        return productRepository.findByFilters(categoryId, brand, minPrice, maxPrice, keyword, pageable);
+    public Page<ProductResponse> getProductsByCategory(Long categoryId, Pageable pageable) {
+                Page<Product> products = productRepository.findByCategoryId(categoryId, pageable);
+                return products.map(productMapper::toResponse);
+    }
+
+    public Page<ProductResponse> searchProducts(String keyword, Pageable pageable) {
+        Page<Product> products = productRepository.searchProducts(keyword, pageable);
+        return products.map(productMapper::toResponse);
+    }
+
+    public Page<ProductResponse> filterProducts(Long categoryId, String brand, BigDecimal minPrice, BigDecimal maxPrice, String keyword, Pageable pageable) {
+        Page<Product> products = productRepository.findByFilters(categoryId, brand, minPrice, maxPrice, keyword, pageable);
+        return products.map(productMapper::toResponse);
     }
 
     @Cacheable(value = "bestSellers")
-    public Page<Product> getBestSellers(Pageable pageable) {
-        return productRepository.findBestSellers(pageable);
+    public Page<ProductResponse> getBestSellers(Pageable pageable) {
+        Page<Product> products = productRepository.findBestSellers(pageable);
+        return products.map(productMapper::toResponse);
     }
 
-    public Page<Product> getNewArrivals(Pageable pageable) {
-        return productRepository.findByIsActiveTrueOrderByCreatedAtDesc(pageable);
+    public Page<ProductResponse> getNewArrivals(Pageable pageable) {
+        Page<Product> products = productRepository.findByIsActiveTrueOrderByCreatedAtDesc(pageable);
+        return products.map(productMapper::toResponse);
     }
 
-    public Page<Product> getRelatedProducts(Long productId, Pageable pageable) {
-        Product product = getProductById(productId);
-        return productRepository.findRelatedProducts(
-                product.getCategory().getId(), productId, pageable);
+    public Page<ProductResponse> getRelatedProducts(Long productId, Pageable pageable) {
+        Product product = getProductEntityById(productId);
+        Page<Product> products = productRepository.findRelatedProducts(product.getCategory().getId(), productId, pageable);
+        return products.map(productMapper::toResponse);
     }
 
-    public List<ProductVariant> getProductVariants(Long productId) {
-        return productVariantRepository.findByProductId(productId);
+    public List<ProductVariantResponse> getProductVariants(Long productId) {
+        List<ProductVariant> variants = productVariantRepository.findByProductId(productId);
+        return productVariantMapper.toResponseList(variants);
     }
 
     public List<String> getAvailableSizes(Long productId) {
@@ -82,26 +106,25 @@ public class ProductServiceImpl implements ProductService{
 
     @Transactional
     @CacheEvict(value = {"products", "product", "brands"}, allEntries = true)
-    public Product createProduct(Product product) {
-        return productRepository.save(product);
+    public ProductResponse createProduct(ProductCreateRequest request) {
+        Product product = productMapper.toEntity(request);
+        Product saved = productRepository.save(product);
+        return productMapper.toResponse(saved);
     }
 
     @Transactional
     @CacheEvict(value = {"products", "product", "brands"}, allEntries = true)
-    public Product updateProduct(Long id, Product productDetails) {
-        Product product = getProductById(id);
-        product.setName(productDetails.getName());
-        product.setDescription(productDetails.getDescription());
-        product.setBrand(productDetails.getBrand());
-        product.setCategory(productDetails.getCategory());
-        product.setIsActive(productDetails.getIsActive());
-        return productRepository.save(product);
+    public ProductResponse updateProduct(Long id, ProductUpdateRequest request) {
+        Product product = getProductEntityById(id);
+        productMapper.updateEntityFromRequest(request, product);
+        Product updated = productRepository.save(product);
+        return productMapper.toResponse(updated);
     }
 
     @Transactional
     @CacheEvict(value = {"products", "product", "brands"}, allEntries = true)
     public void deleteProduct(Long id) {
-        Product product = getProductById(id);
+        Product product = getProductEntityById(id);
         product.setIsActive(false);
         productRepository.save(product);
     }

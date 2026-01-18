@@ -1,7 +1,10 @@
 package com.ecommerce.application.service.impl;
 
+import com.ecommerce.application.dto.request.CategoryRequest;
+import com.ecommerce.application.dto.response.CategoryResponse;
 import com.ecommerce.application.entity.Category;
 import com.ecommerce.application.exception.ResourceNotFoundException;
+import com.ecommerce.application.mapper.CategoryMapper;
 import com.ecommerce.application.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -16,45 +19,54 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class CategoryService {
     private final CategoryRepository categoryRepository;
+    private final CategoryMapper categoryMapper;
 
     @Cacheable(value = "categories")
-    public List<Category> getAllCategories() {
-        return categoryRepository.findAll();
+    public List<CategoryResponse> getAllCategories() {
+        return categoryMapper.toResponseList(categoryRepository.findAll());
     }
 
-    public Category getCategoryById(Long id) {
-        return categoryRepository.findById(id)
+    public CategoryResponse getCategoryById(Long id) {
+         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
+         return categoryMapper.toResponse(category);
     }
 
-    public Category getCategoryByName(String name) {
-        return categoryRepository.findByName(name)
+    private Category getCategoryEntityById(Long id) {
+        return categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category", "ID", id));
+    }
+
+    public CategoryResponse getCategoryByName(String name) {
+        Category category = categoryRepository.findByName(name)
                 .orElseThrow(() -> new ResourceNotFoundException("Category","name",name));
+        return categoryMapper.toResponse(category);
     }
 
     @Cacheable(value = "categoriesWithProducts")
-    public List<Category> getCategoriesWithActiveProducts() {
-        return categoryRepository.findCategoriesWithActiveProducts();
+    public List<CategoryResponse> getCategoriesWithActiveProducts() {
+        return categoryMapper.toResponseList(categoryRepository.findCategoriesWithActiveProducts());
     }
 
     @Transactional
     @CacheEvict(value = {"categories", "categoriesWithProducts"}, allEntries = true)
-    public Category createCategory(Category category) {
-        if(categoryRepository.existsByName(category.getName())) {
-            throw new RuntimeException("Category with name: " + category.getName() + " already exists");
+    public CategoryResponse createCategory(CategoryRequest request) {
+        if(categoryRepository.existsByName(request.getName())) {
+            throw new RuntimeException("Category with name: " + request.getName() + " already exists");
         }
-        if(category.getName().isBlank()) {
+        if(request.getName().isBlank()) {
             throw new RuntimeException("Category name cannot be null");
         }
-        return categoryRepository.save(category);
+        Category newCategory = categoryMapper.toEntity(request);
+        return categoryMapper.toResponse(newCategory);
     }
 
     @Transactional
     @CacheEvict(value = {"categories", "categoriesWithProducts"}, allEntries = true)
-    public Category updateCategory(Long id, Category categoryDetails) {
-        Category category = getCategoryById(id);
-        category.setName(categoryDetails.getName());
-        return categoryRepository.save(category);
+    public CategoryResponse updateCategory(Long id, CategoryRequest request) {
+        Category category = getCategoryEntityById(id);
+        category.setName(request.getName());
+        Category updatedCategory = categoryRepository.save(category);
+        return categoryMapper.toResponse(updatedCategory);
     }
 
     @Transactional

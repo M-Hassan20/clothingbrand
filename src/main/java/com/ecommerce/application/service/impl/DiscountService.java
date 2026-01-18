@@ -1,7 +1,9 @@
 package com.ecommerce.application.service.impl;
 
+import com.ecommerce.application.dto.request.DiscountRequest;
 import com.ecommerce.application.entity.Discount;
 import com.ecommerce.application.exception.ResourceNotFoundException;
+import com.ecommerce.application.mapper.DiscountMapper;
 import com.ecommerce.application.repository.DiscountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DiscountService {
     private final DiscountRepository discountRepository;
+    private final DiscountMapper discountMapper;
 
     public Discount getDiscountById(Long id) {
         return discountRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Discount", "id", id));
@@ -81,16 +84,17 @@ public class DiscountService {
 
     // Create discount (Admin)
     @Transactional
-    public Discount createDiscount(Discount discount) {
-        if (discountRepository.findByCode(discount.getCode()).isPresent()) {
-            throw new RuntimeException("Discount code already exists: " + discount.getCode());
+    public Discount createDiscount(DiscountRequest request) {
+        if (discountRepository.findByCode(request.getCode()).isPresent()) {
+            throw new RuntimeException("Discount code already exists: " + request.getCode());
         }
+        Discount discount = discountMapper.toEntity(request);
         return discountRepository.save(discount);
     }
 
     // Update discount (Admin)
     @Transactional
-    public Discount updateDiscount(Long id, Discount discountDetails) {
+    public Discount updateDiscount(Long id, DiscountRequest discountDetails) {
         Discount discount = getDiscountById(id);
         discount.setCode(discountDetails.getCode());
         discount.setDiscountValue(discountDetails.getDiscountValue());
