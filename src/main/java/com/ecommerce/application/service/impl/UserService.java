@@ -61,7 +61,7 @@ public class UserService {
         user.setFirebaseUid(firebaseUid);
         user.setEmail(email);
         user.setFullName(fullName);
-        user.setRole(Role.USER); // Default role
+        user.setRole(Role.CUSTOMER); // Default role
 
         return userMapper.toResponse(userRepository.save(user));
     }

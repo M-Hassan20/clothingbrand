@@ -2,6 +2,7 @@ package com.ecommerce.application.service.impl;
 
 import com.ecommerce.application.dto.request.ProductCreateRequest;
 import com.ecommerce.application.dto.request.ProductUpdateRequest;
+import com.ecommerce.application.dto.response.ProductDetailResponse;
 import com.ecommerce.application.dto.response.ProductResponse;
 import com.ecommerce.application.dto.response.ProductVariantResponse;
 import com.ecommerce.application.entity.Category;
@@ -33,9 +34,10 @@ public class ProductServiceImpl implements ProductService{
     private final ProductVariantRepository productVariantRepository;
     private final ProductMapper productMapper;
     private final ProductVariantMapper productVariantMapper;
+    private final ReviewService reviewService;
     @Cacheable(value = "products", key = "#pageable.pageNumber + '-' + #pageable.pageSize")
-    public Page<Product> getAllActiveProducts(Pageable pageable) {
-        return productRepository.findByIsActiveTrue(pageable);
+    public Page<ProductResponse> getAllActiveProducts(Pageable pageable) {
+        return productRepository.findByIsActiveTrue(pageable).map(productMapper::toResponse);
     }
 
     @Cacheable(value = "product", key = "#id")
@@ -132,6 +134,23 @@ public class ProductServiceImpl implements ProductService{
     // Get low stock products (Admin)
     public List<Product> getLowStockProducts() {
         return productRepository.findLowStockProducts();
+    }
+
+    public ProductDetailResponse getProductDetailById(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+
+        ProductDetailResponse response = productMapper.toDetailResponse(product);
+
+        // Set additional data
+        response.setVariants(productVariantMapper.toResponseList(
+                productVariantRepository.findByProductId(id)));
+        response.setAvailableSizes(getAvailableSizes(id));
+        response.setAvailableColors(getAvailableColors(id));
+        response.setAverageRating(reviewService.getAverageRating(id));
+        response.setReviewCount(reviewService.getReviewCount(id));
+
+        return response;
     }
 
 }

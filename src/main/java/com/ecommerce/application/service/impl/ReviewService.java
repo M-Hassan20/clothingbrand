@@ -1,10 +1,13 @@
 package com.ecommerce.application.service.impl;
 
+import com.ecommerce.application.dto.request.ReviewCreateRequest;
 import com.ecommerce.application.dto.response.ReviewResponse;
 import com.ecommerce.application.entity.Product;
 import com.ecommerce.application.entity.Review;
 import com.ecommerce.application.entity.User;
+import com.ecommerce.application.exception.ResourceNotFoundException;
 import com.ecommerce.application.mapper.ReviewMapper;
+import com.ecommerce.application.repository.ProductRepository;
 import com.ecommerce.application.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,7 +24,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ReviewService {
     private final ReviewRepository reviewRepository;
-    private final ProductServiceImpl productService;
+    private final ProductRepository productRepository;
     private final UserService userService;
     private final OrderService orderService;
     private final ReviewMapper reviewMapper;
@@ -82,28 +85,28 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReviewResponse createReview(Long productId, Long userId, Integer rating, String comment) {
+    public ReviewResponse createReview(Long userId, ReviewCreateRequest request) {
         // Validate rating
-        if (rating < 1 || rating > 5) {
+        if (request.getRating() < 1 || request.getRating() > 5) {
             throw new RuntimeException("Rating must be between 1 and 5");
         }
 
         // Check if user already reviewed this product
-        if (hasUserReviewed(productId, userId)) {
+        if (hasUserReviewed(request.getProductId(), userId)) {
             throw new RuntimeException("You have already reviewed this product");
         }
 
-        Product product = productService.useEntityById(productId);
+        Product product = productRepository.findById(request.getProductId()).orElseThrow(() -> new ResourceNotFoundException("Product", "ID", request.getProductId()));
         User user = userService.getUserEntityById(userId);
 
         // Check if user purchased this product
-        boolean isVerifiedPurchase = orderService.hasUserPurchasedProduct(userId, productId);
+        boolean isVerifiedPurchase = orderService.hasUserPurchasedProduct(userId, request.getProductId());
 
         Review review = new Review();
         review.setProduct(product);
         review.setUser(user);
-        review.setRating(rating);
-        review.setComment(comment);
+        review.setRating(request.getRating());
+        review.setComment(request.getComment());
         review.setIsVerifiedPurchase(isVerifiedPurchase);
         review.setIsApproved(true); // Auto-approve or set to false for moderation
 

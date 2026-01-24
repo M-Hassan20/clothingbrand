@@ -15,7 +15,7 @@ import java.util.List;
 public interface ProductService {
 
     // READ OPERATIONS
-    Page<Product> getAllActiveProducts(Pageable pageable);
+    Page<ProductResponse> getAllActiveProducts(Pageable pageable);
 
     ProductResponse getProductById(Long productId);
 

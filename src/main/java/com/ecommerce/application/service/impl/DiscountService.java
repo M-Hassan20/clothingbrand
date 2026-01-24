@@ -94,16 +94,9 @@ public class DiscountService {
 
     // Update discount (Admin)
     @Transactional
-    public Discount updateDiscount(Long id, DiscountRequest discountDetails) {
+    public Discount updateDiscount(Long id, DiscountRequest request) {
         Discount discount = getDiscountById(id);
-        discount.setCode(discountDetails.getCode());
-        discount.setDiscountValue(discountDetails.getDiscountValue());
-        discount.setMinOrderAmount(discountDetails.getMinOrderAmount());
-        discount.setMaxDiscountAmount(discountDetails.getMaxDiscountAmount());
-        discount.setValidFrom(discountDetails.getValidFrom());
-        discount.setValidUntil(discountDetails.getValidUntil());
-        discount.setMaxUsageCount(discountDetails.getMaxUsageCount());
-        discount.setIsActive(discountDetails.getIsActive());
+        discountMapper.updateEntityFromRequest(request, discount);
         return discountRepository.save(discount);
     }
 
@@ -114,4 +107,6 @@ public class DiscountService {
         discount.setIsActive(false);
         discountRepository.save(discount);
     }
+
+
 }

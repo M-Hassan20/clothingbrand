@@ -53,7 +53,7 @@ public class OrderService {
         return orderRepository.findAllByOrderByCreatedAtDesc(pageable).map(orderMapper::toResponse);
     }
 
-    public Page<OrderResponse> getOrderByStatus(OrderStatus status, Pageable pageable) {
+    public Page<OrderResponse> getOrdersByStatus(OrderStatus status, Pageable pageable) {
         return orderRepository.findByStatusOrderByCreatedAtDesc(status, pageable).map(orderMapper::toResponse);
     }
 

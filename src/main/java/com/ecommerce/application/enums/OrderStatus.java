@@ -2,7 +2,7 @@ package com.ecommerce.application.enums;
 
 public enum OrderStatus {
     PENDING,
-    CREATED,
+    PROCESSING,
     PAID,
     SHIPPED,
     DELIVERED,
