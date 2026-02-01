@@ -57,6 +57,7 @@ public class CategoryService {
             throw new RuntimeException("Category name cannot be null");
         }
         Category newCategory = categoryMapper.toEntity(request);
+        categoryRepository.save(newCategory);
         return categoryMapper.toResponse(newCategory);
     }
 
@@ -66,6 +67,7 @@ public class CategoryService {
         Category category = getCategoryEntityById(id);
         category.setName(request.getName());
         Category updatedCategory = categoryRepository.save(category);
+        categoryRepository.save(updatedCategory);
         return categoryMapper.toResponse(updatedCategory);
     }
 
