@@ -34,6 +34,7 @@ public class OrderService {
     private final UserService userService;
     private final OrderMapper orderMapper;
     private final OrderItemMapper orderItemMapper;
+    private final EmailService emailService;
 
     public OrderResponse getOrderById(Long id) {
         return orderMapper.toResponse(orderRepository.findById(id)
@@ -178,6 +179,10 @@ public class OrderService {
 
         order = orderRepository.save(order);
 
+        emailService.sendOrderConfirmationEmail(user.getEmail(), user.getFullName(), order.getId(), order.getTotalAmount().toString());
+
+        emailService.sendAdminNewOrderNotification(order.getId(), user.getEmail(), order.getTotalAmount().toString());
+
         // Save order items
         for (OrderItem item : orderItems) {
             item.setOrder(order);
@@ -203,6 +208,8 @@ public class OrderService {
                         item.getQuantity());
             }
         }
+
+        emailService.sendOrderStatusUpdateEmail(order.getUser().getEmail(), order.getUser().getFullName(), orderId, newStatus.toString());
 
         return orderMapper.toResponse(orderRepository.save(order));
     }

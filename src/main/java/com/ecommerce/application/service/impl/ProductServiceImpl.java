@@ -153,4 +153,14 @@ public class ProductServiceImpl implements ProductService{
         return response;
     }
 
+    @Transactional
+    @CacheEvict(value = {"products", "product"}, allEntries = true)
+    public void updateProductThumbnail(Long productId, String thumbnailUrl) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
+
+        product.setThumbnailImage(thumbnailUrl);
+        productRepository.save(product);
+    }
+
 }

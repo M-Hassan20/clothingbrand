@@ -105,4 +105,12 @@ public class ProductVariantServiceImpl implements ProductVariantService{
         variant.setIsActive(false);
     }
 
+    @Transactional
+    public void updateVariantImages(Long variantId, String mainImage, List<String> additionalImages) {
+        ProductVariant variant = getVariantEntityById(variantId);
+        variant.setPublicImageUrl(mainImage);
+        variant.setAdditionalImageUrls(additionalImages);
+        productVariantRepository.save(variant);
+    }
+
 }

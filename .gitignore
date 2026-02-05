@@ -53,3 +53,5 @@ buildNumber.properties
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
 >>>>>>> 25a37af1985e2450b5a5b6f8337990bd8a80011f
+
+src/main/resources/firebase-service-account.json

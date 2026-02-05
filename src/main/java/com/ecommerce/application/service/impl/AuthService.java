@@ -28,6 +28,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
+    private final EmailService emailService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -46,6 +47,7 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
+        emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFullName());
         // Generate JWT token
         String token = jwtUtil.generateToken(
                 savedUser.getEmail(),

@@ -40,7 +40,8 @@ public class SecurityConfig {
                                 "/api/products/**",
                                 "/api/categories/**",
                                 "/api/reviews/product/**",
-                                "/api/cart/**" // Cart accessible to guests (session-based)
+                                "/api/cart/**", // Cart accessible to guests (session-based)
+                                "/api/test/**"
                         ).permitAll()
 
                         // Customer endpoints - require authentication
