@@ -2,16 +2,21 @@ package com.ecommerce.application.controller.admin;
 
 import com.ecommerce.application.dto.response.ApiResponse;
 import com.ecommerce.application.dto.response.OrderResponse;
+import com.ecommerce.application.entity.Order;
 import com.ecommerce.application.enums.OrderStatus;
+import com.ecommerce.application.service.impl.InvoiceService;
 import com.ecommerce.application.service.impl.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +30,7 @@ import java.util.Map;
 public class AdminOrderController {
 
     private final OrderService orderService;
+    private final InvoiceService invoiceService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<OrderResponse>>> getAllOrders(
@@ -52,7 +58,6 @@ public class AdminOrderController {
     public ResponseEntity<ApiResponse<OrderResponse>> updateOrderStatus(
             @PathVariable Long id,
             @RequestParam OrderStatus status) {
-
         OrderResponse order = orderService.updateOrderStatus(id, status);
         return ResponseEntity.ok(ApiResponse.success("Order status updated successfully", order));
     }
@@ -92,5 +97,21 @@ public class AdminOrderController {
         );
 
         return ResponseEntity.ok(ApiResponse.success("Order status counts retrieved", counts));
+    }
+
+    /**
+     * Generate invoice for order
+     */
+    @GetMapping("/{orderId}/invoice")
+    public ResponseEntity<byte[]> generateInvoice(@PathVariable Long orderId) throws IOException {
+        byte[] invoicePdf = invoiceService.generateInvoice(orderId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("inline", "invoice_" + orderId + ".pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(invoicePdf);
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
@@ -90,4 +91,5 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByIsActiveTrue();
     List<Product> findByBrand(String brand);
     List<Product> findByNameContainingIgnoreCase(String name);
+    Optional<Product> findByNameAndBrand(String name, String brand);
 }

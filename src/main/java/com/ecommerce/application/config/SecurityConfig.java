@@ -49,7 +49,8 @@ public class SecurityConfig {
                                 "/api/orders/**",
                                 "/api/wishlist/**",
                                 "/api/addresses/**",
-                                "/api/reviews"
+                                "/api/reviews",
+                                "/api/invoices/**"
                         ).hasAnyRole("CUSTOMER", "ADMIN")
 
                         // Admin endpoints - require ADMIN role

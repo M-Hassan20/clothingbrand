@@ -35,6 +35,7 @@ public class OrderService {
     private final OrderMapper orderMapper;
     private final OrderItemMapper orderItemMapper;
     private final EmailService emailService;
+    private final InvoiceService invoiceService;
 
     public OrderResponse getOrderById(Long id) {
         return orderMapper.toResponse(orderRepository.findById(id)
@@ -206,6 +207,14 @@ public class OrderService {
                 productVariantService.increaseStock(
                         item.getProductVariant().getId(),
                         item.getQuantity());
+            }
+        }
+
+        if(newStatus == OrderStatus.DELIVERED && oldStatus != OrderStatus.DELIVERED) {
+            try {
+                invoiceService.generateAndEmailInvoice(orderId);
+            } catch (Exception e) {
+                System.err.println("Failed to generate invoice: " + e.getMessage());
             }
         }
 
