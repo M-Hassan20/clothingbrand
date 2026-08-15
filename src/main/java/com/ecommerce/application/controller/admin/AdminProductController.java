@@ -8,7 +8,7 @@ import com.ecommerce.application.dto.response.ImageUploadResponse;
 import com.ecommerce.application.dto.response.ProductResponse;
 import com.ecommerce.application.dto.response.ProductVariantResponse;
 import com.ecommerce.application.entity.Product;
-//import com.ecommerce.application.service.impl.FirebaseStorageService;
+import com.ecommerce.application.service.impl.CloudinaryService;
 import com.ecommerce.application.service.impl.ProductServiceImpl;
 import com.ecommerce.application.service.impl.ProductVariantServiceImpl;
 import jakarta.validation.Valid;
@@ -31,7 +31,7 @@ public class AdminProductController {
 
     private final ProductServiceImpl productService;
     private final ProductVariantServiceImpl productVariantService;
-//    private final FirebaseStorageService storageService;
+    private final CloudinaryService storageService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<ProductResponse>> createProduct(
@@ -108,52 +108,52 @@ public class AdminProductController {
     /**
      * Create product with images
      */
-//    @PostMapping(consumes = {"multipart/form-data"})
-//    public ResponseEntity<ApiResponse<ProductResponse>> createProductWithImages(
-//            @RequestPart("product") @Valid ProductCreateRequest request,
-//            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
-//
-//        // Create product first
-//        ProductResponse product = productService.createProduct(request);
-//
-//        // Upload images if provided
-//        if (images != null && !images.isEmpty()) {
-//            List<ImageUploadResponse> uploadedImages = storageService.uploadImages(
-//                    images, "products", product.getId().toString());
-//
-//            // Update product with first image as thumbnail
-//            if (!uploadedImages.isEmpty()) {
-//                // You'll need to add this method to ProductService
-//                productService.updateProductThumbnail(product.getId(), uploadedImages.get(0).getFileUrl());
-//            }
-//        }
-//
-//        return ResponseEntity.status(HttpStatus.CREATED)
-//                .body(ApiResponse.success("Product created successfully", product));
-//    }
-//    To be cleared after setting up firebase properly
+    @PostMapping(consumes = {"multipart/form-data"})
+    public ResponseEntity<ApiResponse<ProductResponse>> createProductWithImages(
+            @RequestPart("product") @Valid ProductCreateRequest request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
+
+        // Create product first
+        ProductResponse product = productService.createProduct(request);
+
+        // Upload images if provided
+        if (images != null && !images.isEmpty()) {
+            List<ImageUploadResponse> uploadedImages = storageService.uploadImages(
+                    images, "products", product.getId().toString());
+
+            // Update product with first image as thumbnail
+            if (!uploadedImages.isEmpty()) {
+                // You'll need to add this method to ProductService
+                productService.updateProductThumbnail(product.getId(), uploadedImages.get(0).getFileUrl());
+            }
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Product created successfully", product));
+    }
+
 
     /**
      * Upload product variant images
      */
-//    @PostMapping("/variants/{variantId}/images")
-//    public ResponseEntity<ApiResponse<List<ImageUploadResponse>>> uploadVariantImages(
-//            @PathVariable Long variantId,
-//            @RequestParam("files") List<MultipartFile> files) throws IOException {
-//
-//        List<ImageUploadResponse> responses = storageService.uploadImages(
-//                files, "variants", variantId.toString());
-//
-//        // Update variant with images
-//        if (!responses.isEmpty()) {
-//            productVariantService.updateVariantImages(
-//                    variantId,
-//                    responses.get(0).getFileUrl(),
-//                    responses.stream().map(ImageUploadResponse::getFileUrl).toList()
-//            );
-//        }
-//
-//        return ResponseEntity.ok(ApiResponse.success("Images uploaded successfully", responses));
-//    }
-//    To be cleared after setting up firebase properly
+    @PostMapping("/variants/{variantId}/images")
+    public ResponseEntity<ApiResponse<List<ImageUploadResponse>>> uploadVariantImages(
+            @PathVariable Long variantId,
+            @RequestParam("files") List<MultipartFile> files) throws IOException {
+
+        List<ImageUploadResponse> responses = storageService.uploadImages(
+                files, "variants", variantId.toString());
+
+        // Update variant with images
+        if (!responses.isEmpty()) {
+            productVariantService.updateVariantImages(
+                    variantId,
+                    responses.get(0).getFileUrl(),
+                    responses.stream().map(ImageUploadResponse::getFileUrl).toList()
+            );
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("Images uploaded successfully", responses));
+    }
+
 }

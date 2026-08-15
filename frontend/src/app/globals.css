@@ -1,0 +1,154 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-playfair);
+  --font-heading: var(--font-playfair);
+  
+  --color-ivory: var(--color-ivory);
+  --color-beige: var(--color-beige);
+  --color-blush: var(--color-blush);
+  --color-charcoal: var(--color-charcoal);
+  --color-brown-muted: var(--color-brown-muted);
+  --color-accent: var(--color-accent);
+  --color-error: var(--color-error);
+  --color-success: var(--color-success);
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  /* Haus of Hafsah Palette */
+  --color-ivory: #FAF7F2;
+  --color-beige: #E8DFD3;
+  --color-blush: #E7D4CE;
+  --color-charcoal: #2B2622;
+  --color-brown-muted: #8A7B6C;
+  --color-accent: #B08968;
+  --color-error: #B3452F;
+  --color-success: #5C7A5C;
+
+  /* Shadcn Mappings */
+  --background: var(--color-ivory);
+  --foreground: var(--color-charcoal);
+  
+  --card: var(--color-beige);
+  --card-foreground: var(--color-charcoal);
+  
+  --popover: var(--color-ivory);
+  --popover-foreground: var(--color-charcoal);
+  
+  --primary: var(--color-accent);
+  --primary-foreground: var(--color-ivory);
+  
+  --secondary: var(--color-beige);
+  --secondary-foreground: var(--color-charcoal);
+  
+  --muted: var(--color-beige);
+  --muted-foreground: var(--color-brown-muted);
+  
+  --accent: var(--color-blush);
+  --accent-foreground: var(--color-charcoal);
+  
+  --destructive: var(--color-error);
+  --destructive-foreground: var(--color-ivory);
+  
+  /* Make borders a transparent version of brown-muted for subtleness, or use thin beige borders */
+  --border: rgba(138, 123, 108, 0.2);
+  --input: rgba(138, 123, 108, 0.4);
+  --ring: var(--color-accent);
+  
+  --radius: 0.5rem; /* rounded-md/rounded-lg focus, not overly bubbly */
+  
+  --sidebar: var(--color-ivory);
+  --sidebar-foreground: var(--color-charcoal);
+  --sidebar-primary: var(--color-accent);
+  --sidebar-primary-foreground: var(--color-ivory);
+  --sidebar-accent: var(--color-blush);
+  --sidebar-accent-foreground: var(--color-charcoal);
+  --sidebar-border: rgba(138, 123, 108, 0.2);
+  --sidebar-ring: var(--color-accent);
+}
+
+.dark {
+  /* Keep a warm dark mode if requested, or just dark charcoal background */
+  --background: #1C1816;
+  --foreground: #FAF7F2;
+  
+  --card: #2B2622;
+  --card-foreground: #FAF7F2;
+  
+  --popover: #1C1816;
+  --popover-foreground: #FAF7F2;
+  
+  --primary: var(--color-accent);
+  --primary-foreground: var(--color-ivory);
+  
+  --secondary: #2B2622;
+  --secondary-foreground: #FAF7F2;
+  
+  --muted: #2B2622;
+  --muted-foreground: var(--color-brown-muted);
+  
+  --accent: var(--color-accent);
+  --accent-foreground: var(--color-ivory);
+  
+  --destructive: var(--color-error);
+  --destructive-foreground: var(--color-ivory);
+  
+  --border: rgba(232, 223, 211, 0.15);
+  --input: rgba(232, 223, 211, 0.2);
+  --ring: var(--color-accent);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif font-medium tracking-tight text-charcoal;
+  }
+  .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+    @apply text-foreground;
+  }
+}

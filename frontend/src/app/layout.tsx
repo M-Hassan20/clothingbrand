@@ -1,0 +1,47 @@
+import type { Metadata } from "next";
+import { Playfair_Display, Inter } from "next/font/google";
+import "./globals.css";
+import Navbar from "@/components/layout/Navbar";
+import CartDrawer from "@/components/layout/CartDrawer";
+import Footer from "@/components/layout/Footer";
+import { Toaster } from "@/components/ui/sonner";
+import PageTransition from "@/components/layout/PageTransition";
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+});
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "Haus of Hafsah — Next.js Storefront",
+  description: "Customer-facing boutique storefront for Haus of Hafsah premium clothing brand.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body
+        className={`${playfair.variable} ${inter.variable} antialiased min-h-screen flex flex-col`}
+      >
+        <Navbar />
+        <main className="flex-1 flex flex-col bg-background">
+          <PageTransition>
+            {children}
+          </PageTransition>
+        </main>
+        <Footer />
+        <CartDrawer />
+        <Toaster position="bottom-right" />
+      </body>
+    </html>
+  );
+}

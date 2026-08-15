@@ -3,6 +3,10 @@ package com.ecommerce.application.config;
 import com.ecommerce.application.security.CustomUserDetailsService;
 import com.ecommerce.application.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -32,8 +36,11 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.disable()) // Configure properly in production
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
+                        // Permit all OPTIONS requests (preflight)
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         // Public endpoints - accessible to everyone (including guests)
                         .requestMatchers(
                                 "/api/auth/**",
@@ -41,7 +48,8 @@ public class SecurityConfig {
                                 "/api/categories/**",
                                 "/api/reviews/product/**",
                                 "/api/cart/**", // Cart accessible to guests (session-based)
-                                "/api/test/**"
+                                "/api/test/**",
+                                "/error"
                         ).permitAll()
 
                         // Customer endpoints - require authentication
@@ -49,7 +57,7 @@ public class SecurityConfig {
                                 "/api/orders/**",
                                 "/api/wishlist/**",
                                 "/api/addresses/**",
-                                "/api/reviews",
+                                "/api/reviews/**",
                                 "/api/invoices/**"
                         ).hasAnyRole("CUSTOMER", "ADMIN")
 
@@ -85,5 +93,17 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }

@@ -6,19 +6,26 @@ import com.ecommerce.application.dto.response.ProductDetailResponse;
 import com.ecommerce.application.dto.response.ProductResponse;
 import com.ecommerce.application.entity.Category;
 import com.ecommerce.application.entity.Product;
+import com.ecommerce.application.entity.ProductVariant;
+import com.ecommerce.application.repository.ProductVariantRepository;
 import org.mapstruct.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Mapper(componentModel = "spring", uses = {CategoryMapper.class, ProductVariantMapper.class})
-public interface ProductMapper {
+public abstract class ProductMapper {
+
+    @Autowired
+    protected ProductVariantRepository productVariantRepository;
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "category", source = "categoryId", qualifiedByName = "categoryIdToCategory")
     @Mapping(target = "isActive", defaultValue = "true")
-    Product toEntity(ProductCreateRequest request);
+    public abstract Product toEntity(ProductCreateRequest request);
 
     @Mapping(target = "category", source = "category")
     @Mapping(target = "minPrice", expression = "java(calculateMinPrice(product))")
@@ -26,46 +33,63 @@ public interface ProductMapper {
     @Mapping(target = "thumbnailImage", expression = "java(getFirstImage(product))")
     @Mapping(target = "averageRating", ignore = true) // Set in service
     @Mapping(target = "reviewCount", ignore = true) // Set in service
-    ProductResponse toResponse(Product product);
+    public abstract ProductResponse toResponse(Product product);
 
     @Mapping(target = "variants", ignore = true) // Set in service
     @Mapping(target = "availableSizes", ignore = true) // Set in service
     @Mapping(target = "availableColors", ignore = true) // Set in service
     @Mapping(target = "averageRating", ignore = true) // Set in service
     @Mapping(target = "reviewCount", ignore = true) // Set in service
-    ProductDetailResponse toDetailResponse(Product product);
+    public abstract ProductDetailResponse toDetailResponse(Product product);
 
-    List<ProductResponse> toResponseList(List<Product> products);
+    public abstract List<ProductResponse> toResponseList(List<Product> products);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "category", source = "categoryId", qualifiedByName = "categoryIdToCategory")
-    void updateEntityFromRequest(ProductUpdateRequest request, @MappingTarget Product product);
+    public abstract void updateEntityFromRequest(ProductUpdateRequest request, @MappingTarget Product product);
 
     @Named("categoryIdToCategory")
-    default Category categoryIdToCategory(Long categoryId) {
+    protected Category categoryIdToCategory(Long categoryId) {
         if(categoryId == null) return null;
         Category category = new Category();
         category.setId(categoryId);
         return category;
     }
 
-    default BigDecimal calculateMinPrice(Product product) {
-//        Implemented in service
-        return BigDecimal.ZERO;
+    protected BigDecimal calculateMinPrice(Product product) {
+        if (product == null || product.getId() == null) {
+            return BigDecimal.ZERO;
+        }
+        return productVariantRepository.findByProductId(product.getId()).stream()
+                .map(ProductVariant::getPrice)
+                .min(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
     }
 
-    default BigDecimal calculateMaxPrice(Product product) {
-//        Implemented in service
-        return BigDecimal.ZERO;
+    protected BigDecimal calculateMaxPrice(Product product) {
+        if (product == null || product.getId() == null) {
+            return BigDecimal.ZERO;
+        }
+        return productVariantRepository.findByProductId(product.getId()).stream()
+                .map(ProductVariant::getPrice)
+                .max(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
     }
 
-    default String getFirstImage(Product product) {
-        //Implemented in service
-        return null;
+    protected String getFirstImage(Product product) {
+        if (product == null) {
+            return null;
+        }
+        if (product.getThumbnailImage() != null && !product.getThumbnailImage().isEmpty()) {
+            return product.getThumbnailImage();
+        }
+        return productVariantRepository.findByProductId(product.getId()).stream()
+                .map(ProductVariant::getPublicImageUrl)
+                .filter(url -> url != null && !url.isEmpty())
+                .findFirst()
+                .orElse(null);
     }
-
-
 }

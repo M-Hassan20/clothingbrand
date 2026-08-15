@@ -37,14 +37,4 @@ public class FirebaseConfig {
             // App will still run but image upload won't work
         }
     }
-
-    @Bean
-    public Bucket firebaseStorageBucket() {
-        try {
-            return StorageClient.getInstance().bucket();
-        } catch (Exception e) {
-            System.err.println("Could not get Firebase Storage bucket: " + e.getMessage());
-            return null;
-        }
-    }
 }

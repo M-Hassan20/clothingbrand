@@ -10,6 +10,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -47,6 +48,7 @@ public class CartService {
         return cart;
     }
 
+    @Transactional
     public CartDTO addToCart(String userId, Long productVariantId, Integer quantity) {
         ProductVariant variant = productVariantService.useEntity(productVariantId);
 
@@ -95,6 +97,7 @@ public class CartService {
         return cart;
     }
 
+    @Transactional
     public CartDTO updateCartItem(String userId, Long productVariantId, Integer quantity) {
         if (quantity <= 0) {
             return removeFromCart(userId, productVariantId);

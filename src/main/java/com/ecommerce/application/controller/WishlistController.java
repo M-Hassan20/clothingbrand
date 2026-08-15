@@ -1,6 +1,7 @@
 package com.ecommerce.application.controller;
 
 import com.ecommerce.application.dto.response.ApiResponse;
+import com.ecommerce.application.dto.response.ProductResponse;
 import com.ecommerce.application.dto.response.WishlistItemResponse;
 import com.ecommerce.application.dto.response.WishlistResponse;
 import com.ecommerce.application.service.impl.WishlistService;
@@ -20,9 +21,9 @@ public class WishlistController {
     private final WishlistService wishlistService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<WishlistResponse>> getUserWishlist(@RequestParam Long userId) {
-        WishlistResponse wishlist = wishlistService.getUserWishlist(userId);
-        return ResponseEntity.ok(ApiResponse.success("User Wishlist", wishlist));
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> getUserWishlist(@RequestParam Long userId) {
+        List<ProductResponse> products = wishlistService.getUserWishlistProducts(userId);
+        return ResponseEntity.ok(ApiResponse.success("User Wishlist Products", products));
     }
 
     @GetMapping("/items")

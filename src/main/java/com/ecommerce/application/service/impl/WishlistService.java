@@ -1,11 +1,14 @@
 package com.ecommerce.application.service.impl;
 
+import com.ecommerce.application.dto.response.ProductResponse;
 import com.ecommerce.application.dto.response.WishlistItemResponse;
 import com.ecommerce.application.dto.response.WishlistResponse;
+import com.ecommerce.application.entity.Product;
 import com.ecommerce.application.entity.Wishlist;
 import com.ecommerce.application.entity.WishlistItem;
 import com.ecommerce.application.entity.ProductVariant;
 import com.ecommerce.application.entity.User;
+import com.ecommerce.application.mapper.ProductMapper;
 import com.ecommerce.application.mapper.WishlistMapper;
 import com.ecommerce.application.repository.WishlistRepository;
 import com.ecommerce.application.repository.WishlistItemRepository;
@@ -26,12 +29,23 @@ public class WishlistService {
     private final UserService userService;
     private final ProductVariantServiceImpl productVariantService;
     private final WishlistMapper wishlistMapper;
+    private final ProductMapper productMapper;
 
     @Transactional
     public WishlistResponse getUserWishlist(Long userId) {
         Wishlist wishlist = wishlistRepository.findByUserId(userId)
                 .orElseGet(() -> createWishlist(userId));
         return wishlistMapper.toResponse(wishlist);
+    }
+
+    public List<ProductResponse> getUserWishlistProducts(Long userId) {
+        Wishlist wishlist = getWishlistEntityFromUserId(userId);
+        List<WishlistItem> items = wishlistItemRepository.findByWishlistId(wishlist.getId());
+        List<Product> products = items.stream()
+                .map(item -> item.getProductVariant().getProduct())
+                .distinct()
+                .toList();
+        return productMapper.toResponseList(products);
     }
 
     private Wishlist getWishlistEntityFromUserId(Long userId) {
