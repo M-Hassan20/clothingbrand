@@ -8,7 +8,10 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "products")
+@Table(name = "products", indexes = {
+    @Index(name = "idx_products_category_id", columnList = "category_id"),
+    @Index(name = "idx_products_is_active", columnList = "is_active")
+})
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

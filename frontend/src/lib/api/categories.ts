@@ -54,7 +54,9 @@ export function enrichCategory(cat: RawCategory): CategoryResponse {
 
 export async function getCategories(): Promise<CategoryResponse[]> {
   try {
-    const data = await apiGet<CategoryResponse[]>('/categories');
+    const data = await apiGet<CategoryResponse[]>('/categories', {
+      next: { tags: ['categories'], revalidate: 300 }
+    });
     if (data && data.length > 0) {
       return data.map(enrichCategory);
     }
@@ -66,7 +68,9 @@ export async function getCategories(): Promise<CategoryResponse[]> {
 
 export async function getCategoryById(id: number): Promise<CategoryResponse> {
   try {
-    const data = await apiGet<CategoryResponse>(`/categories/${id}`);
+    const data = await apiGet<CategoryResponse>(`/categories/${id}`, {
+      next: { tags: ['categories'], revalidate: 300 }
+    });
     if (data) {
       return enrichCategory(data);
     }
@@ -80,7 +84,9 @@ export async function getCategoryById(id: number): Promise<CategoryResponse> {
 
 export async function getCategoriesWithProducts(): Promise<CategoryWithProductsResponse[]> {
   try {
-    const data = await apiGet<CategoryWithProductsResponse[]>('/categories/with-products');
+    const data = await apiGet<CategoryWithProductsResponse[]>('/categories/with-products', {
+      next: { tags: ['categories', 'products'], revalidate: 300 }
+    });
     if (data && data.length > 0) {
       return data.map((cat) => ({
         ...enrichCategory(cat),

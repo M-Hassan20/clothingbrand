@@ -11,7 +11,10 @@ import lombok.experimental.SuperBuilder;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "orders")
+@Table(name = "orders", indexes = {
+    @Index(name = "idx_orders_user_id", columnList = "user_id"),
+    @Index(name = "idx_orders_status", columnList = "status")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

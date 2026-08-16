@@ -10,6 +10,7 @@ import { useCartStore } from '@/lib/stores/cart-store';
 import { useWishlistStore } from '@/lib/stores/wishlist-store';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { getOptimizedImageUrl } from '@/lib/image-loader';
 
 export default function AccountWishlistPage() {
   const authUserId = useAuthStore((state) => state.userId);
@@ -123,7 +124,7 @@ export default function AccountWishlistPage() {
                 <div className="relative h-28 w-20 bg-beige/35 overflow-hidden rounded-md flex-shrink-0">
                   {variant.publicImageUrl ? (
                     <Image
-                      src={variant.publicImageUrl}
+                      src={getOptimizedImageUrl(variant.publicImageUrl, 150)}
                       alt={item.productName}
                       fill
                       sizes="100px"

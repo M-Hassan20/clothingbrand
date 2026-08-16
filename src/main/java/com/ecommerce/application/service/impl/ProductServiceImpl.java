@@ -35,6 +35,7 @@ public class ProductServiceImpl implements ProductService{
     private final ProductMapper productMapper;
     private final ProductVariantMapper productVariantMapper;
     private final ReviewService reviewService;
+    private final RevalidationService revalidationService;
     @Cacheable(value = "products", key = "#pageable.pageNumber + '-' + #pageable.pageSize")
     public Page<ProductResponse> getAllActiveProducts(Pageable pageable) {
         return productRepository.findByIsActiveTrue(pageable).map(productMapper::toResponse);
@@ -111,6 +112,7 @@ public class ProductServiceImpl implements ProductService{
     public ProductResponse createProduct(ProductCreateRequest request) {
         Product product = productMapper.toEntity(request);
         Product saved = productRepository.save(product);
+        revalidationService.revalidate("products");
         return productMapper.toResponse(saved);
     }
 
@@ -120,6 +122,7 @@ public class ProductServiceImpl implements ProductService{
         Product product = getProductEntityById(id);
         productMapper.updateEntityFromRequest(request, product);
         Product updated = productRepository.save(product);
+        revalidationService.revalidate("products", "product-" + id);
         return productMapper.toResponse(updated);
     }
 
@@ -129,6 +132,7 @@ public class ProductServiceImpl implements ProductService{
         Product product = getProductEntityById(id);
         product.setIsActive(false);
         productRepository.save(product);
+        revalidationService.revalidate("products", "product-" + id);
     }
 
     // Get low stock products (Admin)
@@ -161,6 +165,7 @@ public class ProductServiceImpl implements ProductService{
 
         product.setThumbnailImage(thumbnailUrl);
         productRepository.save(product);
+        revalidationService.revalidate("products", "product-" + productId);
     }
 
     @Override

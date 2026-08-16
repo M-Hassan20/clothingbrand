@@ -22,6 +22,7 @@ import java.util.List;
 public class ProductVariantServiceImpl implements ProductVariantService{
     private final ProductVariantRepository productVariantRepository;
     private final ProductVariantMapper productVariantMapper;
+    private final RevalidationService revalidationService;
 
     public ProductVariantResponse getVariantById(Long id) {
         return productVariantMapper.toResponse(productVariantRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Product Variant", "id", id)));
@@ -53,8 +54,11 @@ public class ProductVariantServiceImpl implements ProductVariantService{
     @Transactional
     public ProductVariantResponse createVariant(ProductVariantRequest request) {
         ProductVariant productVariant = productVariantMapper.toEntity(request);
-        productVariantRepository.save(productVariant);
-        return productVariantMapper.toResponse(productVariant);
+        ProductVariant saved = productVariantRepository.save(productVariant);
+        if (saved.getProduct() != null) {
+            revalidationService.revalidate("products", "product-" + saved.getProduct().getId());
+        }
+        return productVariantMapper.toResponse(saved);
     }
 
     @Transactional
@@ -67,15 +71,22 @@ public class ProductVariantServiceImpl implements ProductVariantService{
         variant.setAdditionalImageUrls(request.getAdditionalImageUrls());
         variant.setSku(request.getSku());
         variant.setStockQuantity(request.getStockQuantity());
-//        variant.setProduct(request.getProduct());
-        return productVariantMapper.toResponse(productVariantRepository.save(variant));
+        ProductVariant updated = productVariantRepository.save(variant);
+        if (updated.getProduct() != null) {
+            revalidationService.revalidate("products", "product-" + updated.getProduct().getId());
+        }
+        return productVariantMapper.toResponse(updated);
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public ProductVariantResponse updateStock(Long id, Integer quantity) {
         ProductVariant variant = getVariantEntityById(id);
         variant.setStockQuantity(quantity);
-        return productVariantMapper.toResponse(productVariantRepository.save(variant));
+        ProductVariant updated = productVariantRepository.save(variant);
+        if (updated.getProduct() != null) {
+            revalidationService.revalidate("products", "product-" + updated.getProduct().getId());
+        }
+        return productVariantMapper.toResponse(updated);
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -85,14 +96,20 @@ public class ProductVariantServiceImpl implements ProductVariantService{
             throw new RuntimeException("Insufficient Stock for Variant: " + id);
         }
         variant.setStockQuantity(variant.getStockQuantity() - newStockQuantity);
-        productVariantRepository.save(variant);
+        ProductVariant updated = productVariantRepository.save(variant);
+        if (updated.getProduct() != null) {
+            revalidationService.revalidate("products", "product-" + updated.getProduct().getId());
+        }
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public void increaseStock(Long id, Integer newStockQuantity) {
         ProductVariant variant = getVariantEntityById(id);
         variant.setStockQuantity(variant.getStockQuantity() + newStockQuantity);
-        productVariantRepository.save(variant);
+        ProductVariant updated = productVariantRepository.save(variant);
+        if (updated.getProduct() != null) {
+            revalidationService.revalidate("products", "product-" + updated.getProduct().getId());
+        }
     }
 
     public List<ProductVariantResponse> getLowStockVariants(Integer threshold) {
@@ -103,6 +120,10 @@ public class ProductVariantServiceImpl implements ProductVariantService{
     public void deleteVariant(Long id) {
         ProductVariant variant = getVariantEntityById(id);
         variant.setIsActive(false);
+        productVariantRepository.save(variant);
+        if (variant.getProduct() != null) {
+            revalidationService.revalidate("products", "product-" + variant.getProduct().getId());
+        }
     }
 
     @Transactional
@@ -110,7 +131,10 @@ public class ProductVariantServiceImpl implements ProductVariantService{
         ProductVariant variant = getVariantEntityById(variantId);
         variant.setPublicImageUrl(mainImage);
         variant.setAdditionalImageUrls(additionalImages);
-        productVariantRepository.save(variant);
+        ProductVariant updated = productVariantRepository.save(variant);
+        if (updated.getProduct() != null) {
+            revalidationService.revalidate("products", "product-" + updated.getProduct().getId());
+        }
     }
 
 }

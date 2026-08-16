@@ -7,7 +7,17 @@ import { Heart, ShoppingBag, Plus, Minus, Truck, RotateCcw, ShieldCheck, Loader2
 import { ProductDetailResponse, ProductResponse } from '@/types/api';
 import ProductGallery from '@/components/product/ProductGallery';
 import VariantSelector from '@/components/product/VariantSelector';
-import ReviewList from '@/components/product/ReviewList';
+import dynamic from 'next/dynamic';
+
+const ReviewList = dynamic(() => import('@/components/product/ReviewList'), {
+  loading: () => (
+    <div className="h-20 flex items-center justify-center">
+      <Loader2 className="h-6 w-6 animate-spin text-accent" />
+    </div>
+  ),
+  ssr: false,
+});
+
 import ProductCard from '@/components/product/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { getOptimizedImageUrl } from '@/lib/image-loader';
 
 interface ProductGalleryProps {
   defaultImage: string | null;
@@ -43,7 +44,7 @@ export default function ProductGallery({ defaultImage, variantImages }: ProductG
       {/* Large Main Display */}
       <div className="relative aspect-[3/4] w-full overflow-hidden rounded-md bg-beige/35 border border-border/10">
         <Image
-          src={allImages[activeIndex]}
+          src={getOptimizedImageUrl(allImages[activeIndex], 800)}
           alt="Product details view"
           fill
           priority
@@ -86,7 +87,7 @@ export default function ProductGallery({ defaultImage, variantImages }: ProductG
                 }`}
               >
                 <Image
-                  src={img}
+                  src={getOptimizedImageUrl(img, 200)}
                   alt={`Product view thumbnail ${idx + 1}`}
                   fill
                   sizes="80px"

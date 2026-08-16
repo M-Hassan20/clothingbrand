@@ -20,6 +20,7 @@ import java.util.List;
 public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final CategoryMapper categoryMapper;
+    private final RevalidationService revalidationService;
 
     @Cacheable(value = "categories")
     public List<CategoryResponse> getAllCategories() {
@@ -58,6 +59,7 @@ public class CategoryService {
         }
         Category newCategory = categoryMapper.toEntity(request);
         categoryRepository.save(newCategory);
+        revalidationService.revalidate("categories", "products");
         return categoryMapper.toResponse(newCategory);
     }
 
@@ -67,7 +69,7 @@ public class CategoryService {
         Category category = getCategoryEntityById(id);
         category.setName(request.getName());
         Category updatedCategory = categoryRepository.save(category);
-        categoryRepository.save(updatedCategory);
+        revalidationService.revalidate("categories", "products");
         return categoryMapper.toResponse(updatedCategory);
     }
 
@@ -75,5 +77,6 @@ public class CategoryService {
     @CacheEvict(value = {"categories", "categoriesWithProducts"}, allEntries = true)
     public void deleteCategory(Long id) {
         categoryRepository.deleteById(id);
+        revalidationService.revalidate("categories", "products");
     }
 }

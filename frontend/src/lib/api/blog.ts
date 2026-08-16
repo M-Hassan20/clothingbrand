@@ -15,7 +15,9 @@ export async function getPublishedPosts(params?: {
   if (params?.size !== undefined) query.append('size', String(params.size));
 
   const path = `/blog?${query.toString()}`;
-  return apiGet<PaginatedResponse<BlogPostSummaryResponse>>(path);
+  return apiGet<PaginatedResponse<BlogPostSummaryResponse>>(path, {
+    next: { tags: ['blog-posts'], revalidate: 300 }
+  });
 }
 
 export async function getPostBySlug(
@@ -26,5 +28,8 @@ export async function getPostBySlug(
   if (previewToken) query.append('previewToken', previewToken);
 
   const path = `/blog/${encodeURIComponent(slug)}?${query.toString()}`;
-  return apiGet<BlogPostDetailResponse>(path);
+  return apiGet<BlogPostDetailResponse>(path, {
+    cache: previewToken ? 'no-store' : 'default',
+    next: previewToken ? undefined : { tags: ['blog-posts', `blog-${slug}`], revalidate: 300 }
+  });
 }

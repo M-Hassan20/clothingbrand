@@ -9,6 +9,7 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import { getCart, updateCartItem, removeCartItem } from '@/lib/api/cart';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { getOptimizedImageUrl } from '@/lib/image-loader';
 
 export default function CartPage() {
   const {
@@ -111,7 +112,7 @@ export default function CartPage() {
                     <div className="relative h-28 w-20 overflow-hidden rounded-md bg-beige/25 flex-shrink-0">
                       {item.imageUrl ? (
                         <Image
-                          src={item.imageUrl}
+                          src={getOptimizedImageUrl(item.imageUrl, 150)}
                           alt={item.productName}
                           fill
                           sizes="120px"

@@ -47,7 +47,9 @@ export async function getProducts(params?: PageParams): Promise<ProductResponse[
       sortDir: 'DESC',
       ...params,
     });
-    const data = await apiGet<ProductResponse[]>(`/products${query}`);
+    const data = await apiGet<ProductResponse[]>(`/products${query}`, {
+      next: { tags: ['products'], revalidate: 300 }
+    });
     if (data && data.length > 0) return data;
   } catch (err) {
     console.warn('Backend products fetch failed, using fallback mock data:', err);
@@ -57,7 +59,9 @@ export async function getProducts(params?: PageParams): Promise<ProductResponse[
 
 export async function getProductById(id: number): Promise<ProductDetailResponse> {
   try {
-    const data = await apiGet<ProductDetailResponse>(`/products/${id}`);
+    const data = await apiGet<ProductDetailResponse>(`/products/${id}`, {
+      next: { tags: ['products', `product-${id}`], revalidate: 300 }
+    });
     if (data) return data;
   } catch (err) {
     console.warn(`Backend fetch for product ${id} failed, using fallback mock data:`, err);
@@ -73,7 +77,9 @@ export async function getProductsByCategory(
 ): Promise<ProductResponse[]> {
   try {
     const query = buildQueryString({ ...params });
-    const data = await apiGet<ProductResponse[]>(`/products/category/${categoryId}${query}`);
+    const data = await apiGet<ProductResponse[]>(`/products/category/${categoryId}${query}`, {
+      next: { tags: ['products'], revalidate: 300 }
+    });
     if (data && data.length > 0) return data;
   } catch (err) {
     console.warn('Backend products by category fetch failed, using fallback:', err);
@@ -148,7 +154,9 @@ export async function filterProducts(params: FilterParams): Promise<ProductRespo
 export async function getBestSellers(params?: PageParams): Promise<ProductResponse[]> {
   try {
     const query = buildQueryString({ ...params });
-    const data = await apiGet<ProductResponse[]>(`/products/best-sellers${query}`);
+    const data = await apiGet<ProductResponse[]>(`/products/best-sellers${query}`, {
+      next: { tags: ['products'], revalidate: 300 }
+    });
     if (data && data.length > 0) return data;
   } catch (err) {
     console.warn('Backend best sellers fetch failed, using fallback:', err);
@@ -160,7 +168,9 @@ export async function getBestSellers(params?: PageParams): Promise<ProductRespon
 export async function getNewArrivals(params?: PageParams): Promise<ProductResponse[]> {
   try {
     const query = buildQueryString({ ...params });
-    const data = await apiGet<ProductResponse[]>(`/products/new-arrivals${query}`);
+    const data = await apiGet<ProductResponse[]>(`/products/new-arrivals${query}`, {
+      next: { tags: ['products'], revalidate: 300 }
+    });
     if (data && data.length > 0) return data;
   } catch (err) {
     console.warn('Backend new arrivals fetch failed, using fallback:', err);
@@ -175,7 +185,9 @@ export async function getRelatedProducts(
 ): Promise<ProductResponse[]> {
   try {
     const query = buildQueryString({ ...params });
-    const data = await apiGet<ProductResponse[]>(`/products/${id}/related${query}`);
+    const data = await apiGet<ProductResponse[]>(`/products/${id}/related${query}`, {
+      next: { tags: ['products'], revalidate: 300 }
+    });
     if (data && data.length > 0) return data;
   } catch (err) {
     console.warn('Backend related products fetch failed, using fallback:', err);
@@ -187,7 +199,9 @@ export async function getRelatedProducts(
 
 export async function getProductVariants(id: number): Promise<ProductVariantResponse[]> {
   try {
-    const data = await apiGet<ProductVariantResponse[]>(`/products/${id}/variants`);
+    const data = await apiGet<ProductVariantResponse[]>(`/products/${id}/variants`, {
+      next: { tags: ['products', `product-${id}`], revalidate: 300 }
+    });
     if (data && data.length > 0) return data;
   } catch (err) {
     console.warn('Backend variants fetch failed, using fallback:', err);

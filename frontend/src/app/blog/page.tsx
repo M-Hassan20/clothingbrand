@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { getPublishedPosts } from '@/lib/api/blog';
 import { BlogPostSummaryResponse } from '@/types/api';
 import { Loader2, BookOpen, Calendar, User } from 'lucide-react';
+import { getOptimizedImageUrl } from '@/lib/image-loader';
 
 export default function BlogListingPage() {
   const [posts, setPosts] = useState<BlogPostSummaryResponse[]>([]);
@@ -79,7 +80,7 @@ export default function BlogListingPage() {
                     <Link href={`/blog/${post.slug}`} className="block relative aspect-[16/10] overflow-hidden">
                       {post.coverImageUrl ? (
                         <Image
-                          src={post.coverImageUrl}
+                          src={getOptimizedImageUrl(post.coverImageUrl, 600)}
                           alt={post.title}
                           fill
                           className="object-cover group-hover:scale-103 transition duration-500 ease-out"

@@ -7,6 +7,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { getPostBySlug } from '@/lib/api/blog';
 import { BlogPostDetailResponse } from '@/types/api';
 import { Loader2, ArrowLeft, Calendar, User, AlertCircle } from 'lucide-react';
+import { getOptimizedImageUrl } from '@/lib/image-loader';
 
 export default function BlogDetailPage() {
   const params = useParams();
@@ -177,7 +178,7 @@ export default function BlogDetailPage() {
         {post.coverImageUrl && (
           <div className="relative aspect-[16/10] w-full rounded-md overflow-hidden border border-border/40 mb-10">
             <Image
-              src={post.coverImageUrl}
+              src={getOptimizedImageUrl(post.coverImageUrl, 1200)}
               alt={post.title}
               fill
               className="object-cover"

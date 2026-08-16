@@ -24,6 +24,7 @@ public class BlogPostService {
 
     private final BlogPostRepository blogPostRepository;
     private final JwtUtil jwtUtil;
+    private final RevalidationService revalidationService;
 
     // ---------- Admin operations ----------
 
@@ -70,7 +71,11 @@ public class BlogPostService {
         post.setAuthorName(request.getAuthorName());
         post.setCategory(request.getCategory());
 
-        return toAdminResponse(blogPostRepository.save(post));
+        BlogPost saved = blogPostRepository.save(post);
+        if (saved.getIsPublished()) {
+            revalidationService.revalidate("blog-posts", "blog-" + saved.getSlug());
+        }
+        return toAdminResponse(saved);
     }
 
     @Transactional
@@ -80,19 +85,25 @@ public class BlogPostService {
         if (post.getPublishedAt() == null) {
             post.setPublishedAt(LocalDateTime.now());
         }
-        return toAdminResponse(blogPostRepository.save(post));
+        BlogPost saved = blogPostRepository.save(post);
+        revalidationService.revalidate("blog-posts", "blog-" + saved.getSlug());
+        return toAdminResponse(saved);
     }
 
     @Transactional
     public BlogPostAdminResponse unpublish(Long id) {
         BlogPost post = getEntityById(id);
         post.setIsPublished(false);
-        return toAdminResponse(blogPostRepository.save(post));
+        BlogPost saved = blogPostRepository.save(post);
+        revalidationService.revalidate("blog-posts", "blog-" + saved.getSlug());
+        return toAdminResponse(saved);
     }
 
     @Transactional
     public void deletePost(Long id) {
-        blogPostRepository.deleteById(id);
+        BlogPost post = getEntityById(id);
+        blogPostRepository.delete(post);
+        revalidationService.revalidate("blog-posts", "blog-" + post.getSlug());
     }
 
     // ---------- Public operations ----------

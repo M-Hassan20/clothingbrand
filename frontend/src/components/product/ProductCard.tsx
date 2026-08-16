@@ -15,6 +15,7 @@ import { useCartStore } from '@/lib/stores/cart-store';
 import { useWishlistStore } from '@/lib/stores/wishlist-store';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { getOptimizedImageUrl } from '@/lib/image-loader';
 
 interface ProductCardProps {
   product: ProductResponse;
@@ -189,7 +190,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="relative h-full w-full overflow-hidden">
           {thumbnailImage ? (
             <Image
-              src={isHovered && secondImage ? secondImage : thumbnailImage}
+              src={getOptimizedImageUrl(isHovered && secondImage ? secondImage : thumbnailImage, 400)}
               alt={name}
               fill
               sizes="(max-width: 768px) 50vw, 33vw"
