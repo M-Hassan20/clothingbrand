@@ -17,10 +17,10 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   }, []);
 
   useEffect(() => {
-    if (mounted && !isAuthenticated) {
+    if (mounted && !isAuthenticated && pathname !== '/account/wishlist') {
       router.push('/auth/login');
     }
-  }, [mounted, isAuthenticated, router]);
+  }, [mounted, isAuthenticated, pathname, router]);
 
   if (!mounted) {
     return (
@@ -31,6 +31,9 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   }
 
   if (!isAuthenticated) {
+    if (pathname === '/account/wishlist') {
+      return <div className="w-full bg-background min-h-[calc(100vh-4rem)]">{children}</div>;
+    }
     return null;
   }
 

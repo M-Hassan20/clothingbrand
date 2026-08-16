@@ -14,6 +14,9 @@ import java.util.List;
 @AllArgsConstructor
 public class OrderResponse {
     private Long id;
+    private Long userId;
+    private String userEmail;
+    private String userFullName;
     private OrderStatus status;
     private BigDecimal totalAmount;
     private AddressResponse shippingAddress;

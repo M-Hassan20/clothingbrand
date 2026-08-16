@@ -129,6 +129,28 @@ export interface AddressCreateRequest {
   isDefault: boolean;
 }
 
+export interface GuestCheckoutRequest {
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
+  shippingStreet: string;
+  shippingCity: string;
+  shippingCountry: string;
+  shippingZipCode: string;
+  items: {
+    productVariantId: number;
+    quantity: number;
+  }[];
+  discountCode: string | null;
+}
+
+export interface GuestReviewRequest {
+  productId: number;
+  guestEmail: string;
+  rating: number;
+  comment?: string;
+}
+
 export interface ReviewResponse {
   id: number;
   userId: string;
@@ -155,4 +177,28 @@ export interface ReviewCreateRequest {
   productId: number;
   rating: number;
   comment: string;
+}
+
+export interface BlogPostSummaryResponse {
+  id: number;
+  slug: string;
+  title: string;
+  excerpt: string;
+  coverImageUrl: string;
+  authorName: string;
+  category: string;
+  publishedAt: string;
+}
+
+export interface BlogPostDetailResponse {
+  id: number;
+  slug: string;
+  title: string;
+  excerpt: string;
+  coverImageUrl: string;
+  contentHtml: string;
+  authorName: string;
+  category: string;
+  publishedAt: string;
+  isPreview?: boolean;
 }

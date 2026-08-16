@@ -1,4 +1,4 @@
-import { OrderCreateRequest, OrderResponse, OrderItemResponse } from '@/types/api';
+import { OrderCreateRequest, OrderResponse, OrderItemResponse, GuestCheckoutRequest } from '@/types/api';
 import { apiGet, apiPost, apiPatch, downloadInvoice as dlInvoice } from './client';
 
 export async function createOrder(
@@ -6,6 +6,12 @@ export async function createOrder(
   body: OrderCreateRequest
 ): Promise<OrderResponse> {
   return apiPost<OrderResponse>(`/orders?userId=${encodeURIComponent(userId)}`, body);
+}
+
+export async function createGuestOrder(
+  body: GuestCheckoutRequest
+): Promise<OrderResponse> {
+  return apiPost<OrderResponse>('/orders/guest', body);
 }
 
 interface PaginatedResponse<T> {

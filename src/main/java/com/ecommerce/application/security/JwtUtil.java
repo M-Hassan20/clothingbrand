@@ -71,4 +71,17 @@ public class JwtUtil {
         final String email = extractEmail(token);
         return (email.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
+
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
+    }
+
+    public boolean isTokenValid(String token) {
+        try {
+            extractAllClaims(token); // will throw if invalid/expired
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

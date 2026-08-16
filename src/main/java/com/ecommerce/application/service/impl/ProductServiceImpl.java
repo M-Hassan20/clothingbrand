@@ -163,4 +163,9 @@ public class ProductServiceImpl implements ProductService{
         productRepository.save(product);
     }
 
+    @Override
+    public Page<ProductResponse> getAllProductsForAdmin(Long categoryId, String search, Pageable pageable) {
+        Page<Product> products = productRepository.findAllForAdmin(categoryId, search, pageable);
+        return products.map(productMapper::toResponse);
+    }
 }

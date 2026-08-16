@@ -86,6 +86,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT DISTINCT p.brand FROM Product p WHERE p.brand IS NOT NULL ORDER BY p.brand")
     List<String> findAllBrands();
 
+    @Query("SELECT p FROM Product p " +
+            "WHERE (:categoryId IS NULL OR p.category.id = :categoryId) " +
+            "AND (:search IS NULL OR :search = '' OR " +
+            "     LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "     LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "     LOWER(p.brand) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<Product> findAllForAdmin(@Param("categoryId") Long categoryId,
+                                  @Param("search") String search,
+                                  Pageable pageable);
+
     List<Product> findByCategory(Category category);
     List<Product> findByCategoryId(Long categoryId);
     List<Product> findByIsActiveTrue();

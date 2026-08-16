@@ -16,6 +16,8 @@ public interface ProductVariantMapper {
     ProductVariant toEntity(ProductVariantRequest request);
 
     @Mapping(target = "inStock", expression = "java(variant.getStockQuantity() != null && variant.getStockQuantity() > 0)")
+    @Mapping(target = "productName", source = "product.name")
+    @Mapping(target = "productId", source = "product.id")
     ProductVariantResponse toResponse(ProductVariant variant);
 
     List<ProductVariantResponse> toResponseList(List<ProductVariant> variants);

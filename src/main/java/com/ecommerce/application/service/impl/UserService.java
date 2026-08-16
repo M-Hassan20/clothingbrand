@@ -85,4 +85,26 @@ public class UserService {
                 .orElseGet(() -> createUser(firebaseUid, email, fullName));
     }
 
+    @Transactional
+    public User findOrCreateGuestUser(String email, String fullName, String phone) {
+        return userRepository.findByEmail(email)
+                .map(user -> {
+                    if (fullName != null && !fullName.isBlank()) {
+                        user.setFullName(fullName);
+                    }
+                    if (phone != null && !phone.isBlank()) {
+                        user.setPhone(phone);
+                    }
+                    return userRepository.save(user);
+                })
+                .orElseGet(() -> {
+                    User guestUser = new User();
+                    guestUser.setEmail(email);
+                    guestUser.setFullName(fullName);
+                    guestUser.setPhone(phone);
+                    guestUser.setRole(Role.CUSTOMER);
+                    guestUser.setIsGuest(true);
+                    return userRepository.save(guestUser);
+                });
+    }
 }

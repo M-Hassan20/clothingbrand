@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 export default function AccountWishlistPage() {
   const authUserId = useAuthStore((state) => state.userId);
   const { setCart, getEffectiveUserId } = useCartStore();
-  const { removeWishlistVariantId } = useWishlistStore();
+  const { removeWishlistVariantId, guestWishlistItems } = useWishlistStore();
 
   const [wishlistItems, setWishlistItems] = useState<WishlistItemResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,7 +23,11 @@ export default function AccountWishlistPage() {
   const userId = getEffectiveUserId(authUserId);
 
   const fetchWishlist = useCallback(async () => {
-    if (!authUserId) return;
+    if (!authUserId) {
+      setWishlistItems(guestWishlistItems);
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const list = await getWishlistItems(authUserId);
@@ -33,7 +37,7 @@ export default function AccountWishlistPage() {
     } finally {
       setLoading(false);
     }
-  }, [authUserId]);
+  }, [authUserId, guestWishlistItems]);
 
   useEffect(() => {
     fetchWishlist();
@@ -42,9 +46,11 @@ export default function AccountWishlistPage() {
   const handleRemove = async (itemId: number, variantId: number) => {
     setActionLoadingId(itemId);
     try {
-      await removeFromWishlist(userId, variantId);
+      if (authUserId) {
+        await removeFromWishlist(userId, variantId);
+      }
       removeWishlistVariantId(variantId);
-      setWishlistItems((prev) => prev.filter((item) => item.id !== itemId));
+      setWishlistItems((prev) => prev.filter((item) => item.productVariant.id !== variantId));
       toast.success('Removed from wishlist');
     } catch {
       toast.error('Failed to remove item');

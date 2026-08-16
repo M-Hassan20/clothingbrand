@@ -1,6 +1,12 @@
-import { ReviewResponse, ReviewStats, ReviewCreateRequest } from '@/types/api';
+import { ReviewResponse, ReviewStats, ReviewCreateRequest, GuestReviewRequest } from '@/types/api';
 import { apiGet, apiPost } from './client';
 import { MOCK_REVIEWS, MOCK_REVIEW_STATS } from './mockData';
+
+export async function createGuestReview(
+  body: GuestReviewRequest
+): Promise<ReviewResponse> {
+  return await apiPost<ReviewResponse>('/reviews/guest', body);
+}
 
 interface PaginatedResponse<T> {
   content: T[];

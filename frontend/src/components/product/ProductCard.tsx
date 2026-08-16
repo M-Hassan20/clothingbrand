@@ -26,7 +26,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
   const { userId: authUserId, isAuthenticated } = useAuthStore();
   const { setCart, getEffectiveUserId } = useCartStore();
-  const { addWishlistVariantId, removeWishlistVariantId, hasItem } = useWishlistStore();
+  const { addWishlistVariantId, removeWishlistVariantId, hasItem, addGuestWishlistItem } = useWishlistStore();
 
   const [variants, setVariants] = useState<ProductVariantResponse[]>([]);
   const [secondImage, setSecondImage] = useState<string | null>(null);
@@ -71,12 +71,6 @@ export default function ProductCard({ product }: ProductCardProps) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!isAuthenticated) {
-      toast.error('Please sign in to add items to your wishlist.');
-      router.push('/auth/login');
-      return;
-    }
-
     if (!defaultVariant) {
       toast.error('Product details loading, please try again.');
       return;
@@ -89,12 +83,32 @@ export default function ProductCard({ product }: ProductCardProps) {
       if (isWishlisted) {
         // Optimistic update
         removeWishlistVariantId(variantId);
-        await removeFromWishlist(userId, variantId);
+        if (isAuthenticated) {
+          await removeFromWishlist(userId, variantId);
+        }
         toast.success('Removed from wishlist');
       } else {
         // Optimistic update
-        addWishlistVariantId(variantId);
-        await addToWishlist(userId, variantId);
+        if (isAuthenticated) {
+          addWishlistVariantId(variantId);
+          await addToWishlist(userId, variantId);
+        } else {
+          addGuestWishlistItem({
+            id: variantId,
+            productVariant: {
+              id: defaultVariant.id,
+              size: defaultVariant.size,
+              color: defaultVariant.color,
+              price: defaultVariant.price,
+              stockQuantity: defaultVariant.stockQuantity,
+              sku: defaultVariant.sku,
+              publicImageUrl: defaultVariant.publicImageUrl || thumbnailImage || '',
+              inStock: defaultVariant.inStock,
+            },
+            productName: name,
+            addedAt: new Date().toISOString(),
+          });
+        }
         toast.success('Added to wishlist');
       }
     } catch (err) {

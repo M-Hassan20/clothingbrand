@@ -61,11 +61,11 @@ export default function Footer() {
               Minimalistic & neutral premium apparel designed for modern elegance. Warm palettes, soft fabrics, and editorial silhouettes.
             </p>
             <div className="flex space-x-4 pt-2">
-              <a href="#" className="text-brown-muted hover:text-accent transition-colors">
+              <a href="https://www.instagram.com/hausofhafsah?igsh=d2gydW11Z21uYXBs" className="text-brown-muted hover:text-accent transition-colors">
                 <InstagramIcon className="h-4 w-4" />
                 <span className="sr-only">Instagram</span>
               </a>
-              <a href="#" className="text-brown-muted hover:text-accent transition-colors">
+              <a href="https://www.facebook.com/share/1AJTH3rUxL/" className="text-brown-muted hover:text-accent transition-colors">
                 <FacebookIcon className="h-4 w-4" />
                 <span className="sr-only">Facebook</span>
               </a>

@@ -7,7 +7,7 @@ import { CheckCircle2, ChevronRight, ArrowLeft, Download, MapPin } from 'lucide-
 import { useCartStore } from '@/lib/stores/cart-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { getAddresses, createAddress } from '@/lib/api/addresses';
-import { createOrder, downloadOrderInvoice } from '@/lib/api/orders';
+import { createOrder, createGuestOrder, downloadOrderInvoice } from '@/lib/api/orders';
 import { clearCart } from '@/lib/api/cart';
 import { AddressResponse, AddressCreateRequest, OrderResponse } from '@/types/api';
 import AddressSelector from '@/components/checkout/AddressSelector';
@@ -28,20 +28,26 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<OrderResponse | null>(null);
 
+  const [guestInfo, setGuestInfo] = useState({
+    guestName: '',
+    guestEmail: '',
+    guestPhone: '',
+    shippingStreet: '',
+    shippingCity: '',
+    shippingCountry: '',
+    shippingZipCode: '',
+  });
+
   useEffect(() => {
-    if (!isAuthenticated) {
-      toast.error('Please sign in to complete your purchase.');
-      router.push('/auth/login');
-      return;
-    }
     // Redirect if cart is empty and not on confirmation page
     if (step !== 'confirmation' && (!cart || !cart.items || cart.items.length === 0)) {
       toast.error('Your bag is empty.');
       router.push('/cart');
     }
-  }, [isAuthenticated, cart, step, router]);
+  }, [cart, step, router]);
 
   const fetchAddresses = useCallback(async () => {
+    if (!isAuthenticated) return;
     try {
       const list = await getAddresses(userId);
       setAddresses(list);
@@ -54,7 +60,7 @@ export default function CheckoutPage() {
     } catch (error) {
       console.error('Failed to load addresses:', error);
     }
-  }, [userId]);
+  }, [userId, isAuthenticated]);
 
   useEffect(() => {
     fetchAddresses();
@@ -72,21 +78,48 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
-    if (!selectedAddressId) {
+    if (isAuthenticated && !selectedAddressId) {
       toast.error('Please select a shipping address');
       return;
     }
 
+    if (!isAuthenticated) {
+      const { guestName, guestEmail, guestPhone, shippingStreet, shippingCity, shippingCountry, shippingZipCode } = guestInfo;
+      if (!guestName || !guestEmail || !guestPhone || !shippingStreet || !shippingCity || !shippingCountry || !shippingZipCode) {
+        toast.error('Please fill in all shipping and contact details');
+        return;
+      }
+    }
+
     try {
       setLoading(true);
-      const order = await createOrder(userId, {
-        shippingAddressId: selectedAddressId,
-        items: items.map((item) => ({
-          productVariantId: item.productVariantId,
-          quantity: item.quantity,
-        })),
-        discountCode: null,
-      });
+      let order: OrderResponse;
+
+      if (isAuthenticated) {
+        order = await createOrder(userId, {
+          shippingAddressId: selectedAddressId!,
+          items: items.map((item) => ({
+            productVariantId: item.productVariantId,
+            quantity: item.quantity,
+          })),
+          discountCode: null,
+        });
+      } else {
+        order = await createGuestOrder({
+          guestName: guestInfo.guestName,
+          guestEmail: guestInfo.guestEmail,
+          guestPhone: guestInfo.guestPhone,
+          shippingStreet: guestInfo.shippingStreet,
+          shippingCity: guestInfo.shippingCity,
+          shippingCountry: guestInfo.shippingCountry,
+          shippingZipCode: guestInfo.shippingZipCode,
+          items: items.map((item) => ({
+            productVariantId: item.productVariantId,
+            quantity: item.quantity,
+          })),
+          discountCode: null,
+        });
+      }
 
       setCreatedOrder(order);
       // Clear cart
@@ -218,18 +251,131 @@ export default function CheckoutPage() {
 
               {step === 'shipping' ? (
                 <div className="space-y-6">
-                  <AddressSelector
-                    addresses={addresses}
-                    selectedAddressId={selectedAddressId}
-                    onSelectAddress={setSelectedAddressId}
-                    onCreateNewAddress={handleCreateAddress}
-                  />
+                  {isAuthenticated ? (
+                    <AddressSelector
+                      addresses={addresses}
+                      selectedAddressId={selectedAddressId}
+                      onSelectAddress={setSelectedAddressId}
+                      onCreateNewAddress={handleCreateAddress}
+                    />
+                  ) : (
+                    <div className="space-y-6 font-sans text-xs">
+                      <div>
+                        <h3 className="font-serif text-sm font-semibold text-charcoal tracking-wide mb-3">Contact Information</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-bold text-brown-muted uppercase tracking-wider mb-1">
+                              Full Name
+                            </label>
+                            <input
+                              type="text"
+                              value={guestInfo.guestName}
+                              onChange={(e) => setGuestInfo({ ...guestInfo, guestName: e.target.value })}
+                              className="w-full rounded-md border border-border px-3 py-2 text-xs focus:border-accent focus:outline-none bg-background text-charcoal"
+                              placeholder="Your full name"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-brown-muted uppercase tracking-wider mb-1">
+                              Email Address
+                            </label>
+                            <input
+                              type="email"
+                              value={guestInfo.guestEmail}
+                              onChange={(e) => setGuestInfo({ ...guestInfo, guestEmail: e.target.value })}
+                              className="w-full rounded-md border border-border px-3 py-2 text-xs focus:border-accent focus:outline-none bg-background text-charcoal"
+                              placeholder="your.email@example.com"
+                            />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="block text-[10px] font-bold text-brown-muted uppercase tracking-wider mb-1">
+                              Phone Number
+                            </label>
+                            <input
+                              type="text"
+                              value={guestInfo.guestPhone}
+                              onChange={(e) => setGuestInfo({ ...guestInfo, guestPhone: e.target.value })}
+                              className="w-full rounded-md border border-border px-3 py-2 text-xs focus:border-accent focus:outline-none bg-background text-charcoal"
+                              placeholder="e.g. +123456789"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-border/40 pt-4">
+                        <h3 className="font-serif text-sm font-semibold text-charcoal tracking-wide mb-3">Shipping Address</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="sm:col-span-2">
+                            <label className="block text-[10px] font-bold text-brown-muted uppercase tracking-wider mb-1">
+                              Street Address
+                            </label>
+                            <input
+                              type="text"
+                              value={guestInfo.shippingStreet}
+                              onChange={(e) => setGuestInfo({ ...guestInfo, shippingStreet: e.target.value })}
+                              className="w-full rounded-md border border-border px-3 py-2 text-xs focus:border-accent focus:outline-none bg-background text-charcoal"
+                              placeholder="Street name, apartment, suite, etc."
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-brown-muted uppercase tracking-wider mb-1">
+                              City
+                            </label>
+                            <input
+                              type="text"
+                              value={guestInfo.shippingCity}
+                              onChange={(e) => setGuestInfo({ ...guestInfo, shippingCity: e.target.value })}
+                              className="w-full rounded-md border border-border px-3 py-2 text-xs focus:border-accent focus:outline-none bg-background text-charcoal"
+                              placeholder="City"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-brown-muted uppercase tracking-wider mb-1">
+                              Zip Code
+                            </label>
+                            <input
+                              type="text"
+                              value={guestInfo.shippingZipCode}
+                              onChange={(e) => setGuestInfo({ ...guestInfo, shippingZipCode: e.target.value })}
+                              className="w-full rounded-md border border-border px-3 py-2 text-xs focus:border-accent focus:outline-none bg-background text-charcoal"
+                              placeholder="Postal / Zip Code"
+                            />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="block text-[10px] font-bold text-brown-muted uppercase tracking-wider mb-1">
+                              Country
+                            </label>
+                            <input
+                              type="text"
+                              value={guestInfo.shippingCountry}
+                              onChange={(e) => setGuestInfo({ ...guestInfo, shippingCountry: e.target.value })}
+                              className="w-full rounded-md border border-border px-3 py-2 text-xs focus:border-accent focus:outline-none bg-background text-charcoal"
+                              placeholder="Country"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex justify-end pt-4 border-t border-border/40">
                     <Button
                       onClick={() => {
-                        if (!selectedAddressId) {
-                          toast.error('Please select a shipping address');
-                          return;
+                        if (isAuthenticated) {
+                          if (!selectedAddressId) {
+                            toast.error('Please select a shipping address');
+                            return;
+                          }
+                        } else {
+                          const { guestName, guestEmail, guestPhone, shippingStreet, shippingCity, shippingCountry, shippingZipCode } = guestInfo;
+                          if (!guestName || !guestEmail || !guestPhone || !shippingStreet || !shippingCity || !shippingCountry || !shippingZipCode) {
+                            toast.error('Please fill in all shipping and contact details');
+                            return;
+                          }
+                          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                          if (!emailRegex.test(guestEmail)) {
+                            toast.error('Please enter a valid email address');
+                            return;
+                          }
                         }
                         setStep('payment');
                       }}
@@ -241,14 +387,26 @@ export default function CheckoutPage() {
                 </div>
               ) : (
                 /* Collapsed Preview */
-                selectedAddressId && (
-                  <div className="font-sans text-xs text-brown-muted flex items-start gap-2 pt-2">
-                    <MapPin className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-                    <div>
-                      {addresses.find((a) => a.id === selectedAddressId)?.street},{' '}
-                      {addresses.find((a) => a.id === selectedAddressId)?.city}
+                isAuthenticated ? (
+                  selectedAddressId && (
+                    <div className="font-sans text-xs text-brown-muted flex items-start gap-2 pt-2">
+                      <MapPin className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                      <div>
+                        {addresses.find((a) => a.id === selectedAddressId)?.street},{' '}
+                        {addresses.find((a) => a.id === selectedAddressId)?.city}
+                      </div>
                     </div>
-                  </div>
+                  )
+                ) : (
+                  guestInfo.shippingStreet && (
+                    <div className="font-sans text-xs text-brown-muted flex items-start gap-2 pt-2">
+                      <MapPin className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                      <div>
+                        {guestInfo.guestName} ({guestInfo.guestEmail})<br />
+                        {guestInfo.shippingStreet}, {guestInfo.shippingCity}, {guestInfo.shippingCountry}
+                      </div>
+                    </div>
+                  )
                 )
               )}
             </div>

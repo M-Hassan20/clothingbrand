@@ -33,19 +33,30 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         // Check if user already exists
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already in use");
+        User existingUser = userRepository.findByEmail(request.getEmail()).orElse(null);
+        User savedUser;
+        if (existingUser != null) {
+            if (Boolean.TRUE.equals(existingUser.getIsGuest())) {
+                // Claim it
+                existingUser.setPassword(passwordEncoder.encode(request.getPassword()));
+                existingUser.setFullName(request.getFullName());
+                existingUser.setPhone(request.getPhone());
+                existingUser.setIsGuest(false);
+                savedUser = userRepository.save(existingUser);
+            } else {
+                throw new RuntimeException("Email already in use");
+            }
+        } else {
+            // Create new user
+            User user = new User();
+            user.setEmail(request.getEmail());
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+            user.setFullName(request.getFullName());
+            user.setPhone(request.getPhone());
+            user.setRole(Role.CUSTOMER);
+            user.setIsGuest(false);
+            savedUser = userRepository.save(user);
         }
-
-        // Create new user
-        User user = new User();
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setFullName(request.getFullName());
-        user.setPhone(request.getPhone());
-        user.setRole(Role.CUSTOMER);
-
-        User savedUser = userRepository.save(user);
 
         emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFullName());
         // Generate JWT token
@@ -104,11 +115,22 @@ public class AuthService {
             // Get or create user
             User user = userRepository.findByFirebaseUid(firebaseUid)
                     .orElseGet(() -> {
+                        User existingEmailUser = userRepository.findByEmail(email).orElse(null);
+                        if (existingEmailUser != null && Boolean.TRUE.equals(existingEmailUser.getIsGuest())) {
+                            existingEmailUser.setFirebaseUid(firebaseUid);
+                            existingEmailUser.setIsGuest(false);
+                            if (name != null && !name.isBlank()) {
+                                existingEmailUser.setFullName(name);
+                            }
+                            return userRepository.save(existingEmailUser);
+                        }
+
                         User newUser = new User();
                         newUser.setFirebaseUid(firebaseUid);
                         newUser.setEmail(email);
                         newUser.setFullName(name);
                         newUser.setRole(Role.CUSTOMER);
+                        newUser.setIsGuest(false);
                         return userRepository.save(newUser);
                     });
 

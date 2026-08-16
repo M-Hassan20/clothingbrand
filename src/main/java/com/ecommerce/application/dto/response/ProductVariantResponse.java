@@ -18,4 +18,6 @@ public class ProductVariantResponse {
     private String sku;
     private String publicImageUrl;
     private Boolean inStock;
+    private String productName;
+    private Long productId;
 }

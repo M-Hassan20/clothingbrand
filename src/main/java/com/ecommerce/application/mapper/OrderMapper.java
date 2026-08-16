@@ -12,6 +12,9 @@ public interface OrderMapper {
 
 //    @Mapping(target = "items", source = "items")
     @Mapping(target = "shippingAddress", source = "shippingAddress")
+    @Mapping(target = "userId", source = "order.user.id")
+    @Mapping(target = "userEmail", source = "order.user.email")
+    @Mapping(target = "userFullName", source = "order.user.fullName")
     OrderResponse toResponse(Order order);
 
     List<OrderResponse> toResponseList(List<Order> orders);

@@ -1,6 +1,7 @@
 package com.ecommerce.application.controller;
 
 import com.ecommerce.application.dto.request.OrderCreateRequest;
+import com.ecommerce.application.dto.request.GuestCheckoutRequest;
 import com.ecommerce.application.dto.response.ApiResponse;
 import com.ecommerce.application.dto.response.OrderItemResponse;
 import com.ecommerce.application.dto.response.OrderResponse;
@@ -55,6 +56,14 @@ public class OrderController {
 
         OrderResponse order = orderService.createOrder(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Order Created successfully!", order));
+    }
+
+    @PostMapping("/guest")
+    public ResponseEntity<ApiResponse<OrderResponse>> createGuestOrder(
+            @Valid @RequestBody GuestCheckoutRequest request) {
+
+        OrderResponse order = orderService.createGuestOrder(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Guest Order Created successfully!", order));
     }
 
     @PatchMapping("/{id}/cancel")

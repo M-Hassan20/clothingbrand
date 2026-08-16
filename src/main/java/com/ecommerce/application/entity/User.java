@@ -3,6 +3,7 @@ package com.ecommerce.application.entity;
 import com.ecommerce.application.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -36,4 +37,7 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(columnDefinition = "ENUM('ADMIN', 'CUSTOMER')")  // ✅ Fixed enum
     private Role role;
+
+    @Builder.Default
+    private Boolean isGuest = false;
 }

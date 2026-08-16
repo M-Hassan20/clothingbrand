@@ -2,8 +2,11 @@ package com.ecommerce.application.service.impl;
 
 import com.ecommerce.application.dto.request.OrderCreateRequest;
 import com.ecommerce.application.dto.request.OrderItemRequest;
+import com.ecommerce.application.dto.request.GuestCheckoutRequest;
+import com.ecommerce.application.dto.request.AddressRequest;
 import com.ecommerce.application.dto.response.OrderItemResponse;
 import com.ecommerce.application.dto.response.OrderResponse;
+import com.ecommerce.application.dto.response.AddressResponse;
 import com.ecommerce.application.entity.*;
 import com.ecommerce.application.enums.OrderStatus;
 import com.ecommerce.application.exception.ResourceNotFoundException;
@@ -253,5 +256,31 @@ public class OrderService {
 
     public Long getOrderCountByStatus(OrderStatus status) {
         return orderRepository.countByStatus(status);
+    }
+
+    @Transactional
+    public OrderResponse createGuestOrder(GuestCheckoutRequest request) {
+        User guestUser = userService.findOrCreateGuestUser(
+                request.getGuestEmail(),
+                request.getGuestName(),
+                request.getGuestPhone()
+        );
+
+        AddressRequest addressRequest = new AddressRequest();
+        addressRequest.setLabel("Checkout");
+        addressRequest.setStreet(request.getShippingStreet());
+        addressRequest.setCity(request.getShippingCity());
+        addressRequest.setCountry(request.getShippingCountry());
+        addressRequest.setZipCode(request.getShippingZipCode());
+        addressRequest.setIsDefault(true);
+
+        AddressResponse guestAddress = addressService.createAddress(guestUser.getId(), addressRequest);
+
+        OrderCreateRequest orderCreateRequest = new OrderCreateRequest();
+        orderCreateRequest.setShippingAddressId(guestAddress.getId());
+        orderCreateRequest.setItems(request.getItems());
+        orderCreateRequest.setDiscountCode(request.getDiscountCode());
+
+        return createOrder(guestUser.getId(), orderCreateRequest);
     }
 }

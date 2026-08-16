@@ -1,6 +1,7 @@
 package com.ecommerce.application.controller;
 
 import com.ecommerce.application.dto.request.ReviewCreateRequest;
+import com.ecommerce.application.dto.request.GuestReviewRequest;
 import com.ecommerce.application.dto.response.ApiResponse;
 import com.ecommerce.application.dto.response.ReviewResponse;
 import com.ecommerce.application.service.impl.ReviewService;
@@ -91,6 +92,14 @@ public class ReviewController {
 
         ReviewResponse review = reviewService.createReview(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Review created successfully!", review));
+    }
+
+    @PostMapping("/guest")
+    public ResponseEntity<ApiResponse<ReviewResponse>> createGuestReview(
+            @Valid @RequestBody GuestReviewRequest request) {
+
+        ReviewResponse review = reviewService.createGuestReview(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Guest Review created successfully!", review));
     }
 
     @PutMapping("/{reviewId}")

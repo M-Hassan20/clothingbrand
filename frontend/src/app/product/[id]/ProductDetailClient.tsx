@@ -42,7 +42,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
   // Zustand State
   const { userId: authUserId, isAuthenticated } = useAuthStore();
   const { setCart, getEffectiveUserId } = useCartStore();
-  const { addWishlistVariantId, removeWishlistVariantId, hasItem } = useWishlistStore();
+  const { addWishlistVariantId, removeWishlistVariantId, hasItem, addGuestWishlistItem } = useWishlistStore();
 
   const userId = getEffectiveUserId(authUserId);
 
@@ -50,8 +50,8 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
-  const [addingToCart, setAddingToCart] = useState(false);
-  const [updatingWishlist, setUpdatingWishlist] = useState(false);
+  const [addingToCart, setAddingToCart] = useState<boolean>(false);
+  const [updatingWishlist, setUpdatingWishlist] = useState<boolean>(false);
 
   // Automatically select the first in-stock variant on mount
   useEffect(() => {
@@ -65,11 +65,9 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
     }
   }, [variants]);
 
-  // Find currently matched variant based on selections
+  // Find matching variant based on selections
   const currentVariant = variants.find(
-    (v) =>
-      v.size === selectedSize &&
-      v.color.toLowerCase() === selectedColor?.toLowerCase()
+    (v) => v.size === selectedSize && v.color === selectedColor
   );
 
   const isWishlisted = currentVariant ? hasItem(currentVariant.id) : false;
@@ -82,12 +80,6 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
   };
 
   const handleToggleWishlist = async () => {
-    if (!isAuthenticated) {
-      toast.error('Please sign in to add items to your wishlist.');
-      router.push('/auth/login');
-      return;
-    }
-
     if (!currentVariant) {
       toast.error('Please select size and color variants first');
       return;
@@ -98,11 +90,31 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
     try {
       if (isWishlisted) {
         removeWishlistVariantId(variantId);
-        await removeFromWishlist(userId, variantId);
+        if (isAuthenticated) {
+          await removeFromWishlist(userId, variantId);
+        }
         toast.success('Removed from wishlist');
       } else {
-        addWishlistVariantId(variantId);
-        await addToWishlist(userId, variantId);
+        if (isAuthenticated) {
+          addWishlistVariantId(variantId);
+          await addToWishlist(userId, variantId);
+        } else {
+          addGuestWishlistItem({
+            id: variantId,
+            productVariant: {
+              id: currentVariant.id,
+              size: currentVariant.size,
+              color: currentVariant.color,
+              price: currentVariant.price,
+              stockQuantity: currentVariant.stockQuantity,
+              sku: currentVariant.sku,
+              publicImageUrl: currentVariant.publicImageUrl || thumbnailImage || '',
+              inStock: currentVariant.stockQuantity > 0,
+            },
+            productName: name,
+            addedAt: new Date().toISOString(),
+          });
+        }
         toast.success('Added to wishlist');
       }
     } catch (err) {

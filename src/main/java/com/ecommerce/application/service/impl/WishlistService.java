@@ -38,6 +38,7 @@ public class WishlistService {
         return wishlistMapper.toResponse(wishlist);
     }
 
+    @Transactional
     public List<ProductResponse> getUserWishlistProducts(Long userId) {
         Wishlist wishlist = getWishlistEntityFromUserId(userId);
         List<WishlistItem> items = wishlistItemRepository.findByWishlistId(wishlist.getId());
@@ -53,6 +54,7 @@ public class WishlistService {
     }
 
 
+    @Transactional
     public List<WishlistItemResponse> getWishlistItems(Long userId) {
         Wishlist wishlist = getWishlistEntityFromUserId(userId);
         return wishlistMapper.toWishlistItemResponseList(wishlistItemRepository.findByWishlistId(wishlist.getId()));

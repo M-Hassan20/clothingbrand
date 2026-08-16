@@ -1,0 +1,122 @@
+export interface AdminUser {
+  userId: number;
+  email: string;
+  fullName: string;
+  role: 'ADMIN' | 'CUSTOMER';
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T | null;
+}
+
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+const BASE_URL = 'http://localhost:8080/api';
+
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const url = `${BASE_URL}${path}`;
+  
+  const headers = new Headers(options.headers || {});
+  headers.set('Accept', 'application/json');
+  if (!headers.has('Content-Type') && !(options.body instanceof Blob) && !(options.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
+  
+  // Get token from localStorage
+  const token = localStorage.getItem('admin_token');
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  
+  const config: RequestInit = {
+    ...options,
+    headers,
+  };
+  
+  const response = await fetch(url, config);
+  
+  if (!response.ok) {
+    let errorMessage = `HTTP error! Status: ${response.status}`;
+    try {
+      const errorJson = await response.json();
+      if (errorJson && errorJson.message) {
+        errorMessage = errorJson.message;
+      }
+    } catch {
+      errorMessage = response.statusText || errorMessage;
+    }
+    
+    // Auto-logout on token expiration
+    if (response.status === 401 || response.status === 403) {
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_user');
+      // Redirect to login if not already there
+      if (!window.location.pathname.endsWith('/login')) {
+        window.location.href = '/login';
+      }
+    }
+    
+    throw new ApiError(errorMessage, response.status);
+  }
+  
+  // Parse response
+  const envelope = (await response.json()) as ApiResponse<T>;
+  if (!envelope.success) {
+    throw new ApiError(envelope.message || 'API request failed', response.status);
+  }
+  
+  // Some APIs might return a success wrap with null data (e.g. DELETE)
+  return envelope.data as T;
+}
+
+export const api = {
+  get: <T>(path: string, options?: RequestInit) => request<T>(path, { ...options, method: 'GET' }),
+  post: <T>(path: string, body?: unknown, options?: RequestInit) =>
+    request<T>(path, {
+      ...options,
+      method: 'POST',
+      body: body instanceof FormData ? body : JSON.stringify(body),
+    }),
+  put: <T>(path: string, body?: unknown, options?: RequestInit) =>
+    request<T>(path, {
+      ...options,
+      method: 'PUT',
+      body: body instanceof FormData ? body : JSON.stringify(body),
+    }),
+  patch: <T>(path: string, body?: unknown, options?: RequestInit) =>
+    request<T>(path, {
+      ...options,
+      method: 'PATCH',
+      body: body instanceof FormData ? body : JSON.stringify(body),
+    }),
+  delete: <T>(path: string, options?: RequestInit) => request<T>(path, { ...options, method: 'DELETE' }),
+  download: async (path: string, fileName: string) => {
+    const token = localStorage.getItem('admin_token');
+    const headers = new Headers();
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+    const response = await fetch(`http://localhost:8080/api${path}`, { method: 'GET', headers });
+    if (!response.ok) {
+      throw new Error(`Failed to download file: ${response.statusText}`);
+    }
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode?.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+};

@@ -1,9 +1,11 @@
 package com.ecommerce.application.service.impl;
 
 import com.ecommerce.application.dto.request.ReviewCreateRequest;
+import com.ecommerce.application.dto.request.GuestReviewRequest;
 import com.ecommerce.application.dto.response.ReviewResponse;
 import com.ecommerce.application.entity.Product;
 import com.ecommerce.application.entity.Review;
+import com.ecommerce.application.repository.UserRepository;
 import com.ecommerce.application.entity.User;
 import com.ecommerce.application.exception.ResourceNotFoundException;
 import com.ecommerce.application.mapper.ReviewMapper;
@@ -28,6 +30,7 @@ public class ReviewService {
     private final UserService userService;
     private final OrderService orderService;
     private final ReviewMapper reviewMapper;
+    private final UserRepository userRepository;
 
     public ReviewResponse getReviewById(Long id) {
         return reviewMapper.toResponse(reviewRepository.findById(id).orElseThrow(() -> new RuntimeException("Review not found with id: "+ id)));
@@ -166,6 +169,24 @@ public class ReviewService {
     @Transactional
     public void rejectReview(Long reviewId) {
         reviewRepository.deleteById(reviewId);
+    }
+
+    @Transactional
+    public ReviewResponse createGuestReview(GuestReviewRequest request) {
+        User user = userRepository.findByEmail(request.getGuestEmail())
+                .orElseThrow(() -> new RuntimeException("We couldn't find a completed order under this email for this product."));
+
+        boolean isVerifiedPurchase = orderService.hasUserPurchasedProduct(user.getId(), request.getProductId());
+        if (!isVerifiedPurchase) {
+            throw new RuntimeException("We couldn't find a completed order under this email for this product.");
+        }
+
+        ReviewCreateRequest createRequest = new ReviewCreateRequest();
+        createRequest.setProductId(request.getProductId());
+        createRequest.setRating(request.getRating());
+        createRequest.setComment(request.getComment());
+
+        return createReview(user.getId(), createRequest);
     }
 }
 
