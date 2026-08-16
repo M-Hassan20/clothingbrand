@@ -1,9 +1,25 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Star, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
+import {
+  Star,
+  AlertCircle,
+  Sparkles,
+  Loader2,
+  Edit2,
+  Trash2,
+  X,
+  Check,
+} from 'lucide-react';
 import { ReviewResponse, ReviewStats } from '@/types/api';
-import { getProductReviews, getProductReviewStats, createReview } from '@/lib/api/reviews';
+import {
+  getProductReviews,
+  getProductReviewStats,
+  createReview,
+  updateReview,
+  deleteReview,
+  createGuestReview,
+} from '@/lib/api/reviews';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -20,9 +36,20 @@ export default function ReviewList({ productId }: ReviewListProps) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
+  // Write Mode
+  const [writeMode, setWriteMode] = useState<'user' | 'guest'>('user');
+
   // Form State
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
+
+  // Inline Editing States
+  const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
+  const [editRating, setEditRating] = useState(5);
+  const [editComment, setEditComment] = useState('');
+  const [updatingReviewId, setUpdatingReviewId] = useState<number | null>(null);
+  const [deletingReviewId, setDeletingReviewId] = useState<number | null>(null);
 
   const loadReviewsData = useCallback(async () => {
     try {
@@ -51,23 +78,87 @@ export default function ReviewList({ productId }: ReviewListProps) {
       return;
     }
 
+    if (writeMode === 'guest' && !guestEmail.trim()) {
+      toast.error('Please enter the email associated with your purchase.');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await createReview(userId || 'guest-user', {
-        productId,
-        rating,
-        comment: comment.trim(),
-      });
+      if (writeMode === 'guest') {
+        await createGuestReview({
+          productId,
+          guestEmail: guestEmail.trim(),
+          rating,
+          comment: comment.trim(),
+        });
+      } else {
+        await createReview(userId || 'guest-user', {
+          productId,
+          rating,
+          comment: comment.trim(),
+        });
+      }
       toast.success('Thank you for your review!');
       setComment('');
+      setGuestEmail('');
       setRating(5);
-      // Reload reviews and stats
       await loadReviewsData();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to submit review';
       toast.error(msg);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleEditStart = (review: ReviewResponse) => {
+    setEditingReviewId(review.id);
+    setEditRating(review.rating);
+    setEditComment(review.comment);
+  };
+
+  const handleEditCancel = () => {
+    setEditingReviewId(null);
+    setEditRating(5);
+    setEditComment('');
+  };
+
+  const handleEditSave = async (reviewId: number) => {
+    if (!editComment.trim()) {
+      toast.error('Review comment cannot be empty.');
+      return;
+    }
+
+    setUpdatingReviewId(reviewId);
+    try {
+      await updateReview(reviewId, userId!, editRating, editComment.trim());
+      toast.success('Review updated successfully!');
+      setEditingReviewId(null);
+      await loadReviewsData();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to update review';
+      toast.error(msg);
+    } finally {
+      setUpdatingReviewId(null);
+    }
+  };
+
+  const handleDelete = async (reviewId: number) => {
+    if (!confirm('Are you sure you want to delete your review?')) {
+      return;
+    }
+
+    setDeletingReviewId(reviewId);
+    try {
+      await deleteReview(reviewId, userId!);
+      toast.success('Review deleted successfully!');
+      await loadReviewsData();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete review';
+      toast.error(msg);
+    } finally {
+      setDeletingReviewId(null);
     }
   };
 
@@ -145,24 +236,119 @@ export default function ReviewList({ productId }: ReviewListProps) {
             </div>
           ) : (
             <div className="divide-y divide-border/60">
-              {reviews.map((review) => (
-                <div key={review.id} className="py-5 first:pt-0">
-                  <div className="flex justify-between items-start gap-4">
-                    <div>
-                      <p className="font-sans text-xs font-semibold text-charcoal">
-                        {review.user?.fullName || review.userFullName || 'Anonymous Customer'}
-                      </p>
-                      <div className="flex gap-0.5 mt-1">{renderStars(review.rating)}</div>
-                    </div>
-                    <span className="font-sans text-[10px] text-brown-muted">
-                      {new Date(review.createdAt).toLocaleDateString()}
-                    </span>
+              {reviews.map((review) => {
+                const isOwner = userId && (String(review.user?.id) === String(userId) || review.userId === String(userId));
+                const isEditing = editingReviewId === review.id;
+
+                return (
+                  <div key={review.id} className="py-5 first:pt-0 space-y-3">
+                    {isEditing ? (
+                      <div className="space-y-3 bg-beige/10 p-4 rounded-md border border-border/45 font-sans">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-semibold text-charcoal">Editing Your Review</span>
+                          <div className="flex gap-3">
+                            <button
+                              onClick={handleEditCancel}
+                              className="text-brown-muted hover:text-charcoal text-xs flex items-center gap-1 cursor-pointer"
+                              disabled={updatingReviewId !== null}
+                            >
+                              <X className="h-3.5 w-3.5" /> Cancel
+                            </button>
+                            <button
+                              onClick={() => handleEditSave(review.id)}
+                              className="text-accent hover:text-accent/90 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                              disabled={updatingReviewId !== null}
+                            >
+                              {updatingReviewId === review.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Check className="h-3.5 w-3.5" />
+                              )}
+                              Save
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Edit Rating Selection */}
+                        <div className="flex gap-1">
+                          {([1, 2, 3, 4, 5] as const).map((r) => (
+                            <button
+                              key={r}
+                              type="button"
+                              onClick={() => setEditRating(r)}
+                              className="p-0.5 hover:scale-110 transition-transform"
+                            >
+                              <Star
+                                className={`h-4.5 w-4.5 ${
+                                  r <= editRating ? 'fill-accent text-accent' : 'text-border fill-transparent'
+                                }`}
+                              />
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Edit Comment Textarea */}
+                        <textarea
+                          rows={3}
+                          value={editComment}
+                          onChange={(e) => setEditComment(e.target.value)}
+                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-charcoal placeholder-brown-muted focus:outline-none focus:ring-1 focus:ring-accent"
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-sans text-xs font-semibold text-charcoal">
+                                {review.user?.fullName || review.userFullName || 'Anonymous Customer'}
+                              </p>
+                              {review.isVerifiedPurchase && (
+                                <span className="inline-flex items-center text-[9px] font-bold text-success bg-success/10 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                  Verified Purchase
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex gap-0.5 mt-1">{renderStars(review.rating)}</div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span className="font-sans text-[10px] text-brown-muted">
+                              {new Date(review.createdAt).toLocaleDateString()}
+                            </span>
+                            {isOwner && (
+                              <div className="flex items-center gap-2 border-l border-border/50 pl-3">
+                                <button
+                                  onClick={() => handleEditStart(review)}
+                                  className="text-brown-muted hover:text-charcoal transition p-1 cursor-pointer"
+                                  title="Edit Review"
+                                >
+                                  <Edit2 className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(review.id)}
+                                  className="text-brown-muted hover:text-error transition p-1 cursor-pointer"
+                                  disabled={deletingReviewId === review.id}
+                                  title="Delete Review"
+                                >
+                                  {deletingReviewId === review.id ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  )}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <p className="mt-2 font-sans text-xs leading-relaxed text-brown-muted">
+                          {review.comment}
+                        </p>
+                      </>
+                    )}
                   </div>
-                  <p className="mt-3 font-sans text-xs leading-relaxed text-brown-muted">
-                    {review.comment}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -176,11 +362,59 @@ export default function ReviewList({ productId }: ReviewListProps) {
             </h4>
           </div>
 
-          {isAuthenticated ? (
+          {/* Mode Selector for Guests */}
+          {!isAuthenticated && (
+            <div className="flex gap-4 border-b border-border/40 pb-3 font-sans text-xs">
+              <button
+                type="button"
+                onClick={() => setWriteMode('user')}
+                className={`pb-1 border-b-2 font-semibold uppercase tracking-wider text-[10px] transition cursor-pointer ${
+                  writeMode === 'user'
+                    ? 'border-accent text-accent'
+                    : 'border-transparent text-brown-muted hover:text-charcoal'
+                }`}
+              >
+                Sign In to Review
+              </button>
+              <button
+                type="button"
+                onClick={() => setWriteMode('guest')}
+                className={`pb-1 border-b-2 font-semibold uppercase tracking-wider text-[10px] transition cursor-pointer ${
+                  writeMode === 'guest'
+                    ? 'border-accent text-accent'
+                    : 'border-transparent text-brown-muted hover:text-charcoal'
+                }`}
+              >
+                Review as Guest
+              </button>
+            </div>
+          )}
+
+          {(isAuthenticated || writeMode === 'guest') ? (
             <form onSubmit={handleSubmitReview} className="space-y-4">
+              {/* Email Address for Guests */}
+              {writeMode === 'guest' && !isAuthenticated && (
+                <div>
+                  <label className="block font-sans text-[10px] font-bold text-brown-muted uppercase tracking-wider">
+                    Checkout Email
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="Enter the email address you used at checkout..."
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
+                    className="w-full mt-1.5 rounded-md border border-border bg-background px-3 py-2 text-xs text-charcoal placeholder-brown-muted/70 focus:outline-none focus:ring-1 focus:ring-accent"
+                  />
+                  <span className="text-[10px] text-brown-muted mt-1 block">
+                    We will verify your purchase status using this email address.
+                  </span>
+                </div>
+              )}
+
               {/* Rating Selector */}
               <div>
-                <label className="block font-sans text-xs font-semibold text-brown-muted uppercase tracking-wider">
+                <label className="block font-sans text-[10px] font-bold text-brown-muted uppercase tracking-wider">
                   Rating
                 </label>
                 <div className="flex gap-1.5 mt-1.5">
@@ -203,7 +437,7 @@ export default function ReviewList({ productId }: ReviewListProps) {
 
               {/* Comment Input */}
               <div>
-                <label className="block font-sans text-xs font-semibold text-brown-muted uppercase tracking-wider">
+                <label className="block font-sans text-[10px] font-bold text-brown-muted uppercase tracking-wider">
                   Your Review
                 </label>
                 <textarea
@@ -219,7 +453,7 @@ export default function ReviewList({ productId }: ReviewListProps) {
               <Button
                 type="submit"
                 disabled={submitting}
-                className="bg-accent text-background hover:bg-accent/90 px-6 py-2 text-xs font-semibold rounded-md flex items-center gap-1.5"
+                className="bg-accent text-background hover:bg-accent/90 px-6 py-2 text-xs font-semibold rounded-md flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
                 {submitting && <Loader2 className="h-3 w-3 animate-spin" />}
                 Submit Review
@@ -233,7 +467,7 @@ export default function ReviewList({ productId }: ReviewListProps) {
                 <a href="/auth/login" className="text-accent underline font-semibold">
                   signed in
                 </a>{' '}
-                to leave a product review.
+                to leave a product review. You can also write a guest review if you checked out as a guest.
               </p>
             </div>
           )}

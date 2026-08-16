@@ -76,6 +76,8 @@ export interface CartItemDTO {
   quantity: number;
   price: number;
   subtotal: number;
+  stockQuantity?: number;
+  productId?: number;
 }
 
 export interface OrderItemResponse {
@@ -164,6 +166,7 @@ export interface ReviewResponse {
   productId: number;
   rating: number;
   comment: string;
+  isVerifiedPurchase?: boolean;
   createdAt: string;
 }
 

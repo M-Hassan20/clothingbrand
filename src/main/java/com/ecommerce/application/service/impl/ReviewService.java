@@ -104,6 +104,9 @@ public class ReviewService {
 
         // Check if user purchased this product
         boolean isVerifiedPurchase = orderService.hasUserPurchasedProduct(userId, request.getProductId());
+        if (!isVerifiedPurchase) {
+            throw new RuntimeException("You can only review products that you have actually purchased.");
+        }
 
         Review review = new Review();
         review.setProduct(product);

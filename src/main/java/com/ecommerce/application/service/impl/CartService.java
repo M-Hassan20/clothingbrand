@@ -34,7 +34,17 @@ public class CartService {
 
         if (cartJson != null) {
             try {
-                return objectMapper.readValue(cartJson, CartDTO.class);
+                CartDTO cart = objectMapper.readValue(cartJson, CartDTO.class);
+                for (CartItemDTO item : cart.getItems()) {
+                    try {
+                        ProductVariant variant = productVariantService.useEntity(item.getProductVariantId());
+                        item.setStockQuantity(variant.getStockQuantity());
+                        item.setProductId(variant.getProduct().getId());
+                    } catch (Exception e) {
+                        item.setStockQuantity(0);
+                    }
+                }
+                return cart;
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("Error deserializing cart", e);
             }
@@ -73,6 +83,8 @@ public class CartService {
             }
             existingItem.setQuantity(newQuantity);
             existingItem.setSubtotal(variant.getPrice().multiply(BigDecimal.valueOf(newQuantity)));
+            existingItem.setStockQuantity(variant.getStockQuantity());
+            existingItem.setProductId(variant.getProduct().getId());
         } else {
             // Add new item
             CartItemDTO newItem = new CartItemDTO();
@@ -83,6 +95,8 @@ public class CartService {
             newItem.setQuantity(quantity);
             newItem.setPrice(variant.getPrice());
             newItem.setSubtotal(variant.getPrice().multiply(BigDecimal.valueOf(quantity)));
+            newItem.setStockQuantity(variant.getStockQuantity());
+            newItem.setProductId(variant.getProduct().getId());
 
             cart.getItems().add(newItem);
         }
@@ -119,6 +133,8 @@ public class CartService {
 
         item.setQuantity(quantity);
         item.setSubtotal(variant.getPrice().multiply(BigDecimal.valueOf(quantity)));
+        item.setStockQuantity(variant.getStockQuantity());
+        item.setProductId(variant.getProduct().getId());
 
         // Recalculate total
         cart.setTotalPrice(calculateTotal(cart));

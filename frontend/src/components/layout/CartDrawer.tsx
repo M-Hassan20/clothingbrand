@@ -6,7 +6,8 @@ import Image from 'next/image';
 import { Plus, Minus, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCartStore } from '@/lib/stores/cart-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
-import { getCart, updateCartItem, removeCartItem } from '@/lib/api/cart';
+import { getCart, updateCartItem, removeCartItem, addToCart } from '@/lib/api/cart';
+import CartItemVariantSelector from '@/components/cart/CartItemVariantSelector';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -84,6 +85,26 @@ export default function CartDrawer() {
     }
   };
 
+  const handleVariantChange = async (oldVariantId: number, newVariantId: number) => {
+    const item = items.find((i) => i.productVariantId === oldVariantId);
+    if (!item) return;
+    const qty = item.quantity;
+    
+    try {
+      setLoading(true);
+      await removeCartItem(userId, oldVariantId);
+      const updatedCart = await addToCart(userId, newVariantId, qty);
+      setCart(updatedCart);
+      toast.success('Variant updated');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to update variant';
+      toast.error(msg);
+      fetchCartData();
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const items = cart?.items || [];
   const totalPrice = cart?.totalPrice || 0;
@@ -140,36 +161,78 @@ export default function CartDrawer() {
               {items.map((item) => (
                 <div key={item.productVariantId} className="flex gap-4 border-b border-border/40 pb-5">
                   {/* Product Image */}
-                  <div className="relative h-20 w-16 overflow-hidden rounded-md bg-beige/40 flex-shrink-0">
-                    {item.imageUrl ? (
-                      <Image
-                        src={item.imageUrl}
-                        alt={item.productName}
-                        fill
-                        sizes="80px"
-                        className="object-cover object-center"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-beige text-charcoal font-serif text-[10px]">
-                        No Image
-                      </div>
-                    )}
-                  </div>
+                  {item.productId ? (
+                    <Link
+                      href={`/product/${item.productId}`}
+                      onClick={() => setIsOpen(false)}
+                      className="relative h-20 w-16 overflow-hidden rounded-md bg-beige/40 flex-shrink-0 block hover:opacity-85 transition-opacity"
+                    >
+                      {item.imageUrl ? (
+                        <Image
+                          src={item.imageUrl}
+                          alt={item.productName}
+                          fill
+                          sizes="80px"
+                          className="object-cover object-center"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-beige text-charcoal font-serif text-[10px]">
+                          No Image
+                        </div>
+                      )}
+                    </Link>
+                  ) : (
+                    <div className="relative h-20 w-16 overflow-hidden rounded-md bg-beige/40 flex-shrink-0">
+                      {item.imageUrl ? (
+                        <Image
+                          src={item.imageUrl}
+                          alt={item.productName}
+                          fill
+                          sizes="80px"
+                          className="object-cover object-center"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-beige text-charcoal font-serif text-[10px]">
+                          No Image
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Info details */}
                   <div className="flex flex-1 flex-col justify-between py-0.5">
                     <div>
                       <div className="flex justify-between text-sm">
-                        <h4 className="font-serif text-charcoal font-medium line-clamp-1">
-                          {item.productName}
-                        </h4>
+                        {item.productId ? (
+                          <Link
+                            href={`/product/${item.productId}`}
+                            onClick={() => setIsOpen(false)}
+                            className="font-serif text-charcoal font-medium line-clamp-1 hover:text-accent transition-colors"
+                          >
+                            {item.productName}
+                          </Link>
+                        ) : (
+                          <h4 className="font-serif text-charcoal font-medium line-clamp-1">
+                            {item.productName}
+                          </h4>
+                        )}
                         <span className="font-sans font-medium text-charcoal">
                           ${item.subtotal.toFixed(2)}
                         </span>
                       </div>
-                      <p className="mt-1 font-sans text-xs text-brown-muted">
-                        Variant: {item.variantName}
-                      </p>
+                      {item.productId ? (
+                        <CartItemVariantSelector
+                          productId={item.productId}
+                          currentVariantId={item.productVariantId}
+                          currentVariantName={item.variantName}
+                          quantity={item.quantity}
+                          onVariantChange={handleVariantChange}
+                        />
+                      ) : (
+                        <p className="mt-1 font-sans text-xs text-brown-muted">
+                          Variant: {item.variantName}
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex items-center justify-between mt-2">

@@ -18,4 +18,6 @@ public class CartItemDTO implements Serializable {
     private Integer quantity;
     private BigDecimal price;
     private BigDecimal subtotal;
+    private Integer stockQuantity;
+    private Long productId;
 }

@@ -84,7 +84,8 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
   const handleUpdateQty = (change: number) => {
     const nextVal = quantity + change;
-    if (nextVal >= 1) {
+    const maxStock = currentVariant ? currentVariant.stockQuantity : 99;
+    if (nextVal >= 1 && nextVal <= maxStock) {
       setQuantity(nextVal);
     }
   };
@@ -169,7 +170,9 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
   const prices = variants.map((v) => v.price);
   const resolvedMinPrice = minPrice ?? (prices.length > 0 ? Math.min(...prices) : 0);
   const priceToDisplay = currentVariant ? currentVariant.price : resolvedMinPrice;
-  const isOutOfStock = currentVariant ? currentVariant.stockQuantity === 0 : false;
+  const isOutOfStock = currentVariant 
+    ? currentVariant.stockQuantity === 0 
+    : (variants.length > 0 && variants.every((v) => v.stockQuantity === 0));
   const isLowStock = currentVariant ? currentVariant.stockQuantity > 0 && currentVariant.stockQuantity <= 3 : false;
 
   return (
@@ -255,61 +258,72 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
             )}
 
             {/* Cart Stepper & Add Actions */}
-            {!isOutOfStock && (
-              <div className="flex gap-4">
-                {/* Quantity counter */}
-                <div className="flex items-center border border-border rounded-md bg-beige/10">
-                  <button
-                    onClick={() => handleUpdateQty(-1)}
-                    disabled={quantity <= 1}
-                    className="p-3 text-brown-muted hover:text-charcoal disabled:opacity-30"
-                  >
-                    <Minus className="h-3.5 w-3.5" />
-                  </button>
-                  <span className="px-3 text-sm font-sans font-semibold text-charcoal select-none min-w-[20px] text-center">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={() => handleUpdateQty(1)}
-                    className="p-3 text-brown-muted hover:text-charcoal"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-
-                {/* Add to Cart CTA */}
+            {/* Cart Stepper & Add Actions */}
+            <div className="flex gap-4">
+              {isOutOfStock ? (
                 <Button
-                  onClick={handleAddToCart}
-                  disabled={addingToCart || !currentVariant}
-                  className="flex-1 bg-accent text-background hover:bg-accent/90 py-3 rounded-md font-sans text-xs font-semibold flex items-center justify-center gap-2 shadow-xs transition-transform duration-200 active:scale-98"
+                  disabled
+                  className="flex-1 bg-beige/40 text-brown-muted py-3 rounded-md font-sans text-xs font-semibold flex items-center justify-center gap-2 cursor-not-allowed border border-border/20"
                 >
-                  {addingToCart ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <ShoppingBag className="h-4 w-4" />
-                  )}
-                  Add to Bag
+                  Out of Stock
                 </Button>
+              ) : (
+                <>
+                  {/* Quantity counter */}
+                  <div className="flex items-center border border-border rounded-md bg-beige/10">
+                    <button
+                      onClick={() => handleUpdateQty(-1)}
+                      disabled={quantity <= 1}
+                      className="p-3 text-brown-muted hover:text-charcoal disabled:opacity-30 cursor-pointer"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="px-3 text-sm font-sans font-semibold text-charcoal select-none min-w-[20px] text-center font-mono">
+                      {quantity}
+                    </span>
+                    <button
+                      onClick={() => handleUpdateQty(1)}
+                      disabled={currentVariant ? quantity >= currentVariant.stockQuantity : false}
+                      className="p-3 text-brown-muted hover:text-charcoal disabled:opacity-30 cursor-pointer"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
 
-                {/* Add to Wishlist Toggle */}
-                <button
-                  onClick={handleToggleWishlist}
-                  disabled={updatingWishlist}
-                  className={`flex h-[46px] w-[46px] items-center justify-center rounded-md border transition-all ${
-                    isWishlisted
-                      ? 'border-error/30 bg-error/5 text-error'
-                      : 'border-border text-brown-muted hover:text-charcoal hover:border-charcoal'
-                  }`}
-                >
-                  {updatingWishlist ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-accent" />
-                  ) : (
-                    <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-error' : ''}`} />
-                  )}
-                  <span className="sr-only">Wishlist</span>
-                </button>
-              </div>
-            )}
+                  {/* Add to Cart CTA */}
+                  <Button
+                    onClick={handleAddToCart}
+                    disabled={addingToCart || !currentVariant || quantity > (currentVariant?.stockQuantity || 0)}
+                    className="flex-1 bg-accent text-background hover:bg-accent/90 py-3 rounded-md font-sans text-xs font-semibold flex items-center justify-center gap-2 shadow-xs transition-transform duration-200 active:scale-98 cursor-pointer"
+                  >
+                    {addingToCart ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ShoppingBag className="h-4 w-4" />
+                    )}
+                    Add to Bag
+                  </Button>
+                </>
+              )}
+
+              {/* Add to Wishlist Toggle */}
+              <button
+                onClick={handleToggleWishlist}
+                disabled={updatingWishlist}
+                className={`flex h-[46px] w-[46px] items-center justify-center rounded-md border transition-all cursor-pointer ${
+                  isWishlisted
+                    ? 'border-error/30 bg-error/5 text-error'
+                    : 'border-border text-brown-muted hover:text-charcoal hover:border-charcoal'
+                }`}
+              >
+                {updatingWishlist ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                ) : (
+                  <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-error' : ''}`} />
+                )}
+                <span className="sr-only">Wishlist</span>
+              </button>
+            </div>
 
             {/* Premium details trustbadges */}
             <div className="border-t border-border/60 pt-6 space-y-3.5 font-sans text-xs text-brown-muted">

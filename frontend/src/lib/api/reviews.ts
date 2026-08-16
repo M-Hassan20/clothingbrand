@@ -1,5 +1,5 @@
 import { ReviewResponse, ReviewStats, ReviewCreateRequest, GuestReviewRequest } from '@/types/api';
-import { apiGet, apiPost } from './client';
+import { apiGet, apiPost, apiPut, apiDelete } from './client';
 import { MOCK_REVIEWS, MOCK_REVIEW_STATS } from './mockData';
 
 export async function createGuestReview(
@@ -94,4 +94,22 @@ export async function createReview(
 
     return newReview;
   }
+}
+
+export async function updateReview(
+  reviewId: number,
+  userId: number | string,
+  rating: number,
+  comment: string
+): Promise<ReviewResponse> {
+  return await apiPut<ReviewResponse>(
+    `/reviews/${reviewId}?userId=${userId}&rating=${rating}&comment=${encodeURIComponent(comment)}`
+  );
+}
+
+export async function deleteReview(
+  reviewId: number,
+  userId: number | string
+): Promise<void> {
+  await apiDelete<void>(`/reviews/${reviewId}?userId=${userId}`);
 }
