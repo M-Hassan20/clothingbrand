@@ -7,18 +7,23 @@ import com.ecommerce.application.dto.response.AuthResponse;
 import com.ecommerce.application.enums.Role;
 import com.ecommerce.application.entity.User;
 import com.ecommerce.application.repository.UserRepository;
+import com.ecommerce.application.entity.PasswordResetOtp;
+import com.ecommerce.application.repository.PasswordResetOtpRepository;
+import com.ecommerce.application.dto.request.ResetPasswordRequest;
+import com.ecommerce.application.dto.request.ForgotPasswordRequest;
 import com.ecommerce.application.security.JwtUtil;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +34,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
+    private final PasswordResetOtpRepository passwordResetOtpRepository;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -153,4 +159,49 @@ public class AuthService {
             throw new RuntimeException("Invalid Firebase token: " + e.getMessage());
         }
     }
+
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        if (user == null || Boolean.TRUE.equals(user.getIsGuest())) {
+            return;
+        }
+
+        passwordResetOtpRepository.invalidateAllUnusedOtpsForUser(user);
+
+        java.security.SecureRandom random = new java.security.SecureRandom();
+        String otpCode = String.format("%06d", random.nextInt(1000000));
+
+        PasswordResetOtp otp = PasswordResetOtp.builder()
+                .user(user)
+                .otpCode(otpCode)
+                .expiryDate(java.time.LocalDateTime.now().plusMinutes(15))
+                .isUsed(false)
+                .build();
+
+        passwordResetOtpRepository.save(otp);
+
+        emailService.sendPasswordResetEmail(user.getEmail(), user.getFullName(), otpCode);
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Invalid or expired verification code"));
+
+        PasswordResetOtp otp = passwordResetOtpRepository
+                .findTopByUserAndOtpCodeAndIsUsedFalseOrderByCreatedAtDesc(user, request.getOtpCode())
+                .orElseThrow(() -> new RuntimeException("Invalid or expired verification code"));
+
+        if (otp.getExpiryDate().isBefore(java.time.LocalDateTime.now())) {
+            throw new RuntimeException("Verification code has expired. Please request a new one.");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        otp.setIsUsed(true);
+        passwordResetOtpRepository.save(otp);
+    }
+
 }

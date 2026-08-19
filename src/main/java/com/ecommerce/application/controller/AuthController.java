@@ -5,11 +5,14 @@ import com.ecommerce.application.dto.request.LoginRequest;
 import com.ecommerce.application.dto.request.RegisterRequest;
 import com.ecommerce.application.dto.response.ApiResponse;
 import com.ecommerce.application.dto.response.AuthResponse;
+import com.ecommerce.application.dto.request.ForgotPasswordRequest;
+import com.ecommerce.application.dto.request.ResetPasswordRequest;
 import com.ecommerce.application.service.impl.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -35,5 +38,17 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> loginWithFirebase(@Valid @RequestBody FirebaseAuthRequest request) {
         AuthResponse response = authService.loginWithFirebase(request);
         return ResponseEntity.ok(ApiResponse.success("Firebase login successful", response));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request);
+        return ResponseEntity.ok(ApiResponse.success("If an account exists with this email, a 6-digit verification code has been sent.", null));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.success("Password updated successfully. You can now log in.", null));
     }
 }

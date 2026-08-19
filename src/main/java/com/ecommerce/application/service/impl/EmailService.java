@@ -109,16 +109,16 @@ public class EmailService {
     }
 
     /**
-     * Send password reset email
+     * Send password reset email with 6-digit OTP code
      */
-    public void sendPasswordResetEmail(String to, String userName, String resetToken) {
+    public void sendPasswordResetEmail(String to, String userName, String otpCode) {
         Map<String, Object> model = Map.of(
                 "userName", userName,
-                "resetUrl", "https://hausofhafsah.com/reset-password?token=" + resetToken,
-                "expiryHours", 24
+                "otpCode", otpCode,
+                "expiryMinutes", 15
         );
 
-        sendTemplateEmail(to, "Reset Your Password", "password-reset", model);
+        sendTemplateEmail(to, "Password Reset Verification Code", "password-reset", model);
     }
 
     /**
