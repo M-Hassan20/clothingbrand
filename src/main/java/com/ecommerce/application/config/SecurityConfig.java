@@ -53,6 +53,7 @@ public class SecurityConfig {
                                 "/api/test/**",
                                 "/api/blog/**",
                                 "/api/homepage/**",
+                                "/api/payments/webhook/safepay",
                                 "/error"
                         ).permitAll()
 

@@ -1,8 +1,10 @@
 package com.ecommerce.application.service.impl;
 
+import com.ecommerce.application.dto.payment.SafePayCheckoutResponse;
 import com.ecommerce.application.dto.response.PaymentResponse;
 import com.ecommerce.application.entity.Order;
 import com.ecommerce.application.entity.Payment;
+import com.ecommerce.application.enums.OrderStatus;
 import com.ecommerce.application.enums.PaymentStatus;
 import com.ecommerce.application.mapper.PaymentMapper;
 import com.ecommerce.application.repository.PaymentRepository;
@@ -18,11 +20,10 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderService orderService;
     private final PaymentMapper paymentMapper;
-    // TODO: Add Stripe service when integrating payment gateway
+    private final SafePayService safePayService;
 
     public PaymentResponse getPaymentById(Long id) {
-        return paymentMapper.toResponse(paymentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Payment not found with id: " + id)));
+        return paymentMapper.toResponse(getPaymentEntityById(id));
     }
 
     private Payment getPaymentEntityById(Long id) {
@@ -35,71 +36,44 @@ public class PaymentService {
                 .orElseThrow(() -> new RuntimeException("Payment not found for order id: " + orderId)));
     }
 
-    public PaymentResponse getPaymentByStripeIntentId(String stripePaymentIntentId) {
-        return paymentMapper.toResponse(paymentRepository.findByStripePaymentIntentId(stripePaymentIntentId)
-                .orElseThrow(() -> new RuntimeException(
-                        "Payment not found with Stripe intent id: " + stripePaymentIntentId)));
-    }
-
-    private Payment getPaymentEntityByStripeIntentId(String stripePaymentIntentId) {
-        return paymentRepository.findByStripePaymentIntentId(stripePaymentIntentId)
-                .orElseThrow(() -> new RuntimeException(
-                        "Payment not found with Stripe intent id: " + stripePaymentIntentId));
-    }
-
-    // Create payment intent (prepare for payment)
     @Transactional
-    public PaymentResponse createPaymentIntent(Long orderId) {
+    public SafePayCheckoutResponse initiateSafePayCheckout(Long orderId) {
         Order order = orderService.getOrderEntityById(orderId);
 
-        // TODO: Create Stripe Payment Intent here
-        // String stripeIntentId = stripeService.createPaymentIntent(order.getTotalAmount());
+        var checkoutSession = safePayService.createCheckoutSession(orderId, order.getTotalAmount(), "MPGS");
+        // "MPGS" confirmed working from your test run — swap to "CYBERSOURCE", "PAYFAST",
+        // or "RAAST" later if you want to offer customers a choice of rails
 
         Payment payment = Payment.builder()
                 .order(order)
                 .amount(order.getTotalAmount())
-                .currency("USD") // Or get from config
+                .currency("PKR")
                 .paymentStatus(PaymentStatus.PENDING)
-                // .stripePaymentIntentId(stripeIntentId)
+                .stripePaymentIntentId(checkoutSession.getTrackerToken()) // reused field, stores SafePay tracker token
                 .build();
 
-        return paymentMapper.toResponse(paymentRepository.save(payment));
+        paymentRepository.save(payment);
+        return checkoutSession;
     }
 
-    // Confirm payment (after Stripe webhook)
+    /**
+     * Called both from the /verify-safepay polling endpoint (after the customer
+     * returns from checkout) and from the webhook — safe to call more than once
+     * for the same tracker, it just re-confirms the same end state each time.
+     */
     @Transactional
-    public PaymentResponse confirmPayment(String stripePaymentIntentId) {
-        Payment payment = getPaymentEntityByStripeIntentId(stripePaymentIntentId);
-        payment.setPaymentStatus(PaymentStatus.SUCCESS);
+    public PaymentResponse verifySafePayPayment(String trackerToken) {
+        Payment payment = paymentRepository.findByStripePaymentIntentId(trackerToken)
+                .orElseThrow(() -> new RuntimeException("Payment not found for tracker: " + trackerToken));
 
-        // Update order status
-        orderService.updateOrderStatus(payment.getOrder().getId(),
-                com.ecommerce.application.enums.OrderStatus.PAID);
+        var statusResponse = safePayService.getTrackerStatus(trackerToken);
 
-        return paymentMapper.toResponse(paymentRepository.save(payment));
-    }
-
-    // Handle failed payment
-    @Transactional
-    public PaymentResponse failPayment(String stripePaymentIntentId) {
-        Payment payment = getPaymentEntityByStripeIntentId(stripePaymentIntentId);
-        payment.setPaymentStatus(PaymentStatus.FAILED);
-        return paymentMapper.toResponse(paymentRepository.save(payment));
-    }
-
-    // Refund payment
-    @Transactional
-    public PaymentResponse refundPayment(Long paymentId) {
-        Payment payment = getPaymentEntityById(paymentId);
-
-        if (payment.getPaymentStatus() != PaymentStatus.SUCCESS) {
-            throw new RuntimeException("Can only refund completed payments");
+        if (safePayService.isPaymentSuccessful(statusResponse)) {
+            payment.setPaymentStatus(PaymentStatus.SUCCESS);
+            orderService.updateOrderStatus(payment.getOrder().getId(), OrderStatus.CONFIRMED);
         }
 
-        // TODO: Process Stripe refund
-        // stripeService.refund(payment.getStripePaymentIntentId());
-
-        payment.setPaymentStatus(PaymentStatus.REFUNDED);
         return paymentMapper.toResponse(paymentRepository.save(payment));
     }
+
 }
