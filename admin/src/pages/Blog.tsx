@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../stores/auth';
 import { api } from '../api/client';
+import { getErrorMessage } from '../utils/error';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import LinkExtension from '@tiptap/extension-link';
@@ -11,7 +12,6 @@ import {
   Trash2,
   Edit,
   Eye,
-  X,
   Upload,
   Loader2,
   AlertTriangle,
@@ -128,7 +128,7 @@ export default function Blog() {
       setPosts(res.content || []);
       setTotalPages(res.totalPages || 0);
     } catch (err) {
-      toast.error('Failed to load blog posts');
+      toast.error(getErrorMessage(err, 'Failed to load blog posts'));
     } finally {
       setLoading(false);
     }
@@ -162,8 +162,8 @@ export default function Blog() {
       setCategory(newDraft.category || 'Style Guide');
       
       toast.success('New draft initialized!');
-    } catch {
-      toast.error('Failed to create new blog draft');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to create new blog draft'));
     } finally {
       setSaving(false);
     }
@@ -204,8 +204,7 @@ export default function Blog() {
       }
       return updated;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to save post';
-      toast.error(msg);
+      toast.error(getErrorMessage(err, 'Failed to save post'));
       return null;
     } finally {
       setSaving(false);
@@ -222,8 +221,8 @@ export default function Blog() {
       const published = await api.patch<BlogPostAdminResponse>(`/admin/blog/${saved.id}/publish`);
       setEditingPost(published);
       toast.success('Blog post is now live!');
-    } catch {
-      toast.error('Failed to publish post');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to publish post'));
     } finally {
       setPublishing(false);
     }
@@ -238,8 +237,8 @@ export default function Blog() {
       setEditingPost(unpublished);
       setShowUnpublishConfirm(false);
       toast.success('Post unpublished (returned to draft status).');
-    } catch {
-      toast.error('Failed to unpublish post');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to unpublish post'));
     } finally {
       setPublishing(false);
     }
@@ -253,8 +252,8 @@ export default function Blog() {
       toast.success('Blog post deleted successfully.');
       setDeletingPost(null);
       fetchPosts();
-    } catch {
-      toast.error('Failed to delete blog post');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to delete blog post'));
     }
   };
 
@@ -263,9 +262,17 @@ export default function Blog() {
     const saved = await handleSave(true);
     if (!saved) return;
     
-    // Storefront preview URL
-    const previewUrl = `http://localhost:3000/preview/blog/${saved.slug}?token=${encodeURIComponent(token || '')}`;
-    window.open(previewUrl, '_blank');
+    try {
+      const res = await api.get<{ previewToken: string }>('/admin/homepage/preview-token');
+      const previewTok = res?.previewToken || token || '';
+      const storeHost = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : 'localhost';
+      const previewUrl = `http://${storeHost}:3000/preview/blog/${saved.slug}?token=${encodeURIComponent(previewTok)}`;
+      window.open(previewUrl, '_blank');
+    } catch {
+      const storeHost = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : 'localhost';
+      const previewUrl = `http://${storeHost}:3000/preview/blog/${saved.slug}?token=${encodeURIComponent(token || '')}`;
+      window.open(previewUrl, '_blank');
+    }
   };
 
   // Handle Cover Image Upload
@@ -284,8 +291,8 @@ export default function Blog() {
       );
       setCoverImageUrl(res.fileUrl);
       toast.success('Cover image uploaded!');
-    } catch {
-      toast.error('Cover image upload failed');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Cover image upload failed'));
     } finally {
       setUploadingCover(false);
     }
@@ -309,8 +316,8 @@ export default function Blog() {
       // Insert image in editor
       editor.chain().focus().setImage({ src: res.fileUrl }).run();
       toast.success('Image inserted successfully!');
-    } catch {
-      toast.error('Failed to upload editor image');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to upload editor image'));
     } finally {
       setUploadingContent(false);
     }

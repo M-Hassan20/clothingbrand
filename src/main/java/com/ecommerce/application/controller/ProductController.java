@@ -145,4 +145,9 @@ public class ProductController {
         List<String> brands = productService.getAllBrands();
         return ResponseEntity.ok(ApiResponse.success(brands));
     }
+
+    @GetMapping("/{id}/complete-the-look")
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> getCompleteTheLook(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success("Recommendations retrieved", productService.getCompleteTheLook(id)));
+    }
 }

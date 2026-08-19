@@ -1,5 +1,6 @@
 package com.ecommerce.application.entity;
 
+import com.ecommerce.application.enums.ProductStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,6 +30,10 @@ public class Product extends BaseEntity{
 
     private String brand;
     private Boolean isActive;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private ProductStatus status = ProductStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")

@@ -134,7 +134,10 @@ public class BlogPostService {
     private boolean isValidAdminPreviewToken(String token) {
         if (token == null || token.isBlank()) return false;
         try {
-            return jwtUtil.isTokenValid(token) && "ADMIN".equals(jwtUtil.extractRole(token));
+            if (!jwtUtil.isTokenValid(token)) return false;
+            String role = jwtUtil.extractRole(token);
+            String scope = jwtUtil.extractScope(token);
+            return "ADMIN".equals(role) || "PREVIEW".equals(scope);
         } catch (Exception e) {
             return false;
         }

@@ -26,15 +26,22 @@ import { toast } from 'sonner';
 
 interface ReviewListProps {
   productId: number;
+  onReviewsUpdated?: (count: number, averageRating: number) => void;
 }
 
-export default function ReviewList({ productId }: ReviewListProps) {
+export default function ReviewList({ productId, onReviewsUpdated }: ReviewListProps) {
   const { userId, isAuthenticated } = useAuthStore();
 
   const [reviews, setReviews] = useState<ReviewResponse[]>([]);
   const [stats, setStats] = useState<ReviewStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  // Keep callback stable across render cycles using a ref
+  const onReviewsUpdatedRef = React.useRef(onReviewsUpdated);
+  useEffect(() => {
+    onReviewsUpdatedRef.current = onReviewsUpdated;
+  }, [onReviewsUpdated]);
 
   // Write Mode
   const [writeMode, setWriteMode] = useState<'user' | 'guest'>('user');
@@ -60,6 +67,12 @@ export default function ReviewList({ productId }: ReviewListProps) {
       ]);
       setReviews(reviewList);
       setStats(reviewStats);
+      
+      const count = reviewStats?.reviewCount ?? 0;
+      const average = reviewStats?.averageRating ?? 0;
+      if (onReviewsUpdatedRef.current) {
+        onReviewsUpdatedRef.current(count, average);
+      }
     } catch (err) {
       console.error('Error fetching reviews:', err);
     } finally {
@@ -303,11 +316,6 @@ export default function ReviewList({ productId }: ReviewListProps) {
                               <p className="font-sans text-xs font-semibold text-charcoal">
                                 {review.user?.fullName || review.userFullName || 'Anonymous Customer'}
                               </p>
-                              {review.isVerifiedPurchase && (
-                                <span className="inline-flex items-center text-[9px] font-bold text-success bg-success/10 px-1.5 py-0.5 rounded uppercase tracking-wider">
-                                  Verified Purchase
-                                </span>
-                              )}
                             </div>
                             <div className="flex gap-0.5 mt-1">{renderStars(review.rating)}</div>
                           </div>

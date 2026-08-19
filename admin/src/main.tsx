@@ -6,11 +6,13 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Homepage from './pages/Homepage';
 import Products from './pages/Products';
 import Categories from './pages/Categories';
 import Orders from './pages/Orders';
 import Blog from './pages/Blog';
 import Inventory from './pages/Inventory';
+import Reviews from './pages/Reviews';
 import { Toaster } from 'sonner';
 import './index.css';
 
@@ -30,9 +32,11 @@ createRoot(document.getElementById('root')!).render(
             }
           >
             <Route index element={<Dashboard />} />
+            <Route path="homepage" element={<Homepage />} />
             <Route path="products" element={<Products />} />
             <Route path="categories" element={<Categories />} />
             <Route path="orders" element={<Orders />} />
+            <Route path="reviews" element={<Reviews />} />
             <Route path="blog" element={<Blog />} />
             <Route path="inventory" element={<Inventory />} />
           </Route>

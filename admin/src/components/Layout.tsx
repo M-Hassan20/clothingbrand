@@ -12,6 +12,8 @@ import {
   X,
   LogOut,
   User,
+  Home,
+  Star,
 } from 'lucide-react';
 
 export default function Layout() {
@@ -21,9 +23,11 @@ export default function Layout() {
 
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+    { name: 'Homepage Config', path: '/homepage', icon: Home },
     { name: 'Products', path: '/products', icon: ShoppingBag },
     { name: 'Categories', path: '/categories', icon: Layers },
     { name: 'Orders', path: '/orders', icon: ListCollapse },
+    { name: 'Reviews', path: '/reviews', icon: Star },
     { name: 'Blog', path: '/blog', icon: BookOpen },
     { name: 'Inventory & Alerts', path: '/inventory', icon: Boxes },
   ];

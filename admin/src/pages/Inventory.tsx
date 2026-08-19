@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
+import { getErrorMessage } from '../utils/error';
 import {
   Search,
   Save,
@@ -50,8 +51,8 @@ export default function Inventory() {
         stocks[v.id] = v.stockQuantity;
       });
       setLocalStocks(stocks);
-    } catch {
-      toast.error('Failed to load low stock inventory list');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to load low stock inventory list'));
     } finally {
       setLoading(false);
     }
@@ -76,8 +77,8 @@ export default function Inventory() {
       
       // Refresh list to update status
       fetchLowStock();
-    } catch {
-      toast.error('Failed to update stock quantity');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to update stock quantity'));
     } finally {
       setUpdatingIds((prev) => ({ ...prev, [variantId]: false }));
     }
@@ -90,7 +91,7 @@ export default function Inventory() {
       await api.download('/admin/excel/export/inventory', 'inventory_status_report.xlsx');
       toast.success('Report downloaded successfully!');
     } catch (err) {
-      toast.error('Failed to download inventory report');
+      toast.error(getErrorMessage(err, 'Failed to download inventory report'));
     } finally {
       setExporting(false);
     }

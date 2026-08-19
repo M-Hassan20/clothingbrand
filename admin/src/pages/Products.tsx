@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../api/client';
+import { getErrorMessage } from '../utils/error';
 import {
   Search,
   Plus,
@@ -12,6 +13,8 @@ import {
   AlertTriangle,
   MoveUp,
   MoveDown,
+  ArrowUp,
+  ArrowDown,
   Info,
   Download,
 } from 'lucide-react';
@@ -53,6 +56,7 @@ interface Product {
   categoryId: number;
   categoryName?: string;
   isActive: boolean;
+  status?: string;
   minPrice?: number;
   maxPrice?: number;
   totalStock?: number;
@@ -70,6 +74,7 @@ export default function Products() {
   // Filtering & Pagination State
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
@@ -101,6 +106,12 @@ export default function Products() {
   // Deletion Modal State
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
 
+  // Recommendations pairings state
+  const [recommendations, setRecommendations] = useState<Product[]>([]);
+  const [recSearchQuery, setRecSearchQuery] = useState('');
+  const [recSearchResults, setRecSearchResults] = useState<Product[]>([]);
+  const [recSearching, setRecSearching] = useState(false);
+
   const fetchCategories = async () => {
     try {
       const data = await api.get<Category[]>('/categories');
@@ -116,6 +127,7 @@ export default function Products() {
       const queryParams = new URLSearchParams();
       if (search) queryParams.append('search', search);
       if (selectedCategory) queryParams.append('categoryId', selectedCategory);
+      if (selectedStatus) queryParams.append('status', selectedStatus);
       queryParams.append('page', page.toString());
       queryParams.append('size', '10');
 
@@ -127,8 +139,8 @@ export default function Products() {
         // Fallback if returned raw list
         setProducts(Array.isArray(response) ? response : []);
       }
-    } catch {
-      toast.error('Failed to load products list');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to load products list'));
     } finally {
       setLoading(false);
     }
@@ -144,7 +156,7 @@ export default function Products() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, selectedCategory, page]);
+  }, [search, selectedCategory, selectedStatus, page]);
 
   // Drawer Actions
   const handleOpenNewDrawer = () => {
@@ -159,6 +171,7 @@ export default function Products() {
     setVariants([
       { size: 'S', color: 'Black', price: 99, stock: 15, sku: '' }
     ]);
+    setRecommendations([]);
     setDrawerOpen(true);
   };
 
@@ -178,9 +191,16 @@ export default function Products() {
       setVariants(details.variants && details.variants.length > 0 ? details.variants : [
         { size: 'S', color: 'Black', price: 99, stock: 15, sku: '' }
       ]);
+      // Fetch recommendations
+      try {
+        const recs = await api.get<Product[]>(`/admin/products/${product.id}/recommendations`);
+        setRecommendations(recs || []);
+      } catch {
+        setRecommendations([]);
+      }
       setDrawerOpen(true);
-    } catch {
-      toast.error('Failed to load product details');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to load product details'));
     } finally {
       setLoading(false);
     }
@@ -210,8 +230,8 @@ export default function Products() {
         }
         toast.success('Images uploaded successfully');
       }
-    } catch {
-      toast.error('Image upload failed');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Image upload failed'));
     } finally {
       setUploadingImages(false);
     }
@@ -275,6 +295,61 @@ export default function Products() {
     setVariants(updated);
   };
 
+  // Recommendations helpers
+  const handleRecSearch = async (query: string) => {
+    setRecSearchQuery(query);
+    if (!query.trim()) {
+      setRecSearchResults([]);
+      return;
+    }
+
+    try {
+      setRecSearching(true);
+      const res = await api.get<{ content: Product[] } | Product[]>(`/admin/products?search=${encodeURIComponent(query)}&size=10`);
+      if (res) {
+        if ('content' in res) {
+          const filtered = res.content.filter((p) => p.id !== editingProduct?.id);
+          setRecSearchResults(filtered);
+        } else {
+          const list = Array.isArray(res) ? res : [];
+          const filtered = list.filter((p) => p.id !== editingProduct?.id);
+          setRecSearchResults(filtered);
+        }
+      }
+    } catch {
+      // Ignored
+    } finally {
+      setRecSearching(false);
+    }
+  };
+
+  const addRecommendation = (product: Product) => {
+    if (recommendations.some((p) => p.id === product.id)) {
+      toast.error('Product is already recommended');
+      return;
+    }
+    setRecommendations([...recommendations, product]);
+    setRecSearchQuery('');
+    setRecSearchResults([]);
+    toast.success(`${product.name} added to recommendations`);
+  };
+
+  const removeRecommendation = (id: number) => {
+    setRecommendations(recommendations.filter((p) => p.id !== id));
+  };
+
+  const moveRecommendation = (index: number, direction: 'up' | 'down') => {
+    const newRecs = [...recommendations];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+    if (targetIndex < 0 || targetIndex >= newRecs.length) return;
+
+    const temp = newRecs[index];
+    newRecs[index] = newRecs[targetIndex];
+    newRecs[targetIndex] = temp;
+    setRecommendations(newRecs);
+  };
+
   // Submit Product Form
   const handleSubmitProduct = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -298,27 +373,38 @@ export default function Products() {
         thumbnailImage,
         additionalImages,
         variants: variants.map(v => ({
-          ...v,
+          size: v.size,
+          color: v.color,
           price: Number(v.price),
-          stock: Number(v.stock),
-          sku: v.sku || `hoh-${name.toLowerCase().slice(0, 5)}-${v.color.slice(0, 3)}-${v.size}`
+          stockQuantity: Number(v.stock),
+          sku: v.sku || `hoh-${name.toLowerCase().slice(0, 5)}-${v.color.slice(0, 3)}-${v.size}`,
+          publicImageUrl: v.imageUrl || '',
+          additionalImageUrls: v.imageUrls || [],
         }))
       };
 
       if (editingProduct) {
-        // Update product
+        // Update product (PUT accepts application/json)
         await api.put(`/admin/products/${editingProduct.id}`, payload);
+        // Save recommendations live
+        await api.put(`/admin/products/${editingProduct.id}/recommendations`, {
+          recommendedProductIds: recommendations.map((r) => r.id),
+        });
         toast.success('Product updated successfully!');
       } else {
-        // Create product
-        await api.post('/admin/products', payload);
+        // Create product — backend expects multipart/form-data with a "product" JSON part
+        const formData = new FormData();
+        formData.append(
+          'product',
+          new Blob([JSON.stringify(payload)], { type: 'application/json' })
+        );
+        await api.post('/admin/products', formData);
         toast.success('Product created successfully!');
       }
       setDrawerOpen(false);
       fetchProducts();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to save product';
-      toast.error(msg);
+      toast.error(getErrorMessage(err, 'Failed to save product'));
     } finally {
       setUploadingImages(false);
     }
@@ -332,8 +418,8 @@ export default function Products() {
       toast.success('Product has been deleted');
       setDeletingProduct(null);
       fetchProducts();
-    } catch {
-      toast.error('Failed to delete product');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to delete product'));
     }
   };
 
@@ -354,8 +440,7 @@ export default function Products() {
       toast.success('Import completed!');
       fetchProducts();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Import failed';
-      toast.error(msg);
+      toast.error(getErrorMessage(err, 'Import failed'));
     } finally {
       setImporting(false);
     }
@@ -366,8 +451,8 @@ export default function Products() {
       setExporting(true);
       await api.download('/admin/excel/export/products', 'products_catalog.xlsx');
       toast.success('Products exported successfully!');
-    } catch {
-      toast.error('Failed to export products');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to export products'));
     } finally {
       setExporting(false);
     }
@@ -401,6 +486,17 @@ export default function Products() {
                 {c.name}
               </option>
             ))}
+          </select>
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className="bg-background border border-border px-3 py-1.5 rounded text-xs focus:outline-none focus:ring-1 focus:ring-accent text-text-primary"
+          >
+            <option value="">Active & Draft</option>
+            <option value="ACTIVE">Active</option>
+            <option value="DRAFT">Draft</option>
+            <option value="ARCHIVED">Archived</option>
+            <option value="ALL">All Statuses</option>
           </select>
         </div>
 
@@ -505,15 +601,28 @@ export default function Products() {
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                            product.isActive
-                              ? 'bg-success/15 text-success'
-                              : 'bg-draft/15 text-draft'
-                          }`}
-                        >
-                          {product.isActive ? 'Active' : 'Draft'}
-                        </span>
+                        {(() => {
+                          const statusStr = product.status ? product.status.toUpperCase() : (product.isActive ? 'ACTIVE' : 'DRAFT');
+                          if (statusStr === 'ARCHIVED') {
+                            return (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800 border border-rose-200">
+                                Archived
+                              </span>
+                            );
+                          }
+                          if (statusStr === 'DRAFT') {
+                            return (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-draft/15 text-draft">
+                                Draft
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-success/15 text-success">
+                              Active
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex justify-end gap-2.5">
@@ -817,6 +926,131 @@ export default function Products() {
                   ))}
                 </div>
               </div>
+
+              {/* Section 4: Complete the Look Recommendations (Only when editing) */}
+              {editingProduct && (
+                <div className="space-y-4 pt-4 border-t border-border/40">
+                  <h4 className="font-serif text-sm font-semibold text-text-primary border-b border-border/60 pb-2">
+                    4. Complete the Look Recommendations
+                  </h4>
+                  
+                  {/* Search and Picker */}
+                  <div className="space-y-2 relative">
+                    <label className="block text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
+                      Search & Add Styling Pairings
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={recSearchQuery}
+                        onChange={(e) => handleRecSearch(e.target.value)}
+                        placeholder="Search product to recommend..."
+                        className="w-full bg-background border border-border rounded px-3 py-2 pl-8 text-xs focus:outline-none text-text-primary"
+                      />
+                      {recSearching ? (
+                        <Loader2 className="absolute left-2.5 top-2.5 h-3.5 w-3.5 animate-spin text-text-secondary" />
+                      ) : (
+                        <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-text-secondary" />
+                      )}
+                    </div>
+
+                    {/* Suggestions list */}
+                    {recSearchResults.length > 0 && (
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-surface border border-border rounded shadow-lg max-h-40 overflow-y-auto z-10 space-y-0.5 p-1">
+                        {recSearchResults.map((product) => (
+                          <button
+                            key={product.id}
+                            type="button"
+                            onClick={() => addRecommendation(product)}
+                            className="w-full flex items-center gap-3 px-2 py-1.5 hover:bg-background text-left rounded transition-colors text-xs text-text-primary"
+                          >
+                            {product.thumbnailImage ? (
+                              <img
+                                src={product.thumbnailImage}
+                                alt={product.name}
+                                className="h-8 w-6 object-cover rounded bg-beige/25"
+                              />
+                            ) : (
+                              <div className="h-8 w-6 bg-beige/40 rounded flex items-center justify-center text-[8px]">
+                                Haus
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold truncate">{product.name}</p>
+                              <p className="text-[10px] text-text-secondary">{product.brand}</p>
+                            </div>
+                            <Plus className="h-3.5 w-3.5 text-accent" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Recommendation List */}
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
+                      Recommended Pairing Items ({recommendations.length})
+                    </label>
+                    {recommendations.length === 0 ? (
+                      <p className="text-xs text-text-secondary italic text-center py-4 bg-background/50 rounded border border-dashed border-border/60">
+                        No custom pairings set. Will fallback to category related products automatically.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {recommendations.map((product, index) => (
+                          <div
+                            key={product.id}
+                            className="flex items-center gap-3 p-2 bg-background border border-border rounded shadow-xs"
+                          >
+                            {product.thumbnailImage ? (
+                              <img
+                                src={product.thumbnailImage}
+                                alt={product.name}
+                                className="h-10 w-8 object-cover rounded bg-beige/25 flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="h-10 w-8 bg-beige/40 rounded flex items-center justify-center text-[8px] flex-shrink-0">
+                                Haus
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-text-primary truncate">
+                                {product.name}
+                              </p>
+                              <p className="text-[10px] text-text-secondary">{product.brand}</p>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => moveRecommendation(index, 'up')}
+                                disabled={index === 0}
+                                className="p-1 hover:bg-surface text-text-secondary hover:text-text-primary disabled:opacity-30 rounded transition-colors"
+                              >
+                                <ArrowUp className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => moveRecommendation(index, 'down')}
+                                disabled={index === recommendations.length - 1}
+                                className="p-1 hover:bg-surface text-text-secondary hover:text-text-primary disabled:opacity-30 rounded transition-colors"
+                              >
+                                <ArrowDown className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeRecommendation(product.id)}
+                                className="p-1 hover:bg-error/15 text-error rounded transition-colors"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </form>
 
             {/* Actions Bar Footer */}

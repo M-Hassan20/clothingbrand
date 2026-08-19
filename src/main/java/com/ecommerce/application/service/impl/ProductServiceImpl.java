@@ -8,16 +8,21 @@ import com.ecommerce.application.dto.response.ProductVariantResponse;
 import com.ecommerce.application.entity.Category;
 import com.ecommerce.application.entity.Product;
 import com.ecommerce.application.entity.ProductVariant;
+import com.ecommerce.application.enums.ProductStatus;
 import com.ecommerce.application.exception.ResourceNotFoundException;
 import com.ecommerce.application.mapper.ProductMapper;
 import com.ecommerce.application.mapper.ProductVariantMapper;
 import com.ecommerce.application.repository.ProductRepository;
 import com.ecommerce.application.repository.ProductVariantRepository;
+import com.ecommerce.application.repository.ProductRecommendationRepository;
+import com.ecommerce.application.entity.ProductRecommendation;
 import com.ecommerce.application.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import java.util.ArrayList;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -36,14 +41,17 @@ public class ProductServiceImpl implements ProductService{
     private final ProductVariantMapper productVariantMapper;
     private final ReviewService reviewService;
     private final RevalidationService revalidationService;
+    private final ProductRecommendationRepository productRecommendationRepository;
     @Cacheable(value = "products", key = "#pageable.pageNumber + '-' + #pageable.pageSize")
     public Page<ProductResponse> getAllActiveProducts(Pageable pageable) {
         return productRepository.findByIsActiveTrue(pageable).map(productMapper::toResponse);
     }
 
-    @Cacheable(value = "product", key = "#id")
+    @Cacheable(value = "product", key = "#productId")
     public ProductResponse getProductById(Long productId) {
-        Product product = productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        // Use the active‑only lookup to enforce soft‑delete semantics
+        Product product = productRepository.findByIdAndIsActiveTrue(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
         return productMapper.toResponse(product);
     }
 
@@ -110,8 +118,45 @@ public class ProductServiceImpl implements ProductService{
     @Transactional
     @CacheEvict(value = {"products", "product", "brands"}, allEntries = true)
     public ProductResponse createProduct(ProductCreateRequest request) {
+        // 1️⃣ Persist the base product entity
         Product product = productMapper.toEntity(request);
+        if (Boolean.FALSE.equals(request.getIsActive())) {
+            product.setStatus(ProductStatus.DRAFT);
+        } else {
+            product.setStatus(ProductStatus.ACTIVE);
+        }
+        if (request.getThumbnailImage() != null && !request.getThumbnailImage().trim().isEmpty()) {
+            product.setThumbnailImage(request.getThumbnailImage());
+        }
         Product saved = productRepository.save(product);
+
+        // 2️⃣ Persist any supplied variants (price, size, color, optional image URL)
+        if (request.getVariants() != null) {
+            request.getVariants().forEach(variantReq -> {
+                ProductVariant variant = new ProductVariant();
+                variant.setProduct(saved);
+                variant.setSize(variantReq.getSize());
+                variant.setColor(variantReq.getColor());
+                variant.setPrice(variantReq.getPrice());
+                variant.setStockQuantity(variantReq.getStockQuantity());
+                // Store the first image URL on the variant if provided – this will be used as thumbnail
+                variant.setPublicImageUrl(variantReq.getPublicImageUrl());
+                variant.setIsActive(true);
+                productVariantRepository.save(variant);
+            });
+        }
+
+        // 3️⃣ Set product thumbnail from the first variant image (if thumbnailImage was not already set)
+        if (saved.getThumbnailImage() == null || saved.getThumbnailImage().trim().isEmpty()) {
+            if (request.getVariants() != null && !request.getVariants().isEmpty()) {
+                String firstImg = request.getVariants().get(0).getPublicImageUrl();
+                if (firstImg != null && !firstImg.trim().isEmpty()) {
+                    saved.setThumbnailImage(firstImg);
+                    productRepository.save(saved);
+                }
+            }
+        }
+
         revalidationService.revalidate("products");
         return productMapper.toResponse(saved);
     }
@@ -121,6 +166,14 @@ public class ProductServiceImpl implements ProductService{
     public ProductResponse updateProduct(Long id, ProductUpdateRequest request) {
         Product product = getProductEntityById(id);
         productMapper.updateEntityFromRequest(request, product);
+        if (request.getIsActive() != null) {
+            product.setIsActive(request.getIsActive());
+            if (Boolean.TRUE.equals(request.getIsActive())) {
+                product.setStatus(ProductStatus.ACTIVE);
+            } else if (product.getStatus() != ProductStatus.ARCHIVED) {
+                product.setStatus(ProductStatus.DRAFT);
+            }
+        }
         Product updated = productRepository.save(product);
         revalidationService.revalidate("products", "product-" + id);
         return productMapper.toResponse(updated);
@@ -131,6 +184,7 @@ public class ProductServiceImpl implements ProductService{
     public void deleteProduct(Long id) {
         Product product = getProductEntityById(id);
         product.setIsActive(false);
+        product.setStatus(ProductStatus.ARCHIVED);
         productRepository.save(product);
         revalidationService.revalidate("products", "product-" + id);
     }
@@ -169,8 +223,59 @@ public class ProductServiceImpl implements ProductService{
     }
 
     @Override
-    public Page<ProductResponse> getAllProductsForAdmin(Long categoryId, String search, Pageable pageable) {
-        Page<Product> products = productRepository.findAllForAdmin(categoryId, search, pageable);
+    public Page<ProductResponse> getAllProductsForAdmin(Long categoryId, String search, String status, Pageable pageable) {
+        String statusParam = (status != null && !status.trim().isEmpty()) ? status.trim().toUpperCase() : "DEFAULT";
+        Page<Product> products = productRepository.findAllForAdmin(categoryId, search, statusParam, pageable);
         return products.map(productMapper::toResponse);
+    }
+
+    @Override
+    public List<ProductResponse> getCompleteTheLook(Long productId) {
+        List<ProductRecommendation> curated =
+                productRecommendationRepository.findByProductIdOrderByDisplayOrderAsc(productId);
+
+        if (!curated.isEmpty()) {
+            return curated.stream()
+                    .map(r -> productMapper.toResponse(r.getRecommendedProduct()))
+                    .toList();
+        }
+
+        // Fallback: same-category related products, existing logic, unchanged
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        return productRepository
+                .findRelatedProducts(product.getCategory().getId(), productId, PageRequest.of(0, 4))
+                .map(productMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<ProductResponse> getRecommendationsForAdmin(Long productId) {
+        return productRecommendationRepository.findByProductIdOrderByDisplayOrderAsc(productId).stream()
+                .map(r -> productMapper.toResponse(r.getRecommendedProduct()))
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public void setRecommendations(Long productId, List<Long> recommendedProductIds) {
+        productRecommendationRepository.deleteByProductId(productId);
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
+        List<ProductRecommendation> rows = new ArrayList<>();
+        int order = 0;
+        for (Long recommendedId : recommendedProductIds) {
+            if (recommendedId.equals(productId)) continue; // a product can't recommend itself
+            Product recommended = productRepository.findById(recommendedId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Product", "id", recommendedId));
+            rows.add(ProductRecommendation.builder()
+                    .product(product)
+                    .recommendedProduct(recommended)
+                    .displayOrder(order++)
+                    .build());
+        }
+        productRecommendationRepository.saveAll(rows);
+        revalidationService.revalidate("products", "product-" + productId);
     }
 }

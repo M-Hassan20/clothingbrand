@@ -9,6 +9,15 @@ export interface PageParams {
   sortDir?: 'ASC' | 'DESC';
 }
 
+// Spring Boot Page<T> response structure
+interface PageResponse<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+}
+
 function buildQueryString(params: Record<string, unknown>): string {
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -18,6 +27,19 @@ function buildQueryString(params: Record<string, unknown>): string {
   });
   const str = searchParams.toString();
   return str ? `?${str}` : '';
+}
+
+/**
+ * Extracts the items array from a backend response that may be either:
+ * - A Spring Page object with a `.content` array
+ * - A plain array (for non-paginated endpoints)
+ */
+function extractItems<T>(data: unknown): T[] {
+  if (Array.isArray(data)) return data as T[];
+  if (data && typeof data === 'object' && 'content' in data) {
+    return (data as PageResponse<T>).content;
+  }
+  return [];
 }
 
 // Convert ProductDetailResponse to ProductResponse (omitting variants, etc.)
@@ -47,10 +69,11 @@ export async function getProducts(params?: PageParams): Promise<ProductResponse[
       sortDir: 'DESC',
       ...params,
     });
-    const data = await apiGet<ProductResponse[]>(`/products${query}`, {
+    const data = await apiGet<PageResponse<ProductResponse> | ProductResponse[]>(`/products${query}`, {
       next: { tags: ['products'], revalidate: 300 }
     });
-    if (data && data.length > 0) return data;
+    const products = extractItems<ProductResponse>(data);
+    if (products.length > 0) return products;
   } catch (err) {
     console.warn('Backend products fetch failed, using fallback mock data:', err);
   }
@@ -77,10 +100,11 @@ export async function getProductsByCategory(
 ): Promise<ProductResponse[]> {
   try {
     const query = buildQueryString({ ...params });
-    const data = await apiGet<ProductResponse[]>(`/products/category/${categoryId}${query}`, {
+    const data = await apiGet<PageResponse<ProductResponse> | ProductResponse[]>(`/products/category/${categoryId}${query}`, {
       next: { tags: ['products'], revalidate: 300 }
     });
-    if (data && data.length > 0) return data;
+    const products = extractItems<ProductResponse>(data);
+    if (products.length > 0) return products;
   } catch (err) {
     console.warn('Backend products by category fetch failed, using fallback:', err);
   }
@@ -93,8 +117,9 @@ export async function searchProducts(
 ): Promise<ProductResponse[]> {
   try {
     const query = buildQueryString({ query: queryText, ...params });
-    const data = await apiGet<ProductResponse[]>(`/products/search${query}`);
-    if (data && data.length > 0) return data;
+    const data = await apiGet<PageResponse<ProductResponse> | ProductResponse[]>(`/products/search${query}`);
+    const products = extractItems<ProductResponse>(data);
+    if (products.length > 0) return products;
   } catch (err) {
     console.warn('Backend search products fetch failed, using fallback:', err);
   }
@@ -115,8 +140,9 @@ export interface FilterParams extends PageParams {
 export async function filterProducts(params: FilterParams): Promise<ProductResponse[]> {
   try {
     const query = buildQueryString({ ...params });
-    const data = await apiGet<ProductResponse[]>(`/products/filter${query}`);
-    if (data && data.length > 0) return data;
+    const data = await apiGet<PageResponse<ProductResponse> | ProductResponse[]>(`/products/filter${query}`);
+    const products = extractItems<ProductResponse>(data);
+    if (products.length > 0) return products;
   } catch (err) {
     console.warn('Backend filter products fetch failed, using fallback:', err);
   }
@@ -154,10 +180,11 @@ export async function filterProducts(params: FilterParams): Promise<ProductRespo
 export async function getBestSellers(params?: PageParams): Promise<ProductResponse[]> {
   try {
     const query = buildQueryString({ ...params });
-    const data = await apiGet<ProductResponse[]>(`/products/best-sellers${query}`, {
+    const data = await apiGet<PageResponse<ProductResponse> | ProductResponse[]>(`/products/best-sellers${query}`, {
       next: { tags: ['products'], revalidate: 300 }
     });
-    if (data && data.length > 0) return data;
+    const products = extractItems<ProductResponse>(data);
+    if (products.length > 0) return products;
   } catch (err) {
     console.warn('Backend best sellers fetch failed, using fallback:', err);
   }
@@ -168,10 +195,11 @@ export async function getBestSellers(params?: PageParams): Promise<ProductRespon
 export async function getNewArrivals(params?: PageParams): Promise<ProductResponse[]> {
   try {
     const query = buildQueryString({ ...params });
-    const data = await apiGet<ProductResponse[]>(`/products/new-arrivals${query}`, {
+    const data = await apiGet<PageResponse<ProductResponse> | ProductResponse[]>(`/products/new-arrivals${query}`, {
       next: { tags: ['products'], revalidate: 300 }
     });
-    if (data && data.length > 0) return data;
+    const products = extractItems<ProductResponse>(data);
+    if (products.length > 0) return products;
   } catch (err) {
     console.warn('Backend new arrivals fetch failed, using fallback:', err);
   }
@@ -185,16 +213,29 @@ export async function getRelatedProducts(
 ): Promise<ProductResponse[]> {
   try {
     const query = buildQueryString({ ...params });
-    const data = await apiGet<ProductResponse[]>(`/products/${id}/related${query}`, {
+    const data = await apiGet<PageResponse<ProductResponse> | ProductResponse[]>(`/products/${id}/related${query}`, {
       next: { tags: ['products'], revalidate: 300 }
     });
-    if (data && data.length > 0) return data;
+    const products = extractItems<ProductResponse>(data);
+    if (products.length > 0) return products;
   } catch (err) {
     console.warn('Backend related products fetch failed, using fallback:', err);
   }
   const found = MOCK_PRODUCTS.find((p) => p.id === id);
   const categoryId = found?.category.id;
   return MOCK_PRODUCTS.filter((p) => p.id !== id && p.category.id === categoryId).map(toProductResponse);
+}
+
+export async function getCompleteTheLook(id: number): Promise<ProductResponse[]> {
+  try {
+    const data = await apiGet<ProductResponse[]>(`/products/${id}/complete-the-look`, {
+      next: { tags: ['products', `product-${id}`], revalidate: 300 }
+    });
+    if (data && data.length > 0) return data;
+  } catch (err) {
+    console.warn('Backend complete-the-look fetch failed, using fallback:', err);
+  }
+  return getRelatedProducts(id);
 }
 
 export async function getProductVariants(id: number): Promise<ProductVariantResponse[]> {

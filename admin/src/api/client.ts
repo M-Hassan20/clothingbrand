@@ -20,10 +20,16 @@ export class ApiError extends Error {
   }
 }
 
-const BASE_URL = 'http://localhost:8080/api';
+const getBaseUrl = (): string => {
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    return `http://${window.location.hostname}:8080/api`;
+  }
+  return 'http://localhost:8080/api';
+};
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const url = `${BASE_URL}${path}`;
+  const baseUrl = getBaseUrl();
+  const url = `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
   
   const headers = new Headers(options.headers || {});
   headers.set('Accept', 'application/json');
@@ -42,14 +48,28 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     headers,
   };
   
-  const response = await fetch(url, config);
+  let response: Response;
+  try {
+    response = await fetch(url, config);
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : 'Network error';
+    throw new ApiError(`Failed to fetch (${errorMsg}). Please verify the backend server is reachable at ${baseUrl}.`, 0);
+  }
   
   if (!response.ok) {
     let errorMessage = `HTTP error! Status: ${response.status}`;
     try {
       const errorJson = await response.json();
-      if (errorJson && errorJson.message) {
-        errorMessage = errorJson.message;
+      if (errorJson) {
+        if (typeof errorJson.message === 'string' && errorJson.message.trim()) {
+          errorMessage = errorJson.message;
+        } else if (Array.isArray(errorJson.errors) && errorJson.errors.length > 0) {
+          errorMessage = errorJson.errors
+            .map((e: any) => e.defaultMessage || e.message || (typeof e === 'string' ? e : JSON.stringify(e)))
+            .join('; ');
+        } else if (typeof errorJson.error === 'string' && errorJson.error.trim()) {
+          errorMessage = errorJson.error;
+        }
       }
     } catch {
       errorMessage = response.statusText || errorMessage;
@@ -105,7 +125,7 @@ export const api = {
     if (token) {
       headers.set('Authorization', `Bearer ${token}`);
     }
-    const response = await fetch(`http://localhost:8080/api${path}`, { method: 'GET', headers });
+    const response = await fetch(`${getBaseUrl()}${path}`, { method: 'GET', headers });
     if (!response.ok) {
       throw new Error(`Failed to download file: ${response.statusText}`);
     }

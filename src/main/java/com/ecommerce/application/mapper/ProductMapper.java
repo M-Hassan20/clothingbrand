@@ -31,6 +31,7 @@ public abstract class ProductMapper {
     @Mapping(target = "minPrice", expression = "java(calculateMinPrice(product))")
     @Mapping(target = "maxPrice", expression = "java(calculateMaxPrice(product))")
     @Mapping(target = "thumbnailImage", expression = "java(getFirstImage(product))")
+    @Mapping(target = "status", expression = "java(determineStatus(product))")
     @Mapping(target = "averageRating", ignore = true) // Set in service
     @Mapping(target = "reviewCount", ignore = true) // Set in service
     public abstract ProductResponse toResponse(Product product);
@@ -91,5 +92,13 @@ public abstract class ProductMapper {
                 .filter(url -> url != null && !url.isEmpty())
                 .findFirst()
                 .orElse(null);
+    }
+
+    protected String determineStatus(Product product) {
+        if (product == null) return null;
+        if (product.getStatus() != null) {
+            return product.getStatus().name();
+        }
+        return Boolean.TRUE.equals(product.getIsActive()) ? "ACTIVE" : "DRAFT";
     }
 }

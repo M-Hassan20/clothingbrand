@@ -48,6 +48,16 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
     variants,
   } = product;
 
+  // Initialize review count and average rating as numbers (fallback to 0) to avoid null issues
+  const [currentReviewCount, setCurrentReviewCount] = useState<number>(reviewCount ?? 0);
+  const [currentAverageRating, setCurrentAverageRating] = useState<number>(averageRating ?? 0);
+
+  // Sync with incoming product prop changes
+  useEffect(() => {
+    setCurrentReviewCount(reviewCount ?? 0);
+    setCurrentAverageRating(averageRating ?? 0);
+  }, [id, reviewCount, averageRating]);
+
   const router = useRouter();
   // Zustand State
   const { userId: authUserId, isAuthenticated } = useAuthStore();
@@ -209,16 +219,16 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
               </h1>
               
               {/* Rating summary */}
-              {averageRating !== undefined && averageRating !== null && averageRating > 0 && (
+              {currentReviewCount > 0 && currentAverageRating !== undefined && currentAverageRating !== null && currentAverageRating > 0 && (
                 <div className="flex items-center gap-2 font-sans text-xs text-brown-muted">
                   <div className="flex text-accent">
                     {Array.from({ length: 5 }).map((_, idx) => (
                       <span key={idx}>
-                        {idx < Math.round(averageRating) ? '★' : '☆'}
+                        {idx < Math.round(currentAverageRating) ? '★' : '☆'}
                       </span>
                     ))}
                   </div>
-                  <span>({reviewCount} reviews)</span>
+                  <span>({currentReviewCount} reviews)</span>
                 </div>
               )}
 
@@ -357,7 +367,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                 value="reviews"
                 className="font-serif text-sm tracking-wide rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:text-charcoal text-brown-muted pb-3 bg-transparent p-0"
               >
-                Customer Reviews ({reviewCount})
+                Customer Reviews ({currentReviewCount})
               </TabsTrigger>
             </TabsList>
             
@@ -373,7 +383,13 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
             </TabsContent>
             
             <TabsContent value="reviews" className="py-8">
-              <ReviewList productId={id} />
+              <ReviewList 
+                productId={id} 
+                onReviewsUpdated={(count, rating) => {
+                  setCurrentReviewCount(count);
+                  setCurrentAverageRating(rating);
+                }}
+              />
             </TabsContent>
           </Tabs>
         </div>

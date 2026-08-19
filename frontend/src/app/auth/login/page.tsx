@@ -44,7 +44,7 @@ export default function LoginPage() {
       const response = await login(data);
       setAuth(response);
       toast.success('Logged in successfully');
-      router.push('/account');
+      router.push('/shop');
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Login failed. Please check your credentials.';
       toast.error(msg);
@@ -59,7 +59,7 @@ export default function LoginPage() {
       const response = await loginWithFirebase(idToken);
       setAuth(response);
       toast.success('Logged in with Google successfully');
-      router.push('/account');
+      router.push('/shop');
     } catch (error) {
       console.error('Google Sign In failed:', error);
       const msg = error instanceof Error ? error.message : 'Google Sign In failed. Please try again.';

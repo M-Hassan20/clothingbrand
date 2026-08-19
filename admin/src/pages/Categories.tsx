@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
+import { getErrorMessage } from '../utils/error';
 import {
   Plus,
   Trash2,
@@ -35,8 +36,8 @@ export default function Categories() {
       setLoading(true);
       const data = await api.get<Category[]>('/categories');
       setCategories(data || []);
-    } catch {
-      toast.error('Failed to load categories');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to load categories'));
     } finally {
       setLoading(false);
     }
@@ -61,8 +62,8 @@ export default function Categories() {
       toast.success('Category created successfully!');
       setNewCategoryName('');
       fetchCategories();
-    } catch {
-      toast.error('Failed to create category');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to create category'));
     } finally {
       setAddingCategory(false);
     }
@@ -93,8 +94,8 @@ export default function Categories() {
       toast.success('Category updated successfully!');
       setEditingCategory(null);
       fetchCategories();
-    } catch {
-      toast.error('Failed to update category');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to update category'));
     } finally {
       setAddingCategory(false);
     }
@@ -109,8 +110,8 @@ export default function Categories() {
       toast.success('Category deleted successfully');
       setDeletingCategory(null);
       fetchCategories();
-    } catch {
-      toast.error('Failed to delete category');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to delete category'));
     } finally {
       setAddingCategory(false);
     }

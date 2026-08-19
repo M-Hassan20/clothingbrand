@@ -44,7 +44,7 @@ public class ProductVariant extends BaseEntity{
     @Min(0)
     private Integer stockQuantity;
 
-    @Column(nullable = false)
+    @Column
     private String publicImageUrl;
 
 @ElementCollection

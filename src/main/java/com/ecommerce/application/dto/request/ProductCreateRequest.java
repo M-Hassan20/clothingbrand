@@ -1,9 +1,13 @@
 package com.ecommerce.application.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import jakarta.validation.constraints.*;
+import java.util.List;
+import com.ecommerce.application.dto.request.ProductVariantRequest;
 
 @Data
 @AllArgsConstructor
@@ -24,4 +28,9 @@ public class ProductCreateRequest {
     private Long categoryId;
 
     private Boolean isActive = true;
+
+    private String thumbnailImage;
+
+    // Optional list of variants for the product
+    private List<ProductVariantRequest> variants;
 }

@@ -67,6 +67,27 @@ public class JwtUtil {
                 .compact();
     }
 
+    public String generatePreviewToken(String email) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("scope", "PREVIEW");
+        // 5 minutes expiration (300,000 ms)
+        return Jwts.builder()
+                .claims(claims)
+                .subject(email != null ? email : "preview")
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + 300000))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public String extractScope(String token) {
+        try {
+            return extractClaim(token, claims -> claims.get("scope", String.class));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String email = extractEmail(token);
         return (email.equals(userDetails.getUsername()) && !isTokenExpired(token));

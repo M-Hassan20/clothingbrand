@@ -1,5 +1,5 @@
 import React from 'react';
-import { getProductById, getRelatedProducts } from '@/lib/api/products';
+import { getProductById, getCompleteTheLook } from '@/lib/api/products';
 import ProductDetailClient from './ProductDetailClient';
 
 interface ProductPageProps {
@@ -10,9 +10,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   const resolvedParams = await params;
   const productId = parseInt(resolvedParams.id, 10);
 
-  // Fetch product detail and related suggestions on the server
+  // Fetch product detail and curated recommendation suggestions on the server
   const product = await getProductById(productId);
-  const relatedProducts = await getRelatedProducts(productId);
+  const relatedProducts = await getCompleteTheLook(productId);
 
   return <ProductDetailClient product={product} relatedProducts={relatedProducts} />;
 }

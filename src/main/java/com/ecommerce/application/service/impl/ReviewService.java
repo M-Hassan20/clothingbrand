@@ -191,5 +191,90 @@ public class ReviewService {
 
         return createReview(user.getId(), createRequest);
     }
+
+    // Admin: Get all reviews with filters, search, sorting & pagination
+    public Page<ReviewResponse> getAllReviewsForAdmin(
+            String search,
+            Integer rating,
+            Boolean verified,
+            Long productId,
+            java.time.LocalDateTime startDate,
+            java.time.LocalDateTime endDate,
+            String sort,
+            int page,
+            int size) {
+
+        String cleanedSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+
+        org.springframework.data.domain.Sort sortOrder;
+        if ("oldest".equalsIgnoreCase(sort)) {
+            sortOrder = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "createdAt");
+        } else if ("rating_high".equalsIgnoreCase(sort)) {
+            sortOrder = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "rating");
+        } else if ("rating_low".equalsIgnoreCase(sort)) {
+            sortOrder = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "rating");
+        } else {
+            sortOrder = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt");
+        }
+
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sortOrder);
+        return reviewRepository.findAllForAdmin(cleanedSearch, rating, verified, productId, startDate, endDate, pageable)
+                .map(reviewMapper::toResponse);
+    }
+
+    // Admin: Get overall review statistics across the entire store
+    public com.ecommerce.application.dto.response.ReviewStatsResponse getOverallReviewStats() {
+        List<Object[]> overall = reviewRepository.getOverallReviewStats();
+        Long totalReviews = 0L;
+        Double averageRating = 0.0;
+
+        if (overall != null && !overall.isEmpty() && overall.get(0) != null) {
+            Object[] row = overall.get(0);
+            if (row[0] != null) totalReviews = (Long) row[0];
+            if (row[1] != null) averageRating = (Double) row[1];
+        }
+
+        List<Object[]> ratingDist = reviewRepository.getOverallRatingCounts();
+
+        long fiveStar = 0L, fourStar = 0L, threeStar = 0L, twoStar = 0L, oneStar = 0L;
+        if (ratingDist != null) {
+            for (Object[] r : ratingDist) {
+                Integer star = (Integer) r[0];
+                Long count = (Long) r[1];
+                if (star != null && count != null) {
+                    switch (star) {
+                        case 5 -> fiveStar = count;
+                        case 4 -> fourStar = count;
+                        case 3 -> threeStar = count;
+                        case 2 -> twoStar = count;
+                        case 1 -> oneStar = count;
+                    }
+                }
+            }
+        }
+
+        Long verifiedCount = reviewRepository.countVerifiedReviews();
+        if (verifiedCount == null) verifiedCount = 0L;
+
+        double roundedAverage = Math.round(averageRating * 10.0) / 10.0;
+
+        return com.ecommerce.application.dto.response.ReviewStatsResponse.builder()
+                .totalReviews(totalReviews)
+                .averageRating(roundedAverage)
+                .fiveStarCount(fiveStar)
+                .fourStarCount(fourStar)
+                .threeStarCount(threeStar)
+                .twoStarCount(twoStar)
+                .oneStarCount(oneStar)
+                .verifiedCount(verifiedCount)
+                .build();
+    }
+
+    // Admin: Delete/Remove review
+    @Transactional
+    public void deleteReviewByAdmin(Long reviewId) {
+        Review review = getReviewEntityById(reviewId);
+        reviewRepository.delete(review);
+    }
 }
 

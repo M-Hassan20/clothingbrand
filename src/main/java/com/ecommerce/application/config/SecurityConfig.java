@@ -52,6 +52,7 @@ public class SecurityConfig {
                                 "/api/cart/**", // Cart accessible to guests (session-based)
                                 "/api/test/**",
                                 "/api/blog/**",
+                                "/api/homepage/**",
                                 "/error"
                         ).permitAll()
 

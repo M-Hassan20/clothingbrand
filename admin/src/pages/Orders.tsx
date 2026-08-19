@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api/client';
+import { getErrorMessage } from '../utils/error';
 import {
   Search,
   Eye,
@@ -108,8 +109,8 @@ export default function Orders() {
 
       setOrders(list);
       setTotalPages(total || 1);
-    } catch {
-      toast.error('Failed to load orders');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to load orders'));
     } finally {
       setLoading(false);
     }
@@ -130,8 +131,8 @@ export default function Orders() {
       // Fetch order items list
       const items = await api.get<OrderItem[]>(`/orders/${order.id}/items`);
       setOrderItems(items || []);
-    } catch {
-      toast.error('Failed to load order items');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to load order items'));
     } finally {
       setLoadingItems(false);
     }
@@ -150,8 +151,8 @@ export default function Orders() {
       const updatedOrder = { ...selectedOrder, status: newStatus };
       setSelectedOrder(updatedOrder);
       setOrders(prev => prev.map(o => o.id === selectedOrder.id ? updatedOrder : o));
-    } catch {
-      toast.error('Failed to update status');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to update status'));
     } finally {
       setUpdatingStatus(false);
     }
@@ -160,8 +161,9 @@ export default function Orders() {
   const handlePrintInvoice = async (orderId: number) => {
     try {
       const token = localStorage.getItem('admin_token');
+      const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : 'localhost';
       // Fetch binary PDF file with authorization credentials
-      const response = await fetch(`http://localhost:8080/api/admin/orders/${orderId}/invoice`, {
+      const response = await fetch(`http://${host}:8080/api/admin/orders/${orderId}/invoice`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -171,8 +173,8 @@ export default function Orders() {
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
       window.open(blobUrl, '_blank');
-    } catch {
-      toast.error('Failed to download invoice PDF');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to download invoice PDF'));
     }
   };
 
@@ -210,8 +212,8 @@ export default function Orders() {
       const queryString = params.toString() ? `?${params.toString()}` : '';
       await api.download(`/admin/excel/export/orders${queryString}`, 'orders_ledger_export.xlsx');
       toast.success('Orders exported successfully!');
-    } catch {
-      toast.error('Failed to export orders list');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to export orders list'));
     } finally {
       setExporting(false);
     }

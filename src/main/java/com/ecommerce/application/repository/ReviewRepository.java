@@ -48,4 +48,31 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     // Admin: Pending reviews for moderation
     Page<Review> findByIsApprovedFalseOrderByCreatedAtDesc(Pageable pageable);
+
+    // Admin: Full filtered listing
+    @Query("SELECT r FROM Review r WHERE " +
+           "(:search IS NULL OR LOWER(r.comment) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(r.user.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(r.user.email) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(r.product.name) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+           "(:rating IS NULL OR r.rating = :rating) AND " +
+           "(:verified IS NULL OR r.isVerifiedPurchase = :verified) AND " +
+           "(:productId IS NULL OR r.product.id = :productId) AND " +
+           "(:startDate IS NULL OR r.createdAt >= :startDate) AND " +
+           "(:endDate IS NULL OR r.createdAt <= :endDate)")
+    Page<Review> findAllForAdmin(
+            @Param("search") String search,
+            @Param("rating") Integer rating,
+            @Param("verified") Boolean verified,
+            @Param("productId") Long productId,
+            @Param("startDate") java.time.LocalDateTime startDate,
+            @Param("endDate") java.time.LocalDateTime endDate,
+            Pageable pageable
+    );
+
+    @Query("SELECT COUNT(r), AVG(r.rating) FROM Review r")
+    List<Object[]> getOverallReviewStats();
+
+    @Query("SELECT r.rating, COUNT(r) FROM Review r GROUP BY r.rating")
+    List<Object[]> getOverallRatingCounts();
+
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.isVerifiedPurchase = true")
+    Long countVerifiedReviews();
 }

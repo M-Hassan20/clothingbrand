@@ -25,5 +25,6 @@ public class ProductResponse {
     private Double averageRating;
     private Long reviewCount;
     private Boolean isActive;
+    private String status;
     private LocalDateTime createdAt;
 }

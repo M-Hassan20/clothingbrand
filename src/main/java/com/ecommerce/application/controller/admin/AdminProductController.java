@@ -3,6 +3,7 @@ package com.ecommerce.application.controller.admin;
 import com.ecommerce.application.dto.request.ProductCreateRequest;
 import com.ecommerce.application.dto.request.ProductUpdateRequest;
 import com.ecommerce.application.dto.request.ProductVariantRequest;
+import com.ecommerce.application.dto.request.ProductRecommendationRequest;
 import com.ecommerce.application.dto.response.ApiResponse;
 import com.ecommerce.application.dto.response.ImageUploadResponse;
 import com.ecommerce.application.dto.response.ProductResponse;
@@ -37,11 +38,28 @@ public class AdminProductController {
     private final ProductVariantServiceImpl productVariantService;
     private final CloudinaryService storageService;
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<ProductResponse>> createProduct(
-            @Valid @RequestBody ProductCreateRequest request) {
+    /**
+     * Create a product together with optional variants and image uploads.
+     * Accepts multipart/form-data where the "product" part is a JSON representation of
+     * {@link ProductCreateRequest} (now containing a list of {@link ProductVariantRequest})
+     * and the optional "images" part contains raw image files.
+     */
+    @PostMapping(consumes = {"multipart/form-data"})
+    public ResponseEntity<ApiResponse<ProductResponse>> createProductWithVariants(
+            @Valid @RequestPart("product") ProductCreateRequest request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
 
+        // Persist product, variants and set thumbnail from first variant image (service handles this)
         ProductResponse product = productService.createProduct(request);
+
+        // If raw image files are supplied, upload them and update product thumbnail with the first one
+        if (images != null && !images.isEmpty()) {
+            List<ImageUploadResponse> uploaded = storageService.uploadImages(images, "products", product.getId().toString());
+            if (!uploaded.isEmpty()) {
+                productService.updateProductThumbnail(product.getId(), uploaded.get(0).getFileUrl());
+            }
+        }
+
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Product created successfully", product));
     }
@@ -50,6 +68,7 @@ public class AdminProductController {
     public ResponseEntity<ApiResponse<Page<ProductResponse>>> getAllProducts(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -60,7 +79,7 @@ public class AdminProductController {
                 : Sort.by(sortBy).descending();
 
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<ProductResponse> products = productService.getAllProductsForAdmin(categoryId, search, pageable);
+        Page<ProductResponse> products = productService.getAllProductsForAdmin(categoryId, search, status, pageable);
         return ResponseEntity.ok(ApiResponse.success("Products Retrieved", products));
     }
 
@@ -130,29 +149,29 @@ public class AdminProductController {
     /**
      * Create product with images
      */
-    @PostMapping(consumes = {"multipart/form-data"})
-    public ResponseEntity<ApiResponse<ProductResponse>> createProductWithImages(
-            @RequestPart("product") @Valid ProductCreateRequest request,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
-
-        // Create product first
-        ProductResponse product = productService.createProduct(request);
-
-        // Upload images if provided
-        if (images != null && !images.isEmpty()) {
-            List<ImageUploadResponse> uploadedImages = storageService.uploadImages(
-                    images, "products", product.getId().toString());
-
-            // Update product with first image as thumbnail
-            if (!uploadedImages.isEmpty()) {
-                // You'll need to add this method to ProductService
-                productService.updateProductThumbnail(product.getId(), uploadedImages.get(0).getFileUrl());
-            }
-        }
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Product created successfully", product));
-    }
+//    @PostMapping(consumes = {"multipart/form-data"})
+//    public ResponseEntity<ApiResponse<ProductResponse>> createProductWithImages(
+//            @RequestPart("product") @Valid ProductCreateRequest request,
+//            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
+//
+//        // Create product first
+//        ProductResponse product = productService.createProduct(request);
+//
+//        // Upload images if provided
+//        if (images != null && !images.isEmpty()) {
+//            List<ImageUploadResponse> uploadedImages = storageService.uploadImages(
+//                    images, "products", product.getId().toString());
+//
+//            // Update product with first image as thumbnail
+//            if (!uploadedImages.isEmpty()) {
+//                // You'll need to add this method to ProductService
+//                productService.updateProductThumbnail(product.getId(), uploadedImages.get(0).getFileUrl());
+//            }
+//        }
+//
+//        return ResponseEntity.status(HttpStatus.CREATED)
+//                .body(ApiResponse.success("Product created successfully", product));
+//    }
 
 
     /**
@@ -176,6 +195,18 @@ public class AdminProductController {
         }
 
         return ResponseEntity.ok(ApiResponse.success("Images uploaded successfully", responses));
+    }
+
+    @GetMapping("/{id}/recommendations")
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> getRecommendations(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success("Recommendations retrieved", productService.getRecommendationsForAdmin(id)));
+    }
+
+    @PutMapping("/{id}/recommendations")
+    public ResponseEntity<ApiResponse<Void>> setRecommendations(
+            @PathVariable Long id, @Valid @RequestBody ProductRecommendationRequest request) {
+        productService.setRecommendations(id, request.getRecommendedProductIds());
+        return ResponseEntity.ok(ApiResponse.success("Recommendations updated", null));
     }
 
 }

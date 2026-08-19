@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../api/client';
+import { getErrorMessage } from '../utils/error';
+import { toast } from 'sonner';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   TrendingUp,
@@ -40,6 +42,29 @@ interface ProductVariantResponse {
   stockQuantity: number;
 }
 
+type ChartRange = 7 | 15 | 30;
+
+function buildChartData(orders: Order[], days: ChartRange) {
+  const trendData = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const label = d.toLocaleDateString(undefined, { month: 'short', day: '2-digit' });
+    const isoString = d.toISOString().split('T')[0];
+
+    const dayOrders = orders.filter((o) => o.createdAt.startsWith(isoString));
+    const dayRevenue = dayOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+    trendData.push({ date: label, revenue: dayRevenue });
+  }
+  return trendData;
+}
+
+const RANGE_OPTIONS: { label: string; value: ChartRange }[] = [
+  { label: '7 D', value: 7 },
+  { label: '15 D', value: 15 },
+  { label: '30 D', value: 30 },
+];
+
 export default function Dashboard() {
   const navigate = useNavigate();
 
@@ -53,6 +78,13 @@ export default function Dashboard() {
   // Lists
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [chartData, setChartData] = useState<Array<{ date: string; revenue: number }>>([]);
+  const [chartRange, setChartRange] = useState<ChartRange>(30);
+  const allOrdersRef = useRef<Order[]>([]);
+
+  const handleRangeChange = useCallback((range: ChartRange) => {
+    setChartRange(range);
+    setChartData(buildChartData(allOrdersRef.current, range));
+  }, []);
 
   const fetchDashboardData = async () => {
     try {
@@ -99,23 +131,13 @@ export default function Dashboard() {
       );
       setRecentOrders(sortedOrders.slice(0, 5));
 
-      // 6. Generate 30 Days trend chart data from actual orders
-      const trendData = [];
-      for (let i = 29; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const label = d.toLocaleDateString(undefined, { month: 'short', day: '2-digit' });
-        const isoString = d.toISOString().split('T')[0];
-        
-        // Sum revenue of orders matching this date
-        const dayOrders = ordersList.filter((o) => o.createdAt.startsWith(isoString));
-        const dayRevenue = dayOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-        trendData.push({ date: label, revenue: dayRevenue });
-      }
-      setChartData(trendData);
+      // 6. Store orders and generate chart data based on current range
+      allOrdersRef.current = ordersList;
+      setChartData(buildChartData(ordersList, chartRange));
 
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
+      toast.error(getErrorMessage(err, 'Failed to load dashboard metrics'));
     } finally {
       setLoading(false);
     }
@@ -152,6 +174,8 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  const chartRangeLabel = chartRange === 7 ? 'Last 7 Days' : chartRange === 15 ? 'Last 15 Days' : 'Last 30 Days';
 
   return (
     <div className="space-y-6 font-sans">
@@ -253,13 +277,30 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Revenue Trend Chart */}
         <div className="lg:col-span-8 bg-surface border border-border p-6 rounded-md shadow-sm space-y-4">
-          <div>
-            <h3 className="font-serif text-sm font-bold text-text-primary tracking-wide">
-              Revenue Trend (Last 30 Days)
-            </h3>
-            <p className="text-[10px] text-text-secondary">
-              Daily checkout sales totals.
-            </p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="font-serif text-sm font-bold text-text-primary tracking-wide">
+                Revenue Trend ({chartRangeLabel})
+              </h3>
+              <p className="text-[10px] text-text-secondary">
+                Daily checkout sales totals.
+              </p>
+            </div>
+            <div className="flex items-center gap-1 bg-background border border-border rounded-md p-0.5 shrink-0">
+              {RANGE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => handleRangeChange(opt.value)}
+                  className={`px-2.5 py-1 rounded text-[10px] font-semibold transition-all cursor-pointer ${
+                    chartRange === opt.value
+                      ? 'bg-accent text-white shadow-sm'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-surface'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
           
           <div className="h-72 w-full text-xs">

@@ -88,12 +88,20 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p " +
             "WHERE (:categoryId IS NULL OR p.category.id = :categoryId) " +
+            "AND (" +
+            "     :statusParam IS NULL OR :statusParam = 'ALL' OR " +
+            "     (:statusParam = 'ACTIVE' AND (p.status = com.ecommerce.application.enums.ProductStatus.ACTIVE OR (p.status IS NULL AND p.isActive = true))) OR " +
+            "     (:statusParam = 'DRAFT' AND (p.status = com.ecommerce.application.enums.ProductStatus.DRAFT OR (p.status IS NULL AND p.isActive = false))) OR " +
+            "     (:statusParam = 'ARCHIVED' AND p.status = com.ecommerce.application.enums.ProductStatus.ARCHIVED) OR " +
+            "     (:statusParam = 'DEFAULT' AND (p.status IS NULL OR p.status != com.ecommerce.application.enums.ProductStatus.ARCHIVED))" +
+            ") " +
             "AND (:search IS NULL OR :search = '' OR " +
             "     LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
             "     LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
             "     LOWER(p.brand) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Product> findAllForAdmin(@Param("categoryId") Long categoryId,
                                   @Param("search") String search,
+                                  @Param("statusParam") String statusParam,
                                   Pageable pageable);
 
     List<Product> findByCategory(Category category);
@@ -102,4 +110,5 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByBrand(String brand);
     List<Product> findByNameContainingIgnoreCase(String name);
     Optional<Product> findByNameAndBrand(String name, String brand);
+    Optional<Product> findByIdAndIsActiveTrue(Long id);
 }

@@ -58,6 +58,11 @@ public interface ProductService {
     // ADMIN / MONITORING
     List<Product> getLowStockProducts();
 
-    Page<ProductResponse> getAllProductsForAdmin(Long categoryId, String search, Pageable pageable);
+    Page<ProductResponse> getAllProductsForAdmin(Long categoryId, String search, String status, Pageable pageable);
+
+    // RECOMMENDATIONS ("COMPLETE THE LOOK")
+    List<ProductResponse> getCompleteTheLook(Long productId);
+    List<ProductResponse> getRecommendationsForAdmin(Long productId);
+    void setRecommendations(Long productId, List<Long> recommendedProductIds);
 }
 

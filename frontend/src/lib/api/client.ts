@@ -1,7 +1,15 @@
 import { ApiResponse } from '@/types/api';
 import { useAuthStore } from '../stores/auth-store';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api';
+const getBaseUrl = (): string => {
+  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+    return process.env.NEXT_PUBLIC_API_BASE_URL;
+  }
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    return `http://${window.location.hostname}:8080/api`;
+  }
+  return 'http://localhost:8080/api';
+};
 
 export class ApiError extends Error {
   status?: number;
@@ -16,7 +24,8 @@ async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = `${BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  const baseUrl = getBaseUrl();
+  const url = `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
   
   // Set up default headers
   const headers = new Headers(options.headers || {});
@@ -36,7 +45,13 @@ async function request<T>(
     headers,
   };
   
-  const response = await fetch(url, config);
+  let response: Response;
+  try {
+    response = await fetch(url, config);
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : 'Network error';
+    throw new ApiError(`Failed to fetch (${errorMsg}). Please verify the backend server is reachable at ${baseUrl}.`);
+  }
   
   // If response is not OK and not JSON
   if (!response.ok) {
@@ -102,7 +117,7 @@ export async function apiDelete<T>(path: string, options?: RequestInit): Promise
 
 // Special handler for invoice download returning a Blob
 export async function downloadInvoice(orderId: number): Promise<Blob> {
-  const url = `${BASE_URL}/invoices/${orderId}/download`;
+  const url = `${getBaseUrl()}/invoices/${orderId}/download`;
   const headers = new Headers();
   
   const token = useAuthStore.getState().token;
@@ -110,10 +125,16 @@ export async function downloadInvoice(orderId: number): Promise<Blob> {
     headers.set('Authorization', `Bearer ${token}`);
   }
   
-  const response = await fetch(url, {
-    method: 'GET',
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : 'Network error';
+    throw new ApiError(`Failed to download invoice (${errorMsg}).`);
+  }
   
   if (!response.ok) {
     throw new ApiError(`Failed to download invoice: ${response.statusText}`, response.status);
