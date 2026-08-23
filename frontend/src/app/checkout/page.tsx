@@ -8,21 +8,33 @@ import { useCartStore } from '@/lib/stores/cart-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { getAddresses, createAddress } from '@/lib/api/addresses';
 import { createOrder, createGuestOrder, downloadOrderInvoice } from '@/lib/api/orders';
+import { initiateSafePayCheckout } from '@/lib/api/payment';
 import { clearCart } from '@/lib/api/cart';
+import { validateDiscountCode } from '@/lib/api/discounts';
 import { AddressResponse, AddressCreateRequest, OrderResponse } from '@/types/api';
 import AddressSelector from '@/components/checkout/AddressSelector';
 import OrderSummary from '@/components/checkout/OrderSummary';
-import PaymentStep from '@/components/checkout/PaymentStep';
+import PaymentStep, { PaymentIntentType } from '@/components/checkout/PaymentStep';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cart, setCart, getEffectiveUserId } = useCartStore();
+  const {
+    cart,
+    setCart,
+    getEffectiveUserId,
+    appliedDiscountCode,
+    discountAmount,
+    setDiscount,
+    clearDiscount,
+  } = useCartStore();
   const { userId: authUserId, isAuthenticated } = useAuthStore();
   const userId = getEffectiveUserId(authUserId);
 
   const [step, setStep] = useState<'shipping' | 'payment' | 'confirmation'>('shipping');
+  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'card'>('cod');
+  const [cardIntent, setCardIntent] = useState<PaymentIntentType>('CYBERSOURCE');
   const [addresses, setAddresses] = useState<AddressResponse[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,6 +49,28 @@ export default function CheckoutPage() {
     shippingCountry: '',
     shippingZipCode: '',
   });
+
+  const items = cart?.items || [];
+  const totalPrice = cart?.totalPrice || 0;
+
+  const handleApplyDiscount = async (code: string) => {
+    if (appliedDiscountCode) {
+      toast.error('A promo code is already applied. Remove it first to use another.');
+      return;
+    }
+    const res = await validateDiscountCode(code, totalPrice);
+    if (res.valid) {
+      setDiscount(res.code, res.discountAmount);
+      toast.success(`Promo code ${res.code} applied! Saved $${res.discountAmount.toFixed(2)}`);
+    } else {
+      throw new Error(res.message || 'Invalid promo code');
+    }
+  };
+
+  const handleRemoveDiscount = () => {
+    clearDiscount();
+    toast.info('Promo code removed');
+  };
 
   useEffect(() => {
     // Redirect if cart is empty and not on confirmation page
@@ -102,7 +136,7 @@ export default function CheckoutPage() {
             productVariantId: item.productVariantId,
             quantity: item.quantity,
           })),
-          discountCode: null,
+          discountCode: appliedDiscountCode,
         });
       } else {
         order = await createGuestOrder({
@@ -117,8 +151,17 @@ export default function CheckoutPage() {
             productVariantId: item.productVariantId,
             quantity: item.quantity,
           })),
-          discountCode: null,
+          discountCode: appliedDiscountCode,
         });
+      }
+
+      if (paymentMethod === 'card') {
+        toast.loading(`Redirecting to SafePay (${cardIntent})...`);
+        const session = await initiateSafePayCheckout(order.id, cardIntent);
+        
+        // Redirect browser to SafePay checkout (Cart is preserved until backend confirms payment)
+        window.location.href = session.checkoutUrl;
+        return;
       }
 
       setCreatedOrder(order);
@@ -130,6 +173,7 @@ export default function CheckoutPage() {
         totalPrice: 0,
         lastUpdated: new Date().toISOString(),
       });
+      clearDiscount();
 
       setStep('confirmation');
       toast.success('Order placed successfully!');
@@ -156,9 +200,6 @@ export default function CheckoutPage() {
       toast.error('Failed to download invoice');
     }
   };
-
-  const items = cart?.items || [];
-  const totalPrice = cart?.totalPrice || 0;
 
   if (step === 'confirmation' && createdOrder) {
     const orderTotal = Number(createdOrder.totalAmount ?? (createdOrder as { totalPrice?: number }).totalPrice ?? 0);
@@ -424,7 +465,14 @@ export default function CheckoutPage() {
 
               {step === 'payment' && (
                 <div className="space-y-6">
-                  <PaymentStep onPlaceOrder={handlePlaceOrder} loading={loading} />
+                  <PaymentStep
+                    paymentMethod={paymentMethod}
+                    cardIntent={cardIntent}
+                    onPaymentMethodChange={setPaymentMethod}
+                    onCardIntentChange={setCardIntent}
+                    onPlaceOrder={handlePlaceOrder}
+                    loading={loading}
+                  />
                   <button
                     onClick={() => setStep('shipping')}
                     className="font-sans text-xs text-brown-muted hover:text-charcoal flex items-center gap-1.5 mt-2"
@@ -439,7 +487,14 @@ export default function CheckoutPage() {
 
           {/* Right Panel: Order Review Sidebar */}
           <div className="lg:col-span-4 space-y-6">
-            <OrderSummary items={items} totalPrice={totalPrice} />
+            <OrderSummary
+              items={items}
+              totalPrice={totalPrice}
+              appliedCode={appliedDiscountCode}
+              discountAmount={discountAmount}
+              onApplyDiscount={handleApplyDiscount}
+              onRemoveDiscount={handleRemoveDiscount}
+            />
           </div>
         </div>
       </div>

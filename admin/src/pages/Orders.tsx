@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-type OrderStatus = 'PENDING' | 'PROCESSING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+type OrderStatus = 'PENDING' | 'PROCESSING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
 
 interface Address {
   id: number;
@@ -43,6 +43,7 @@ interface Order {
   userEmail: string;
   userFullName: string;
   status: OrderStatus;
+  paymentStatus?: 'PENDING' | 'INITIATED' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'PARTIALLY_REFUNDED';
   totalAmount: number;
   shippingAddress?: Address;
   items?: OrderItem[];
@@ -184,7 +185,7 @@ export default function Orders() {
         return 'bg-warning/15 text-warning border-warning/20';
       case 'PROCESSING':
         return 'bg-indigo-500/15 text-indigo-400 border-indigo-500/20';
-      case 'PAID':
+      case 'CONFIRMED':
         return 'bg-success/20 text-success border-success/30';
       case 'SHIPPED':
         return 'bg-accent/15 text-accent border-accent/20';
@@ -192,6 +193,23 @@ export default function Orders() {
         return 'bg-success/15 text-success border-success/20';
       case 'CANCELLED':
         return 'bg-error/15 text-error border-error/20';
+      default:
+        return 'bg-text-secondary/15 text-text-secondary border-border';
+    }
+  };
+
+  const getPaymentStatusStyle = (status?: string) => {
+    switch (status?.toUpperCase()) {
+      case 'SUCCESS':
+        return 'bg-success/20 text-success border-success/30';
+      case 'INITIATED':
+      case 'PENDING':
+        return 'bg-warning/15 text-warning border-warning/20';
+      case 'FAILED':
+        return 'bg-error/15 text-error border-error/20';
+      case 'REFUNDED':
+      case 'PARTIALLY_REFUNDED':
+        return 'bg-indigo-500/15 text-indigo-400 border-indigo-500/20';
       default:
         return 'bg-text-secondary/15 text-text-secondary border-border';
     }
@@ -306,9 +324,9 @@ export default function Orders() {
                   <th className="py-3 px-6 w-28">Order ID</th>
                   <th className="py-3 px-6">Customer Details</th>
                   <th className="py-3 px-6">Order Date</th>
-                  <th className="py-3 px-6">Method</th>
+                  <th className="py-3 px-6">Payment Status</th>
                   <th className="py-3 px-6">Total Amount</th>
-                  <th className="py-3 px-6">Status</th>
+                  <th className="py-3 px-6">Order Status</th>
                   <th className="py-3 px-6 text-right">Actions</th>
                 </tr>
               </thead>
@@ -331,8 +349,14 @@ export default function Orders() {
                         minute: '2-digit'
                       }) : 'N/A'}
                     </td>
-                    <td className="py-3.5 px-6 text-text-secondary font-semibold">
-                      COD
+                    <td className="py-3.5 px-6">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-semibold ${getPaymentStatusStyle(
+                          order.paymentStatus
+                        )}`}
+                      >
+                        {order.paymentStatus || 'PENDING'}
+                      </span>
                     </td>
                     <td className="py-3.5 px-6 font-semibold text-text-primary">
                       ${order.totalAmount.toFixed(2)}
@@ -474,7 +498,14 @@ export default function Orders() {
                         selectedOrder.status
                       )}`}
                     >
-                      {selectedOrder.status}
+                      ORDER: {selectedOrder.status}
+                    </span>
+                    <span
+                      className={`inline-flex px-2.5 py-0.5 rounded-full border text-[10px] font-semibold ${getPaymentStatusStyle(
+                        selectedOrder.paymentStatus
+                      )}`}
+                    >
+                      PAYMENT: {selectedOrder.paymentStatus || 'PENDING'}
                     </span>
                   </div>
                 </div>
@@ -488,7 +519,7 @@ export default function Orders() {
                   >
                     <option value="PENDING">Pending</option>
                     <option value="PROCESSING">Processing</option>
-                    <option value="PAID">Paid</option>
+                    <option value="CONFIRMED">Confirmed</option>
                     <option value="SHIPPED">Shipped</option>
                     <option value="DELIVERED">Delivered</option>
                     <option value="CANCELLED">Cancelled</option>

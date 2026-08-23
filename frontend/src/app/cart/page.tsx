@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Minus, Plus, Trash2, ArrowRight, ShoppingBag } from 'lucide-react';
+import { Minus, Plus, Trash2, ArrowRight, ShoppingBag, Tag, X, Loader2 } from 'lucide-react';
 import { useCartStore } from '@/lib/stores/cart-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { getCart, updateCartItem, removeCartItem, addToCart } from '@/lib/api/cart';
+import { validateDiscountCode } from '@/lib/api/discounts';
 import CartItemVariantSelector from '@/components/cart/CartItemVariantSelector';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -19,10 +20,18 @@ export default function CartPage() {
     loading,
     setLoading,
     getEffectiveUserId,
+    appliedDiscountCode,
+    discountAmount,
+    setDiscount,
+    clearDiscount,
   } = useCartStore();
 
   const authUserId = useAuthStore((state) => state.userId);
   const userId = getEffectiveUserId(authUserId);
+
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
 
   const fetchCartData = useCallback(async () => {
     try {
@@ -39,6 +48,42 @@ export default function CartPage() {
   useEffect(() => {
     fetchCartData();
   }, [fetchCartData]);
+
+  const items = cart?.items || [];
+  const totalPrice = cart?.totalPrice || 0;
+  const cartItemCount = items.reduce((acc, item) => acc + item.quantity, 0);
+  const finalTotal = Math.max(0, totalPrice - (discountAmount || 0));
+
+  const handleApplyPromoCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!promoCodeInput.trim()) return;
+    if (appliedDiscountCode) {
+      toast.error('A promo code is already applied. Remove it first to use another.');
+      return;
+    }
+
+    try {
+      setPromoLoading(true);
+      setPromoError(null);
+      const res = await validateDiscountCode(promoCodeInput.trim(), totalPrice);
+      if (res.valid) {
+        setDiscount(res.code, res.discountAmount);
+        toast.success(`Promo code ${res.code} applied! Saved $${res.discountAmount.toFixed(2)}`);
+        setPromoCodeInput('');
+      } else {
+        setPromoError(res.message || 'Invalid promo code');
+      }
+    } catch (err) {
+      setPromoError(err instanceof Error ? err.message : 'Failed to validate promo code');
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const handleRemovePromoCode = () => {
+    clearDiscount();
+    toast.info('Promo code removed');
+  };
 
   const handleUpdateQuantity = async (productVariantId: number, currentQty: number, change: number) => {
     const newQty = currentQty + change;
@@ -65,6 +110,9 @@ export default function CartPage() {
       setLoading(true);
       const updatedCart = await removeCartItem(userId, productVariantId);
       setCart(updatedCart);
+      if ((updatedCart?.items || []).length === 0) {
+        clearDiscount();
+      }
       toast.success('Item removed from cart');
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Failed to remove item';
@@ -78,7 +126,7 @@ export default function CartPage() {
     const item = items.find((i) => i.productVariantId === oldVariantId);
     if (!item) return;
     const qty = item.quantity;
-    
+
     try {
       setLoading(true);
       await removeCartItem(userId, oldVariantId);
@@ -93,10 +141,6 @@ export default function CartPage() {
       setLoading(false);
     }
   };
-
-  const items = cart?.items || [];
-  const totalPrice = cart?.totalPrice || 0;
-  const cartItemCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
     <div className="w-full bg-background min-h-[calc(100vh-4rem)]">
@@ -258,6 +302,12 @@ export default function CartPage() {
                   <span>Subtotal ({cartItemCount} items)</span>
                   <span className="text-charcoal font-medium">${totalPrice.toFixed(2)}</span>
                 </div>
+                {appliedDiscountCode && discountAmount > 0 && (
+                  <div className="flex justify-between text-success font-semibold">
+                    <span>Discount ({appliedDiscountCode})</span>
+                    <span>-${discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>Shipping</span>
                   <span className="text-success font-semibold">Complimentary</span>
@@ -266,28 +316,58 @@ export default function CartPage() {
                   <span>Estimated Tax</span>
                   <span className="text-charcoal font-medium">$0.00</span>
                 </div>
-                
+
                 <div className="border-t border-border/40 pt-4 flex justify-between text-sm sm:text-base font-semibold text-charcoal">
                   <span>Total</span>
-                  <span>${totalPrice.toFixed(2)}</span>
+                  <span>${finalTotal.toFixed(2)}</span>
                 </div>
               </div>
 
-              {/* Promo code stub */}
+              {/* Promo code area */}
               <div className="space-y-2 pt-2 border-t border-border/40">
-                <label className="block font-sans text-[10px] uppercase tracking-wider text-brown-muted">
+                <label className="block font-sans text-[10px] uppercase tracking-wider text-brown-muted font-semibold">
                   Promo Code
                 </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Enter code"
-                    className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-charcoal placeholder-brown-muted focus:outline-none focus:ring-1 focus:ring-accent"
-                  />
-                  <Button variant="outline" className="border-border text-charcoal hover:bg-blush/20 text-xs py-1.5 px-3">
-                    Apply
-                  </Button>
-                </div>
+                {appliedDiscountCode ? (
+                  <div className="flex items-center justify-between bg-success/10 border border-success/30 px-3 py-2 rounded-md text-xs text-success font-sans">
+                    <div className="flex items-center gap-1.5 font-semibold">
+                      <Tag className="h-3.5 w-3.5" />
+                      <span>PROMO: {appliedDiscountCode} (-${discountAmount.toFixed(2)})</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemovePromoCode}
+                      className="p-1 hover:bg-success/20 rounded transition-colors text-success"
+                      title="Remove promo code"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleApplyPromoCode} className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Enter code"
+                      value={promoCodeInput}
+                      onChange={(e) => {
+                        setPromoCodeInput(e.target.value.toUpperCase());
+                        if (promoError) setPromoError(null);
+                      }}
+                      className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs text-charcoal font-mono tracking-wider placeholder-brown-muted focus:outline-none focus:ring-1 focus:ring-accent uppercase"
+                    />
+                    <Button
+                      type="submit"
+                      disabled={promoLoading || !promoCodeInput.trim()}
+                      variant="outline"
+                      className="border-border text-charcoal hover:bg-blush/20 text-xs py-1.5 px-3 flex items-center gap-1 shrink-0"
+                    >
+                      {promoLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Apply'}
+                    </Button>
+                  </form>
+                )}
+                {promoError && (
+                  <p className="text-[11px] text-error font-medium font-sans">{promoError}</p>
+                )}
               </div>
 
               <div className="pt-2">

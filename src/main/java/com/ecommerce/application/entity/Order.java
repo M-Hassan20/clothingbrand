@@ -33,6 +33,11 @@ public class Order extends BaseEntity {
 
     private BigDecimal totalAmount;
 
+    @Builder.Default
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    private String discountCode;
+
     @ManyToOne
     private Address shippingAddress;
 }

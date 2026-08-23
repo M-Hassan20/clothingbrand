@@ -1,16 +1,48 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
+import { Tag, Check, X, Loader2 } from 'lucide-react';
 import { CartItemDTO } from '@/types/api';
 
 interface OrderSummaryProps {
   items: CartItemDTO[];
   totalPrice: number;
+  appliedCode?: string | null;
+  discountAmount?: number;
+  onApplyDiscount?: (code: string) => Promise<void>;
+  onRemoveDiscount?: () => void;
 }
 
-export default function OrderSummary({ items, totalPrice }: OrderSummaryProps) {
+export default function OrderSummary({
+  items,
+  totalPrice,
+  appliedCode,
+  discountAmount = 0,
+  onApplyDiscount,
+  onRemoveDiscount,
+}: OrderSummaryProps) {
+  const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const cartItemCount = items.reduce((acc, item) => acc + item.quantity, 0);
+  const finalTotal = Math.max(0, totalPrice - discountAmount);
+
+  const handleApply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!code.trim() || !onApplyDiscount) return;
+    try {
+      setLoading(true);
+      setErrorMsg(null);
+      await onApplyDiscount(code.trim());
+      setCode('');
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Invalid promo code');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="bg-beige/10 border border-border/40 rounded-md p-6 space-y-6">
@@ -37,7 +69,7 @@ export default function OrderSummary({ items, totalPrice }: OrderSummaryProps) {
                 </div>
               )}
             </div>
-            
+
             <div className="flex-1 flex flex-col justify-between py-0.5">
               <div className="text-xs">
                 <h4 className="font-serif text-charcoal font-medium line-clamp-1">
@@ -58,12 +90,67 @@ export default function OrderSummary({ items, totalPrice }: OrderSummaryProps) {
         ))}
       </div>
 
+      {/* Promo Code Input */}
+      {onApplyDiscount && (
+        <div className="border-t border-border/40 pt-4 space-y-2 font-sans">
+          {appliedCode ? (
+            <div className="flex items-center justify-between bg-success/10 border border-success/30 px-3 py-2 rounded-md text-xs text-success">
+              <div className="flex items-center gap-1.5 font-semibold">
+                <Tag className="h-3.5 w-3.5" />
+                <span>PROMO: {appliedCode} (-${discountAmount.toFixed(2)})</span>
+              </div>
+              {onRemoveDiscount && (
+                <button
+                  type="button"
+                  onClick={onRemoveDiscount}
+                  className="p-1 hover:bg-success/20 rounded transition-colors text-success"
+                  title="Remove promo code"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          ) : (
+            <form onSubmit={handleApply} className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder="Promo Code"
+                  value={code}
+                  onChange={(e) => {
+                    setCode(e.target.value.toUpperCase());
+                    if (errorMsg) setErrorMsg(null);
+                  }}
+                  className="w-full bg-background border border-border/60 rounded-md px-3 py-2 text-xs font-mono tracking-wider text-charcoal focus:outline-none focus:ring-1 focus:ring-accent"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading || !code.trim()}
+                className="bg-charcoal text-background hover:bg-charcoal/90 disabled:opacity-50 text-xs font-semibold px-4 py-2 rounded-md transition-colors flex items-center gap-1"
+              >
+                {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Apply'}
+              </button>
+            </form>
+          )}
+          {errorMsg && (
+            <p className="text-[11px] text-error font-medium">{errorMsg}</p>
+          )}
+        </div>
+      )}
+
       {/* Pricing Breakdowns */}
       <div className="border-t border-border/40 pt-4 space-y-3 font-sans text-xs text-brown-muted">
         <div className="flex justify-between">
           <span>Subtotal ({cartItemCount} items)</span>
           <span className="text-charcoal font-medium">${totalPrice.toFixed(2)}</span>
         </div>
+        {discountAmount > 0 && (
+          <div className="flex justify-between text-success font-semibold">
+            <span>Discount ({appliedCode})</span>
+            <span>-${discountAmount.toFixed(2)}</span>
+          </div>
+        )}
         <div className="flex justify-between">
           <span>Shipping</span>
           <span className="text-success font-semibold">Complimentary</span>
@@ -75,7 +162,7 @@ export default function OrderSummary({ items, totalPrice }: OrderSummaryProps) {
 
         <div className="border-t border-border/40 pt-4 flex justify-between text-sm sm:text-base font-semibold text-charcoal">
           <span>Total</span>
-          <span>${totalPrice.toFixed(2)}</span>
+          <span>${finalTotal.toFixed(2)}</span>
         </div>
       </div>
     </div>

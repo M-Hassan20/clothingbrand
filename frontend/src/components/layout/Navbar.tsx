@@ -8,6 +8,7 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import { useCartStore } from '@/lib/stores/cart-store';
 import { useWishlistStore } from '@/lib/stores/wishlist-store';
 import { getWishlistItems } from '@/lib/api/wishlist';
+import { ApiError } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from '@/components/ui/sheet';
 import MobileNav from './MobileNav';
@@ -33,6 +34,10 @@ export default function Navbar() {
         const ids = items.map((item) => item.productVariant.id);
         setWishlistVariantIds(ids);
       } catch (err) {
+        setWishlistVariantIds([]);
+        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+          return;
+        }
         console.error('Failed to synchronize wishlist:', err);
       }
     };

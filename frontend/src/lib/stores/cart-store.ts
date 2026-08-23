@@ -7,9 +7,13 @@ interface CartState {
   guestUserId: string;
   cart: CartDTO | null;
   loading: boolean;
+  appliedDiscountCode: string | null;
+  discountAmount: number;
   setIsOpen: (isOpen: boolean) => void;
   setCart: (cart: CartDTO | null) => void;
   setLoading: (loading: boolean) => void;
+  setDiscount: (code: string | null, amount: number) => void;
+  clearDiscount: () => void;
   getEffectiveUserId: (authUserId: string | null) => string;
 }
 
@@ -28,12 +32,16 @@ export const useCartStore = create<CartState>()(
       guestUserId: '',
       cart: null,
       loading: false,
+      appliedDiscountCode: null,
+      discountAmount: 0,
       setIsOpen: (isOpen) => set({ isOpen }),
       setCart: (cart) => set({ cart }),
       setLoading: (loading) => set({ loading }),
+      setDiscount: (code, amount) => set({ appliedDiscountCode: code, discountAmount: amount }),
+      clearDiscount: () => set({ appliedDiscountCode: null, discountAmount: 0 }),
       getEffectiveUserId: (authUserId) => {
         if (authUserId) return authUserId;
-        
+
         let guestId = get().guestUserId;
         if (!guestId) {
           guestId = generateUUID();
@@ -46,6 +54,8 @@ export const useCartStore = create<CartState>()(
       name: 'haus-of-hafsah-cart-metadata',
       partialize: (state) => ({
         guestUserId: state.guestUserId || generateUUID(),
+        appliedDiscountCode: state.appliedDiscountCode,
+        discountAmount: state.discountAmount,
       }),
     }
   )

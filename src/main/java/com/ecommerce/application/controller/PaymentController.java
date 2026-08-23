@@ -32,8 +32,10 @@ public class PaymentController {
 
     @PostMapping("/initiate-safepay/{orderId}")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-    public ResponseEntity<ApiResponse<SafePayCheckoutResponse>> initiateSafePay(@PathVariable Long orderId) {
-        var session = paymentService.initiateSafePayCheckout(orderId);
+    public ResponseEntity<ApiResponse<SafePayCheckoutResponse>> initiateSafePay(
+            @PathVariable Long orderId,
+            @RequestParam(required = false, defaultValue = "CYBERSOURCE") String intent) {
+        var session = paymentService.initiateSafePayCheckout(orderId, intent);
         return ResponseEntity.ok(ApiResponse.success("Checkout session created", session));
     }
 

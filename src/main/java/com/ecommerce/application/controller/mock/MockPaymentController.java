@@ -1,7 +1,10 @@
 package com.ecommerce.application.controller.mock;
 
 import com.ecommerce.application.dto.response.ApiResponse;
+import com.ecommerce.application.entity.Order;
+import com.ecommerce.application.entity.Payment;
 import com.ecommerce.application.enums.OrderStatus;
+import com.ecommerce.application.enums.PaymentStatus;
 import com.ecommerce.application.repository.PaymentRepository;
 import com.ecommerce.application.service.impl.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,16 @@ public class MockPaymentController {
      */
     @PostMapping("/pay/{orderId}")
     public ResponseEntity<ApiResponse<String>> mockPay(@PathVariable Long orderId) {
+        Order order = orderService.getOrderEntityById(orderId);
+        Payment payment = paymentRepository.findByOrderId(orderId)
+                .orElseGet(() -> Payment.builder()
+                        .order(order)
+                        .amount(order.getTotalAmount())
+                        .currency("PKR")
+                        .build());
+        payment.setPaymentStatus(PaymentStatus.SUCCESS);
+        paymentRepository.save(payment);
+
         orderService.updateOrderStatus(orderId, OrderStatus.CONFIRMED);
         return ResponseEntity.ok(ApiResponse.success("Mock payment successful", "Order confirmed"));
     }

@@ -14,6 +14,8 @@ import com.ecommerce.application.mapper.OrderItemMapper;
 import com.ecommerce.application.mapper.OrderMapper;
 import com.ecommerce.application.repository.OrderItemRepository;
 import com.ecommerce.application.repository.OrderRepository;
+import com.ecommerce.application.enums.PaymentStatus;
+import com.ecommerce.application.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +33,7 @@ import java.util.List;
 public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final PaymentRepository paymentRepository;
     private final ProductVariantServiceImpl productVariantService;
     private final AddressService addressService;
     private final DiscountService discountService;
@@ -41,8 +44,8 @@ public class OrderService {
     private final InvoiceService invoiceService;
 
     public OrderResponse getOrderById(Long id) {
-        return orderMapper.toResponse(orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", id)));
+        return enrichOrderResponse(orderMapper.toResponse(orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", id))));
     }
 
     public Order getOrderEntityById(Long id) {
@@ -51,23 +54,26 @@ public class OrderService {
     }
 
     public Page<OrderResponse> getUserOrders(Long userId, Pageable pageable) {
-        return orderRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable).map(orderMapper::toResponse);
+        return orderRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable)
+                .map(order -> enrichOrderResponse(orderMapper.toResponse(order)));
     }
 
     public Page<OrderResponse> getAllOrders(Pageable pageable) {
-        return orderRepository.findAllByOrderByCreatedAtDesc(pageable).map(orderMapper::toResponse);
+        return orderRepository.findAllByOrderByCreatedAtDesc(pageable)
+                .map(order -> enrichOrderResponse(orderMapper.toResponse(order)));
     }
 
     public Page<OrderResponse> getOrdersByStatus(OrderStatus status, Pageable pageable) {
-        return orderRepository.findByStatusOrderByCreatedAtDesc(status, pageable).map(orderMapper::toResponse);
+        return orderRepository.findByStatusOrderByCreatedAtDesc(status, pageable)
+                .map(order -> enrichOrderResponse(orderMapper.toResponse(order)));
     }
 
     public List<OrderResponse> getPendingOrders() {
-        return orderMapper.toResponseList(orderRepository.findPendingOrders());
+        return enrichOrderResponseList(orderMapper.toResponseList(orderRepository.findPendingOrders()));
     }
 
     public List<OrderResponse> getRecentOrders() {
-        return orderMapper.toResponseList(orderRepository.findTop10ByOrderByCreatedAtDesc());
+        return enrichOrderResponseList(orderMapper.toResponseList(orderRepository.findTop10ByOrderByCreatedAtDesc()));
     }
 
     public boolean hasUserPurchasedProduct(Long userId, Long productId) {
@@ -163,9 +169,15 @@ public class OrderService {
             orderItems.add(orderItem);
         }
 
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        String appliedDiscountCode = null;
+
         // Apply discount if provided
-        if (request.getDiscountCode() != null) {
-            totalAmount = discountService.applyDiscount(request.getDiscountCode(), totalAmount);
+        if (request.getDiscountCode() != null && !request.getDiscountCode().trim().isEmpty()) {
+            appliedDiscountCode = request.getDiscountCode().trim().toUpperCase();
+            Discount discount = discountService.validateDiscountCode(appliedDiscountCode);
+            discountAmount = discountService.calculateDiscount(discount, totalAmount);
+            totalAmount = discountService.applyDiscount(appliedDiscountCode, totalAmount);
         }
 
         // Create order
@@ -173,6 +185,8 @@ public class OrderService {
                 .user(user)
                 .status(OrderStatus.PENDING)
                 .totalAmount(totalAmount)
+                .discountAmount(discountAmount)
+                .discountCode(appliedDiscountCode)
                 .build();
 
         // Set shipping address
@@ -194,13 +208,21 @@ public class OrderService {
             productVariantService.decreaseStock(item.getProductVariant().getId(), item.getQuantity());
         }
 
-        return orderMapper.toResponse(order);
+        return enrichOrderResponse(orderMapper.toResponse(order));
     }
 
     @Transactional
     public OrderResponse updateOrderStatus(Long orderId, OrderStatus newStatus) {
         Order order = getOrderEntityById(orderId);
         OrderStatus oldStatus = order.getStatus();
+
+        // Prevent status regression to PENDING if order is already PROCESSING, CONFIRMED, SHIPPED, or DELIVERED
+        if ((oldStatus == OrderStatus.PROCESSING || oldStatus == OrderStatus.CONFIRMED || oldStatus == OrderStatus.SHIPPED || oldStatus == OrderStatus.DELIVERED)
+                && newStatus == OrderStatus.PENDING) {
+            System.out.println("Ignoring status regression from " + oldStatus + " to " + newStatus + " for order ID: " + orderId);
+            return enrichOrderResponse(orderMapper.toResponse(order));
+        }
+
         order.setStatus(newStatus);
 
         // If order is cancelled, restore stock
@@ -223,7 +245,7 @@ public class OrderService {
 
         emailService.sendOrderStatusUpdateEmail(order.getUser().getEmail(), order.getUser().getFullName(), orderId, newStatus.toString());
 
-        return orderMapper.toResponse(orderRepository.save(order));
+        return enrichOrderResponse(orderMapper.toResponse(orderRepository.save(order)));
     }
 
     @Transactional
@@ -282,5 +304,27 @@ public class OrderService {
         orderCreateRequest.setDiscountCode(request.getDiscountCode());
 
         return createOrder(guestUser.getId(), orderCreateRequest);
+    }
+
+    public OrderResponse enrichOrderResponse(OrderResponse response) {
+        if (response == null) return null;
+        Order order = orderRepository.findById(response.getId()).orElse(null);
+        if (order != null) {
+            response.setDiscountCode(order.getDiscountCode());
+            response.setDiscountAmount(order.getDiscountAmount());
+        }
+        paymentRepository.findByOrderId(response.getId())
+                .ifPresentOrElse(
+                        payment -> response.setPaymentStatus(payment.getPaymentStatus()),
+                        () -> response.setPaymentStatus(PaymentStatus.PENDING)
+                );
+        return response;
+    }
+
+    public List<OrderResponse> enrichOrderResponseList(List<OrderResponse> responses) {
+        if (responses != null) {
+            responses.forEach(this::enrichOrderResponse);
+        }
+        return responses;
     }
 }

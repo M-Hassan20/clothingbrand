@@ -24,7 +24,7 @@ public class AdminDiscountController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<Discount>>> getAllDiscounts() {
-        List<Discount> discounts = discountService.getActiveDiscounts();
+        List<Discount> discounts = discountService.getAllDiscounts();
         return ResponseEntity.ok(ApiResponse.success("All discounts retrieved", discounts));
     }
 

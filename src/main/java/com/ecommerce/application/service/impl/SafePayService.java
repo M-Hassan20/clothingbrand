@@ -19,7 +19,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "payment.safepay.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "payment.safepay.enabled", havingValue = "true", matchIfMissing = true)
 public class SafePayService {
 
     private final RestTemplate restTemplate = new RestTemplate();
@@ -94,8 +94,19 @@ public class SafePayService {
 
         ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
         Map<String, Object> data = (Map<String, Object>) response.getBody().get("data");
-        Map<String, Object> tracker = (Map<String, Object>) data.get("tracker");
-        return (String) tracker.get("token");
+        if (data == null) {
+            throw new RuntimeException("Empty response data from SafePay session setup");
+        }
+        if (data.containsKey("token")) {
+            return (String) data.get("token");
+        } else if (data.containsKey("tracker") && data.get("tracker") instanceof Map) {
+            Map<String, Object> tracker = (Map<String, Object>) data.get("tracker");
+            return (String) tracker.get("token");
+        } else if (data.containsKey("session") && data.get("session") instanceof Map) {
+            Map<String, Object> session = (Map<String, Object>) data.get("session");
+            return (String) session.get("token");
+        }
+        throw new RuntimeException("Failed to retrieve tracker token from session response");
     }
 
     /**
@@ -111,14 +122,16 @@ public class SafePayService {
     }
 
     /**
-     * Builds the Checkout URL. Format confirmed directly from a real, working
-     * sandbox test run: /embedded/payment/auth with environment, tbt, tracker,
-     * source, order_id, cancel_url, redirect_url as query params.
+     * Builds the Checkout URL. Format aligned directly with @sfpy/node-core Checkout.js:
+     * https://sandbox.api.getsafepay.com/embedded/ (sandbox) or
+     * https://getsafepay.com/embedded/ (production) with query params.
      */
     private String buildCheckoutUrl(String trackerToken, String authToken, Long orderId) {
-        String base = getBaseUrl() + "/embedded/payment/auth";
+        String baseUrl = sandboxMode
+                ? "https://sandbox.api.getsafepay.com/embedded/"
+                : "https://getsafepay.com/embedded/";
 
-        return base
+        return baseUrl
                 + "?environment=" + (sandboxMode ? "sandbox" : "production")
                 + "&tbt=" + urlEncode(authToken)
                 + "&tracker=" + urlEncode(trackerToken)
@@ -127,6 +140,8 @@ public class SafePayService {
                 + "&cancel_url=" + urlEncode(cancelUrl)
                 + "&redirect_url=" + urlEncode(redirectUrl);
     }
+
+
 
     /**
      * GET /reporter/api/v1/payments/{tracker} — confirmed endpoint from official docs.
@@ -148,9 +163,18 @@ public class SafePayService {
      */
     @SuppressWarnings("unchecked")
     public boolean isPaymentSuccessful(Map<String, Object> trackerStatusResponse) {
+        if (trackerStatusResponse == null) return false;
         Map<String, Object> data = (Map<String, Object>) trackerStatusResponse.get("data");
-        Map<String, Object> tracker = (Map<String, Object>) data.get("tracker");
-        return "TRACKER_ENDED".equals(tracker.get("state"));
+        if (data == null) return false;
+
+        String state = null;
+        if (data.containsKey("state")) {
+            state = (String) data.get("state");
+        } else if (data.containsKey("tracker") && data.get("tracker") instanceof Map) {
+            Map<String, Object> tracker = (Map<String, Object>) data.get("tracker");
+            state = (String) tracker.get("state");
+        }
+        return "TRACKER_ENDED".equals(state);
     }
 
     /**

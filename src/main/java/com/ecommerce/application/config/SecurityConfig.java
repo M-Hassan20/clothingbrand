@@ -1,5 +1,6 @@
 package com.ecommerce.application.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import com.ecommerce.application.security.CustomUserDetailsService;
 import com.ecommerce.application.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,18 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"success\":false,\"message\":\"Unauthorized: Invalid or expired token\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"success\":false,\"message\":\"Forbidden: Access denied\"}");
+                        })
+                )
                 .authorizeHttpRequests(auth -> auth
                         // Permit all OPTIONS requests (preflight)
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -53,6 +66,7 @@ public class SecurityConfig {
                                 "/api/test/**",
                                 "/api/blog/**",
                                 "/api/homepage/**",
+                                "/api/discounts/**",
                                 "/api/payments/webhook/safepay",
                                 "/error"
                         ).permitAll()

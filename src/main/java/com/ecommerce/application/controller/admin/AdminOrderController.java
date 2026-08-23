@@ -90,7 +90,7 @@ public class AdminOrderController {
         Map<String, Long> counts = Map.of(
                 "PENDING", orderService.getOrderCountByStatus(OrderStatus.PENDING),
                 "PROCESSING", orderService.getOrderCountByStatus(OrderStatus.PROCESSING),
-                "PAID", orderService.getOrderCountByStatus(OrderStatus.PAID),
+                "CONFIRMED", orderService.getOrderCountByStatus(OrderStatus.CONFIRMED),
                 "SHIPPED", orderService.getOrderCountByStatus(OrderStatus.SHIPPED),
                 "DELIVERED", orderService.getOrderCountByStatus(OrderStatus.DELIVERED),
                 "CANCELLED", orderService.getOrderCountByStatus(OrderStatus.CANCELLED)

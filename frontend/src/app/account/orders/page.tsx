@@ -29,13 +29,33 @@ export default function AccountOrdersPage() {
   }, [authUserId]);
 
   const getStatusColor = (status: string) => {
-    switch (status.toUpperCase()) {
+    switch (status?.toUpperCase()) {
       case 'DELIVERED':
         return 'bg-success/10 text-success border-success/20';
+      case 'SHIPPED':
+      case 'PROCESSING':
+        return 'bg-accent/10 text-accent border-accent/20';
       case 'PENDING':
         return 'bg-warning/10 text-warning border-warning/20';
       case 'CANCELLED':
         return 'bg-error/10 text-error border-error/20';
+      default:
+        return 'bg-beige/40 text-brown-muted border-border/40';
+    }
+  };
+
+  const getPaymentStatusColor = (status?: string) => {
+    switch (status?.toUpperCase()) {
+      case 'SUCCESS':
+        return 'bg-success/10 text-success border-success/20';
+      case 'INITIATED':
+      case 'PENDING':
+        return 'bg-warning/10 text-warning border-warning/20';
+      case 'FAILED':
+        return 'bg-error/10 text-error border-error/20';
+      case 'REFUNDED':
+      case 'PARTIALLY_REFUNDED':
+        return 'bg-charcoal/10 text-charcoal border-charcoal/20';
       default:
         return 'bg-beige/40 text-brown-muted border-border/40';
     }
@@ -112,13 +132,24 @@ export default function AccountOrdersPage() {
                   <span className="block text-[10px] text-brown-muted uppercase tracking-wider mb-1 font-semibold">
                     Status
                   </span>
-                  <span
-                    className={`inline-block border px-2.5 py-0.5 rounded-full font-bold text-[9px] uppercase tracking-wider ${getStatusColor(
-                      order.status
-                    )}`}
-                  >
-                    {order.status}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span
+                      className={`inline-block border px-2 py-0.5 rounded-full font-bold text-[9px] uppercase tracking-wider ${getStatusColor(
+                        order.status
+                      )}`}
+                    >
+                      {order.status}
+                    </span>
+                    {order.paymentStatus && (
+                      <span
+                        className={`inline-block border px-2 py-0.5 rounded-full font-bold text-[9px] uppercase tracking-wider ${getPaymentStatusColor(
+                          order.paymentStatus
+                        )}`}
+                      >
+                        PAYMENT: {order.paymentStatus}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 

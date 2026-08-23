@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -26,7 +26,7 @@ const resetPasswordSchema = z
 
 type FormData = z.infer<typeof resetPasswordSchema>;
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailParam = searchParams.get('email') || '';
@@ -243,3 +243,18 @@ export default function ResetPasswordPage() {
     </div>
   );
 }
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full min-h-[calc(100vh-4rem)] bg-background flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-accent" />
+        </div>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
+  );
+}
+

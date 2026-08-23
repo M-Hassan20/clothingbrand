@@ -13,6 +13,7 @@ import Orders from './pages/Orders';
 import Blog from './pages/Blog';
 import Inventory from './pages/Inventory';
 import Reviews from './pages/Reviews';
+import Discounts from './pages/Discounts';
 import { Toaster } from 'sonner';
 import './index.css';
 
@@ -36,6 +37,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="products" element={<Products />} />
             <Route path="categories" element={<Categories />} />
             <Route path="orders" element={<Orders />} />
+            <Route path="discounts" element={<Discounts />} />
             <Route path="reviews" element={<Reviews />} />
             <Route path="blog" element={<Blog />} />
             <Route path="inventory" element={<Inventory />} />

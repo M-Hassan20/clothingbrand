@@ -1,6 +1,7 @@
 package com.ecommerce.application.service.impl;
 
 import com.ecommerce.application.dto.request.DiscountRequest;
+import com.ecommerce.application.dto.response.DiscountValidateResponse;
 import com.ecommerce.application.entity.Discount;
 import com.ecommerce.application.exception.ResourceNotFoundException;
 import com.ecommerce.application.mapper.DiscountMapper;
@@ -8,6 +9,7 @@ import com.ecommerce.application.repository.DiscountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -29,12 +31,35 @@ public class DiscountService {
     }
 
     public Discount validateDiscountCode(String code) {
-        return discountRepository.findValidDiscountByCode(code, LocalDateTime.now())
+        if (code == null || code.trim().isEmpty()) {
+            throw new RuntimeException("Discount code cannot be empty");
+        }
+        return discountRepository.findValidDiscountByCode(code.trim().toUpperCase(), LocalDateTime.now())
                 .orElseThrow(() -> new RuntimeException("Invalid or expired discount code: " + code));
+    }
+
+    public DiscountValidateResponse validateAndCalculateDiscount(String code, BigDecimal orderAmount) {
+        Discount discount = validateDiscountCode(code);
+        BigDecimal discountAmount = calculateDiscount(discount, orderAmount);
+        BigDecimal finalAmount = orderAmount.subtract(discountAmount);
+
+        return DiscountValidateResponse.builder()
+                .valid(true)
+                .code(discount.getCode())
+                .discountType(discount.getDiscountType())
+                .discountValue(discount.getDiscountValue())
+                .discountAmount(discountAmount)
+                .finalAmount(finalAmount)
+                .message("Promo code applied successfully!")
+                .build();
     }
 
     public List<Discount> getActiveDiscounts() {
         return discountRepository.findByIsActiveTrue();
+    }
+
+    public List<Discount> getAllDiscounts() {
+        return discountRepository.findAll();
     }
 
     // Calculate discount amount

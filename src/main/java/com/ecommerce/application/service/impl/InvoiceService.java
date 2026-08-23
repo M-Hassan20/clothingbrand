@@ -90,9 +90,9 @@ public class InvoiceService {
                 .map(item -> item.getPriceSnapshot().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal shippingFee = BigDecimal.ZERO; // TODO: Add shipping fee logic
-        BigDecimal discount = BigDecimal.ZERO; // TODO: Add discount logic
-        BigDecimal tax = BigDecimal.ZERO; // TODO: Add tax calculation
+        BigDecimal shippingFee = BigDecimal.ZERO;
+        BigDecimal discount = order.getDiscountAmount() != null ? order.getDiscountAmount() : BigDecimal.ZERO;
+        BigDecimal tax = BigDecimal.ZERO;
 
         return InvoiceData.builder()
                 .orderId(order.getId())

@@ -94,12 +94,29 @@ export interface OrderItemResponse {
 export interface OrderResponse {
   id: number;
   userId: string;
-  status: string; // PENDING, PAID, SHIPPED, CANCELLED, etc.
+  status: string; // PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED
+  paymentStatus?: 'PENDING' | 'INITIATED' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'PARTIALLY_REFUNDED';
   totalAmount: number;
+  discountAmount?: number;
+  discountCode: string | null;
   items: OrderItemResponse[];
   shippingAddress: AddressResponse;
-  discountCode: string | null;
   createdAt: string;
+}
+
+export interface DiscountValidateRequest {
+  code: string;
+  orderAmount: number;
+}
+
+export interface DiscountValidateResponse {
+  valid: boolean;
+  code: string;
+  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  discountValue: number;
+  discountAmount: number;
+  finalAmount: number;
+  message: string;
 }
 
 export interface OrderCreateRequest {
@@ -205,3 +222,13 @@ export interface BlogPostDetailResponse {
   publishedAt: string;
   isPreview?: boolean;
 }
+
+export interface PaymentResponse {
+  id: number;
+  amount: number;
+  currency: string;
+  paymentStatus: 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
+  stripePaymentIntentId?: string;
+  createdAt?: string;
+}
+
