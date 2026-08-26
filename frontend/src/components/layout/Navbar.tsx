@@ -213,16 +213,26 @@ export default function Navbar() {
               </div>
             </div>
           ) : (
-            <Link href="/auth/login" passHref>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-charcoal hover:bg-blush/20 h-9 w-9 rounded-full"
-              >
-                <User className="h-5 w-5" />
-                <span className="sr-only">Login</span>
-              </Button>
-            </Link>
+            <div className="relative group">
+              <Link href="/auth/login" passHref>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-charcoal hover:bg-blush/20 h-9 w-9 rounded-full"
+                >
+                  <User className="h-5 w-5" />
+                  <span className="sr-only">Login</span>
+                </Button>
+              </Link>
+              <div className="absolute right-0 top-9 mt-2 w-48 origin-top-right rounded-md border border-border bg-background shadow-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-1">
+                <Link href="/auth/register" className="block px-4 py-2 text-xs text-brown-muted hover:text-charcoal hover:bg-beige/35 font-medium transition-colors">
+                  Register
+                </Link>
+                <Link href="/auth/login" className="block px-4 py-2 text-xs text-brown-muted hover:text-charcoal hover:bg-beige/35 font-medium transition-colors">
+                  Login
+                </Link>
+              </div>
+            </div>
           )}
         </div>
       </div>
