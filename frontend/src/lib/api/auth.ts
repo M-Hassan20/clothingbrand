@@ -20,3 +20,7 @@ export async function forgotPassword(email: string): Promise<void> {
 export async function resetPassword(body: { email: string; otpCode: string; newPassword: string }): Promise<void> {
   return apiPost<void>('/auth/reset-password', body);
 }
+
+export async function logout(): Promise<void> {
+  return apiPost<void>('/auth/logout');
+}

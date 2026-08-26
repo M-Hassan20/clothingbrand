@@ -7,6 +7,7 @@ import { Heart, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useWishlistStore } from '@/lib/stores/wishlist-store';
 import { Button } from '@/components/ui/button';
+import { logout } from '@/lib/api/auth';
 
 interface MobileNavProps {
   onClose: () => void;
@@ -79,9 +80,15 @@ export default function MobileNav({ onClose, links }: MobileNavProps) {
 
             <Button
               variant="ghost"
-              onClick={() => {
-                clearAuth();
-                onClose();
+              onClick={async () => {
+                try {
+                  await logout();
+                } catch (err) {
+                  console.error('Failed to log out on server:', err);
+                } finally {
+                  clearAuth();
+                  onClose();
+                }
               }}
               className="w-full flex items-center justify-center gap-2 text-error hover:bg-error/5 font-sans text-sm"
             >

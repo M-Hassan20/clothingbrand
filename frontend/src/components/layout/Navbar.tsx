@@ -8,10 +8,12 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import { useCartStore } from '@/lib/stores/cart-store';
 import { useWishlistStore } from '@/lib/stores/wishlist-store';
 import { getWishlistItems } from '@/lib/api/wishlist';
+import { logout } from '@/lib/api/auth';
 import { ApiError } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from '@/components/ui/sheet';
 import MobileNav from './MobileNav';
+
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -205,7 +207,15 @@ export default function Navbar() {
                   My Orders
                 </Link>
                 <button
-                  onClick={() => clearAuth()}
+                  onClick={async () => {
+                    try {
+                      await logout();
+                    } catch (err) {
+                      console.error('Failed to log out on server:', err);
+                    } finally {
+                      clearAuth();
+                    }
+                  }}
                   className="w-full text-left block px-4 py-2 text-xs text-error hover:bg-error/5"
                 >
                   Sign Out

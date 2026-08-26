@@ -24,7 +24,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       setAuth: (authData) =>
         set({
-          token: authData.token,
+          token: null, // do not store the token in state
           userId: authData.userId,
           email: authData.email,
           fullName: authData.fullName,
