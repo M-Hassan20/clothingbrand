@@ -9,6 +9,12 @@ import com.ecommerce.application.repository.DiscountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
+
+import com.ecommerce.application.entity.ProductVariant;
+import com.ecommerce.application.entity.Product;
+import com.ecommerce.application.entity.Category;
+import com.ecommerce.application.enums.DiscountType;
 
 
 import java.math.BigDecimal;
@@ -109,28 +115,129 @@ public class DiscountService {
 
     // Create discount (Admin)
     @Transactional
+    @CacheEvict(value = {"products", "product", "bestSellers"}, allEntries = true)
     public Discount createDiscount(DiscountRequest request) {
-        if (discountRepository.findByCode(request.getCode()).isPresent()) {
-            throw new RuntimeException("Discount code already exists: " + request.getCode());
+        if (request.getIsAutoApplied() == null) {
+            request.setIsAutoApplied(false);
         }
+
+        if (Boolean.FALSE.equals(request.getIsAutoApplied()) && (request.getCode() == null || request.getCode().trim().isEmpty())) {
+            throw new RuntimeException("Promo code is required for manually applied discounts");
+        }
+
+        if (request.getCode() != null && !request.getCode().trim().isEmpty()) {
+            if (discountRepository.findByCode(request.getCode().trim().toUpperCase()).isPresent()) {
+                throw new RuntimeException("Discount code already exists: " + request.getCode());
+            }
+        }
+
         Discount discount = discountMapper.toEntity(request);
+        if (Boolean.TRUE.equals(discount.getIsAutoApplied()) && (discount.getCode() == null || discount.getCode().trim().isEmpty())) {
+            discount.setCode("AUTO_" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        } else if (discount.getCode() != null) {
+            discount.setCode(discount.getCode().trim().toUpperCase());
+        }
+
         return discountRepository.save(discount);
     }
 
     // Update discount (Admin)
     @Transactional
+    @CacheEvict(value = {"products", "product", "bestSellers"}, allEntries = true)
     public Discount updateDiscount(Long id, DiscountRequest request) {
         Discount discount = getDiscountById(id);
+
+        if (request.getIsAutoApplied() == null) {
+            request.setIsAutoApplied(false);
+        }
+
+        if (Boolean.FALSE.equals(request.getIsAutoApplied()) && (request.getCode() == null || request.getCode().trim().isEmpty())) {
+            throw new RuntimeException("Promo code is required for manually applied discounts");
+        }
+
+        if (request.getCode() != null && !request.getCode().trim().isEmpty()) {
+            discountRepository.findByCode(request.getCode().trim().toUpperCase()).ifPresent(existing -> {
+                if (!existing.getId().equals(id)) {
+                    throw new RuntimeException("Discount code already exists: " + request.getCode());
+                }
+            });
+        }
+
         discountMapper.updateEntityFromRequest(request, discount);
+
+        if (Boolean.TRUE.equals(discount.getIsAutoApplied()) && (discount.getCode() == null || discount.getCode().trim().isEmpty())) {
+            discount.setCode("AUTO_" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        } else if (discount.getCode() != null) {
+            discount.setCode(discount.getCode().trim().toUpperCase());
+        }
+
         return discountRepository.save(discount);
     }
 
     // Deactivate discount (Admin)
     @Transactional
+    @CacheEvict(value = {"products", "product", "bestSellers"}, allEntries = true)
     public void deactivateDiscount(Long id) {
         Discount discount = getDiscountById(id);
         discount.setIsActive(false);
         discountRepository.save(discount);
+    }
+
+    public BigDecimal calculateEffectivePrice(ProductVariant variant) {
+        if (variant == null || variant.getPrice() == null) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal originalPrice = variant.getPrice();
+        Product product = variant.getProduct();
+        if (product == null) {
+            return originalPrice;
+        }
+        Category category = product.getCategory();
+
+        List<Discount> activeAutoDiscounts = discountRepository.findActiveAutoDiscounts(LocalDateTime.now());
+        BigDecimal bestPrice = originalPrice;
+
+        for (Discount discount : activeAutoDiscounts) {
+            boolean applies = false;
+
+            // Check if applies directly to this product
+            if (discount.getApplicableProducts() != null && discount.getApplicableProducts().contains(product)) {
+                applies = true;
+            }
+            // Check if applies to this product's category
+            else if (category != null && discount.getApplicableCategories() != null && discount.getApplicableCategories().contains(category)) {
+                applies = true;
+            }
+
+            if (applies) {
+                BigDecimal discountAmount = BigDecimal.ZERO;
+
+                if (DiscountType.PERCENTAGE.equals(discount.getDiscountType())) {
+                    discountAmount = originalPrice.multiply(discount.getDiscountValue())
+                            .divide(BigDecimal.valueOf(100));
+
+                    // Apply maximum discount cap if exists
+                    if (discount.getMaxDiscountAmount() != null &&
+                            discountAmount.compareTo(discount.getMaxDiscountAmount()) > 0) {
+                        discountAmount = discount.getMaxDiscountAmount();
+                    }
+                } else if (DiscountType.FIXED_AMOUNT.equals(discount.getDiscountType())) {
+                    discountAmount = discount.getDiscountValue();
+                }
+
+                BigDecimal discountedPrice = originalPrice.subtract(discountAmount);
+                if (discountedPrice.compareTo(BigDecimal.ZERO) < 0) {
+                    discountedPrice = BigDecimal.ZERO;
+                }
+
+                if (discountedPrice.compareTo(bestPrice) < 0) {
+                    bestPrice = discountedPrice;
+                }
+            }
+        }
+
+        return bestPrice;
     }
 
 

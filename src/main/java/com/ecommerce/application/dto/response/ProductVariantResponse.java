@@ -20,4 +20,5 @@ public class ProductVariantResponse {
     private Boolean inStock;
     private String productName;
     private Long productId;
+    private BigDecimal salePrice;
 }

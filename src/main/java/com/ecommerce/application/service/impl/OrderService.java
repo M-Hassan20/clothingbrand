@@ -156,14 +156,15 @@ public class OrderService {
                         "Insufficient stock for product: " + variant.getProduct().getName());
             }
 
-            BigDecimal itemTotal = variant.getPrice().multiply(
+            BigDecimal effectivePrice = discountService.calculateEffectivePrice(variant);
+            BigDecimal itemTotal = effectivePrice.multiply(
                     BigDecimal.valueOf(itemRequest.getQuantity()));
             totalAmount = totalAmount.add(itemTotal);
 
             OrderItem orderItem = OrderItem.builder()
                     .productVariant(variant)
                     .quantity(itemRequest.getQuantity())
-                    .priceSnapshot(variant.getPrice())
+                    .priceSnapshot(effectivePrice)
                     .productNameSnapshot(variant.getProduct().getName())
                     .build();
             orderItems.add(orderItem);

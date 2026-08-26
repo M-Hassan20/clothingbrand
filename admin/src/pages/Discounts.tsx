@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 
 interface Discount {
   id: number;
-  code: string;
+  code?: string;
   discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
   discountValue: number;
   minOrderAmount?: number;
@@ -28,6 +28,9 @@ interface Discount {
   maxUsageCount?: number;
   currentUsageCount?: number;
   isActive: boolean;
+  isAutoApplied: boolean;
+  applicableCategories?: { id: number; name: string }[];
+  applicableProducts?: { id: number; name: string }[];
 }
 
 interface DiscountFormData {
@@ -40,6 +43,9 @@ interface DiscountFormData {
   validUntil: string;
   maxUsageCount: string;
   isActive: boolean;
+  isAutoApplied: boolean;
+  applicableCategoryIds: number[];
+  applicableProductIds: number[];
 }
 
 export default function Discounts() {
@@ -48,6 +54,14 @@ export default function Discounts() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [products, setProducts] = useState<{ id: number; name: string; brand?: string; skus?: string[] }[]>([]);
+
+  // Search and dropdown state for direct/flat discount selectors
+  const [categorySearch, setCategorySearch] = useState('');
+  const [productSearch, setProductSearch] = useState('');
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const [productDropdownOpen, setProductDropdownOpen] = useState(false);
 
   const [formData, setFormData] = useState<DiscountFormData>({
     code: '',
@@ -59,7 +73,26 @@ export default function Discounts() {
     validUntil: '',
     maxUsageCount: '',
     isActive: true,
+    isAutoApplied: false,
+    applicableCategoryIds: [],
+    applicableProductIds: [],
   });
+
+  const fetchCategoriesAndProducts = async () => {
+    try {
+      const cats = await api.get<{ id: number; name: string }[]>('/categories');
+      setCategories(cats || []);
+    } catch (err) {
+      console.error('Failed to load categories for discount configuration', err);
+    }
+    try {
+      const productsRes = await api.get<{ content?: { id: number; name: string; brand?: string }[] } | { id: number; name: string; brand?: string }[]>('/admin/products?size=1000');
+      const prods = Array.isArray(productsRes) ? productsRes : productsRes?.content || [];
+      setProducts(prods || []);
+    } catch (err) {
+      console.error('Failed to load products for discount configuration', err);
+    }
+  };
 
   const fetchDiscounts = async () => {
     try {
@@ -75,19 +108,46 @@ export default function Discounts() {
 
   useEffect(() => {
     fetchDiscounts();
+    fetchCategoriesAndProducts();
   }, []);
+
+  const closeCreateModal = () => {
+    setShowCreateModal(false);
+    setCategoryDropdownOpen(false);
+    setProductDropdownOpen(false);
+    setCategorySearch('');
+    setProductSearch('');
+    setFormData({
+      code: '',
+      discountType: 'PERCENTAGE',
+      discountValue: '',
+      minOrderAmount: '',
+      maxDiscountAmount: '',
+      validFrom: '',
+      validUntil: '',
+      maxUsageCount: '',
+      isActive: true,
+      isAutoApplied: false,
+      applicableCategoryIds: [],
+      applicableProductIds: [],
+    });
+  };
 
   const handleCreateDiscount = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.code.trim() || !formData.discountValue) {
-      toast.error('Code and discount value are required');
+    if (!formData.isAutoApplied && !formData.code.trim()) {
+      toast.error('Promo code is required for manually applied discounts');
+      return;
+    }
+    if (!formData.discountValue) {
+      toast.error('Discount value is required');
       return;
     }
 
     try {
       setSubmitting(true);
       const payload = {
-        code: formData.code.trim().toUpperCase(),
+        code: formData.isAutoApplied ? (formData.code.trim().toUpperCase() || null) : formData.code.trim().toUpperCase(),
         discountType: formData.discountType,
         discountValue: parseFloat(formData.discountValue),
         minOrderAmount: formData.minOrderAmount ? parseFloat(formData.minOrderAmount) : null,
@@ -96,22 +156,18 @@ export default function Discounts() {
         validUntil: formData.validUntil ? `${formData.validUntil}T23:59:59` : null,
         maxUsageCount: formData.maxUsageCount ? parseInt(formData.maxUsageCount, 10) : null,
         isActive: formData.isActive,
+        isAutoApplied: formData.isAutoApplied,
+        applicableCategoryIds: formData.applicableCategoryIds,
+        applicableProductIds: formData.applicableProductIds,
       };
 
       await api.post('/admin/discounts', payload);
-      toast.success(`Discount code ${payload.code} created successfully!`);
-      setShowCreateModal(false);
-      setFormData({
-        code: '',
-        discountType: 'PERCENTAGE',
-        discountValue: '',
-        minOrderAmount: '',
-        maxDiscountAmount: '',
-        validFrom: '',
-        validUntil: '',
-        maxUsageCount: '',
-        isActive: true,
-      });
+      toast.success(
+        payload.isAutoApplied 
+          ? 'Direct automatic discount created successfully!' 
+          : `Discount code ${payload.code} created successfully!`
+      );
+      closeCreateModal();
       fetchDiscounts();
     } catch (err) {
       toast.error(getErrorMessage(err, 'Failed to create discount promotion'));
@@ -233,10 +289,28 @@ export default function Discounts() {
                 {filteredDiscounts.map((discount) => (
                   <tr key={discount.id} className="hover:bg-background/30 transition-colors">
                     <td className="py-4 px-6 font-mono font-bold text-accent">
-                      <span className="inline-flex items-center gap-1.5 bg-accent/10 px-2.5 py-1 rounded border border-accent/20">
-                        <Tag className="h-3 w-3" />
-                        {discount.code}
-                      </span>
+                      {discount.isAutoApplied ? (
+                        <div className="space-y-1 font-sans">
+                          <span className="inline-flex items-center gap-1.5 bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20 text-[10px] uppercase font-bold tracking-wide">
+                            AUTOMATIC
+                          </span>
+                          {discount.applicableCategories && discount.applicableCategories.length > 0 && (
+                            <div className="text-[10px] text-text-secondary font-normal">
+                              Categories: {discount.applicableCategories.map((c) => c.name).join(', ')}
+                            </div>
+                          )}
+                          {discount.applicableProducts && discount.applicableProducts.length > 0 && (
+                            <div className="text-[10px] text-text-secondary font-normal">
+                              Products: {discount.applicableProducts.map((p) => p.name).join(', ')}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 bg-accent/10 px-2.5 py-1 rounded border border-accent/20">
+                          <Tag className="h-3 w-3" />
+                          {discount.code}
+                        </span>
+                      )}
                     </td>
                     <td className="py-4 px-6 font-semibold text-text-primary">
                       {discount.discountType === 'PERCENTAGE' ? (
@@ -309,33 +383,187 @@ export default function Discounts() {
       {/* Create Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-text-primary/40 backdrop-blur-xs">
-          <div className="bg-surface border border-border rounded-md shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-5 border-b border-border flex items-center justify-between">
+          <div className="bg-surface border border-border rounded-md shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="p-5 border-b border-border flex items-center justify-between shrink-0">
               <h3 className="font-serif text-lg font-bold text-text-primary">
                 Create New Promotion
               </h3>
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={closeCreateModal}
                 className="text-text-secondary hover:text-text-primary p-1 rounded hover:bg-background"
               >
                 <X className="h-4.5 w-4.5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateDiscount} className="p-6 space-y-4 text-xs">
-              <div className="space-y-1.5">
-                <label className="block font-semibold uppercase text-text-secondary">
-                  Promo Code *
-                </label>
+            <form onSubmit={handleCreateDiscount} className="p-6 space-y-4 text-xs overflow-y-auto flex-1">
+              <div className="flex items-center gap-2 pb-2">
                 <input
-                  type="text"
-                  required
-                  placeholder="e.g. WELCOME10"
-                  value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                  className="w-full bg-background border border-border px-3 py-2 rounded font-mono font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-accent text-text-primary"
+                  type="checkbox"
+                  id="isAutoApplied"
+                  checked={formData.isAutoApplied}
+                  onChange={(e) => setFormData({ ...formData, isAutoApplied: e.target.checked, code: e.target.checked ? '' : formData.code })}
+                  className="rounded border-border bg-background text-accent focus:ring-accent h-4 w-4"
                 />
+                <label htmlFor="isAutoApplied" className="font-semibold uppercase text-text-primary cursor-pointer select-none">
+                  Apply Automatically (Direct / Flat Discount)
+                </label>
               </div>
+
+              {!formData.isAutoApplied ? (
+                <div className="space-y-1.5">
+                  <label className="block font-semibold uppercase text-text-secondary">
+                    Promo Code *
+                  </label>
+                  <input
+                    type="text"
+                    required={!formData.isAutoApplied}
+                    placeholder="e.g. WELCOME10"
+                    value={formData.code}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                    className="w-full bg-background border border-border px-3 py-2 rounded font-mono font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-accent text-text-primary"
+                  />
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-1.5 relative">
+                    <label className="block font-semibold uppercase text-text-secondary">
+                      Applicable Categories
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCategoryDropdownOpen(!categoryDropdownOpen);
+                        setProductDropdownOpen(false);
+                      }}
+                      className="w-full bg-background border border-border px-3 py-2 rounded font-semibold text-left text-text-primary focus:outline-none focus:ring-1 focus:ring-accent flex justify-between items-center"
+                    >
+                      <span>
+                        {formData.applicableCategoryIds.length === 0
+                          ? 'Select Categories'
+                          : `${formData.applicableCategoryIds.length} categories selected`}
+                      </span>
+                      <span className="text-[9px] text-text-secondary">▼</span>
+                    </button>
+                    {categoryDropdownOpen && (
+                      <div className="absolute left-0 right-0 mt-1 bg-surface border border-border rounded shadow-lg z-50 p-3 space-y-2 max-h-56 overflow-y-auto">
+                        <input
+                          type="text"
+                          placeholder="Search categories..."
+                          value={categorySearch}
+                          onChange={(e) => setCategorySearch(e.target.value)}
+                          className="w-full bg-background border border-border px-2 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent text-text-primary text-xs"
+                        />
+                        <div className="space-y-1">
+                          {categories
+                            .filter((cat) => cat.name.toLowerCase().includes(categorySearch.toLowerCase()))
+                            .map((cat) => (
+                              <div key={cat.id} className="flex items-center gap-2 py-0.5">
+                                <input
+                                  type="checkbox"
+                                  id={`cat-${cat.id}`}
+                                  checked={formData.applicableCategoryIds.includes(cat.id)}
+                                  onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    setFormData({
+                                      ...formData,
+                                      applicableCategoryIds: checked
+                                        ? [...formData.applicableCategoryIds, cat.id]
+                                        : formData.applicableCategoryIds.filter((id) => id !== cat.id),
+                                    });
+                                  }}
+                                  className="rounded border-border text-accent focus:ring-accent h-3.5 w-3.5"
+                                />
+                                <label htmlFor={`cat-${cat.id}`} className="text-text-primary cursor-pointer select-none">
+                                  {cat.name}
+                                </label>
+                              </div>
+                            ))}
+                          {categories.filter((cat) => cat.name.toLowerCase().includes(categorySearch.toLowerCase())).length === 0 && (
+                            <p className="text-text-secondary text-[10px] py-1 text-center">No categories found</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5 relative">
+                    <label className="block font-semibold uppercase text-text-secondary">
+                      Applicable Products
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProductDropdownOpen(!productDropdownOpen);
+                        setCategoryDropdownOpen(false);
+                      }}
+                      className="w-full bg-background border border-border px-3 py-2 rounded font-semibold text-left text-text-primary focus:outline-none focus:ring-1 focus:ring-accent flex justify-between items-center"
+                    >
+                      <span>
+                        {formData.applicableProductIds.length === 0
+                          ? 'Select Products'
+                          : `${formData.applicableProductIds.length} products selected`}
+                      </span>
+                      <span className="text-[9px] text-text-secondary">▼</span>
+                    </button>
+                    {productDropdownOpen && (
+                      <div className="absolute left-0 right-0 mt-1 bg-surface border border-border rounded shadow-lg z-50 p-3 space-y-2 max-h-64 overflow-y-auto">
+                        <input
+                          type="text"
+                          placeholder="Search by name or SKU..."
+                          value={productSearch}
+                          onChange={(e) => setProductSearch(e.target.value)}
+                          className="w-full bg-background border border-border px-2 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent text-text-primary text-xs"
+                        />
+                        <div className="space-y-1">
+                          {products
+                            .filter((prod) => {
+                              const matchName = prod.name.toLowerCase().includes(productSearch.toLowerCase());
+                              const matchSku = prod.skus && prod.skus.some(sku => sku.toLowerCase().includes(productSearch.toLowerCase()));
+                              return matchName || matchSku;
+                            })
+                            .map((prod) => (
+                              <div key={prod.id} className="flex items-start gap-2 py-0.5">
+                                <input
+                                  type="checkbox"
+                                  id={`prod-${prod.id}`}
+                                  checked={formData.applicableProductIds.includes(prod.id)}
+                                  onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    setFormData({
+                                      ...formData,
+                                      applicableProductIds: checked
+                                        ? [...formData.applicableProductIds, prod.id]
+                                        : formData.applicableProductIds.filter((id) => id !== prod.id),
+                                    });
+                                  }}
+                                  className="rounded border-border text-accent focus:ring-accent h-3.5 w-3.5 mt-0.5"
+                                />
+                                <label htmlFor={`prod-${prod.id}`} className="text-text-primary cursor-pointer select-none">
+                                  <div>
+                                    {prod.name} {prod.brand ? `(${prod.brand})` : ''}
+                                  </div>
+                                  {prod.skus && prod.skus.length > 0 && (
+                                    <div className="text-[9px] text-text-secondary font-mono">
+                                      SKUs: {prod.skus.join(', ')}
+                                    </div>
+                                  )}
+                                </label>
+                              </div>
+                            ))}
+                          {products.filter((prod) => {
+                            const matchName = prod.name.toLowerCase().includes(productSearch.toLowerCase());
+                            const matchSku = prod.skus && prod.skus.some(sku => sku.toLowerCase().includes(productSearch.toLowerCase()));
+                            return matchName || matchSku;
+                          }).length === 0 && (
+                            <p className="text-text-secondary text-[10px] py-1 text-center">No products found</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -445,7 +673,7 @@ export default function Discounts() {
               <div className="pt-4 flex justify-end gap-3 border-t border-border">
                 <button
                   type="button"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={closeCreateModal}
                   className="px-4 py-2 border border-border hover:bg-background rounded text-text-primary font-semibold transition-colors"
                 >
                   Cancel

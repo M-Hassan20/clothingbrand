@@ -23,7 +23,7 @@ public class Discount extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = true)
     private String code;
     private BigDecimal discountValue;
     private BigDecimal minOrderAmount;
@@ -33,6 +33,7 @@ public class Discount extends BaseEntity{
     private Integer maxUsageCount = 0;
     private Integer currentUsageCount = 0;
     private Boolean isActive = true;
+    private Boolean isAutoApplied = false;
     @Enumerated(EnumType.STRING)
     private DiscountType discountType;
 
@@ -41,6 +42,12 @@ public class Discount extends BaseEntity{
     joinColumns = @JoinColumn(name = "discount_id"),
     inverseJoinColumns = @JoinColumn(name = "category_id"))
     private Set<Category> applicableCategories = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(name = "discount_applicable_products",
+    joinColumns = @JoinColumn(name = "discount_id"),
+    inverseJoinColumns = @JoinColumn(name = "product_id"))
+    private Set<Product> applicableProducts = new HashSet<>();
 
 
 }

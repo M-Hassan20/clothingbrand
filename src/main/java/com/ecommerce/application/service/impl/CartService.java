@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.ecommerce.application.service.impl.DiscountService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,6 +25,7 @@ public class CartService {
     private final RedisTemplate<String, String> redisTemplate;
     private final ProductVariantServiceImpl productVariantService;
     private final ObjectMapper objectMapper;
+    private final DiscountService discountService;
 
     private static final String CART_KEY_PREFIX = "cart:";
     private static final long CART_EXPIRATION_DAYS = 7;
@@ -75,6 +77,8 @@ public class CartService {
                 .findFirst()
                 .orElse(null);
 
+        BigDecimal effectivePrice = discountService.calculateEffectivePrice(variant);
+
         if (existingItem != null) {
             // Update quantity
             int newQuantity = existingItem.getQuantity() + quantity;
@@ -82,7 +86,8 @@ public class CartService {
                 throw new RuntimeException("Insufficient stock available");
             }
             existingItem.setQuantity(newQuantity);
-            existingItem.setSubtotal(variant.getPrice().multiply(BigDecimal.valueOf(newQuantity)));
+            existingItem.setPrice(effectivePrice);
+            existingItem.setSubtotal(effectivePrice.multiply(BigDecimal.valueOf(newQuantity)));
             existingItem.setStockQuantity(variant.getStockQuantity());
             existingItem.setProductId(variant.getProduct().getId());
         } else {
@@ -93,8 +98,8 @@ public class CartService {
             newItem.setVariantName(variant.getSize() + " / " + variant.getColor());
             newItem.setImageUrl(variant.getPublicImageUrl());
             newItem.setQuantity(quantity);
-            newItem.setPrice(variant.getPrice());
-            newItem.setSubtotal(variant.getPrice().multiply(BigDecimal.valueOf(quantity)));
+            newItem.setPrice(effectivePrice);
+            newItem.setSubtotal(effectivePrice.multiply(BigDecimal.valueOf(quantity)));
             newItem.setStockQuantity(variant.getStockQuantity());
             newItem.setProductId(variant.getProduct().getId());
 
@@ -131,8 +136,10 @@ public class CartService {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Item not found in cart"));
 
+        BigDecimal effectivePrice = discountService.calculateEffectivePrice(variant);
         item.setQuantity(quantity);
-        item.setSubtotal(variant.getPrice().multiply(BigDecimal.valueOf(quantity)));
+        item.setPrice(effectivePrice);
+        item.setSubtotal(effectivePrice.multiply(BigDecimal.valueOf(quantity)));
         item.setStockQuantity(variant.getStockQuantity());
         item.setProductId(variant.getProduct().getId());
 

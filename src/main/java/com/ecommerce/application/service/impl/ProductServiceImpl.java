@@ -17,6 +17,7 @@ import com.ecommerce.application.repository.ProductVariantRepository;
 import com.ecommerce.application.repository.ProductRecommendationRepository;
 import com.ecommerce.application.entity.ProductRecommendation;
 import com.ecommerce.application.service.ProductService;
+import com.ecommerce.application.service.impl.DiscountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -42,9 +43,39 @@ public class ProductServiceImpl implements ProductService{
     private final ReviewService reviewService;
     private final RevalidationService revalidationService;
     private final ProductRecommendationRepository productRecommendationRepository;
+    private final DiscountService discountService;
+
+    private ProductResponse populateSalePrices(ProductResponse response, Product product) {
+        if (response == null || product == null) return response;
+
+        List<ProductVariant> variants = productVariantRepository.findByProductId(product.getId());
+        BigDecimal minSale = null;
+        BigDecimal maxSale = null;
+
+        for (ProductVariant variant : variants) {
+            BigDecimal salePrice = discountService.calculateEffectivePrice(variant);
+            if (minSale == null || salePrice.compareTo(minSale) < 0) {
+                minSale = salePrice;
+            }
+            if (maxSale == null || salePrice.compareTo(maxSale) > 0) {
+                maxSale = salePrice;
+            }
+        }
+
+        response.setMinSalePrice(minSale != null ? minSale : response.getMinPrice());
+        response.setMaxSalePrice(maxSale != null ? maxSale : response.getMaxPrice());
+
+        List<String> skus = variants.stream()
+                .map(ProductVariant::getSku)
+                .filter(sku -> sku != null && !sku.isEmpty())
+                .toList();
+        response.setSkus(skus);
+
+        return response;
+    }
     @Cacheable(value = "products", key = "#pageable.pageNumber + '-' + #pageable.pageSize")
     public Page<ProductResponse> getAllActiveProducts(Pageable pageable) {
-        return productRepository.findByIsActiveTrue(pageable).map(productMapper::toResponse);
+        return productRepository.findByIsActiveTrue(pageable).map(product -> populateSalePrices(productMapper.toResponse(product), product));
     }
 
     @Cacheable(value = "product", key = "#productId")
@@ -52,7 +83,7 @@ public class ProductServiceImpl implements ProductService{
         // Use the active‑only lookup to enforce soft‑delete semantics
         Product product = productRepository.findByIdAndIsActiveTrue(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
-        return productMapper.toResponse(product);
+        return populateSalePrices(productMapper.toResponse(product), product);
     }
 
     // Keep this for internal service use
@@ -67,39 +98,44 @@ public class ProductServiceImpl implements ProductService{
 
     public Page<ProductResponse> getProductsByCategory(Long categoryId, Pageable pageable) {
                 Page<Product> products = productRepository.findByCategoryId(categoryId, pageable);
-                return products.map(productMapper::toResponse);
+                return products.map(product -> populateSalePrices(productMapper.toResponse(product), product));
     }
 
     public Page<ProductResponse> searchProducts(String keyword, Pageable pageable) {
         Page<Product> products = productRepository.searchProducts(keyword, pageable);
-        return products.map(productMapper::toResponse);
+        return products.map(product -> populateSalePrices(productMapper.toResponse(product), product));
     }
 
     public Page<ProductResponse> filterProducts(Long categoryId, String brand, BigDecimal minPrice, BigDecimal maxPrice, String keyword, Pageable pageable) {
         Page<Product> products = productRepository.findByFilters(categoryId, brand, minPrice, maxPrice, keyword, pageable);
-        return products.map(productMapper::toResponse);
+        return products.map(product -> populateSalePrices(productMapper.toResponse(product), product));
     }
 
     @Cacheable(value = "bestSellers")
     public Page<ProductResponse> getBestSellers(Pageable pageable) {
         Page<Product> products = productRepository.findBestSellers(pageable);
-        return products.map(productMapper::toResponse);
+        return products.map(product -> populateSalePrices(productMapper.toResponse(product), product));
     }
 
     public Page<ProductResponse> getNewArrivals(Pageable pageable) {
         Page<Product> products = productRepository.findByIsActiveTrueOrderByCreatedAtDesc(pageable);
-        return products.map(productMapper::toResponse);
+        return products.map(product -> populateSalePrices(productMapper.toResponse(product), product));
     }
 
     public Page<ProductResponse> getRelatedProducts(Long productId, Pageable pageable) {
         Product product = getProductEntityById(productId);
         Page<Product> products = productRepository.findRelatedProducts(product.getCategory().getId(), productId, pageable);
-        return products.map(productMapper::toResponse);
+        return products.map(p -> populateSalePrices(productMapper.toResponse(p), p));
     }
 
     public List<ProductVariantResponse> getProductVariants(Long productId) {
         List<ProductVariant> variants = productVariantRepository.findByProductId(productId);
-        return productVariantMapper.toResponseList(variants);
+        List<ProductVariantResponse> responses = productVariantMapper.toResponseList(variants);
+        for (int i = 0; i < variants.size(); i++) {
+            BigDecimal salePrice = discountService.calculateEffectivePrice(variants.get(i));
+            responses.get(i).setSalePrice(salePrice);
+        }
+        return responses;
     }
 
     public List<String> getAvailableSizes(Long productId) {
@@ -201,8 +237,13 @@ public class ProductServiceImpl implements ProductService{
         ProductDetailResponse response = productMapper.toDetailResponse(product);
 
         // Set additional data
-        response.setVariants(productVariantMapper.toResponseList(
-                productVariantRepository.findByProductId(id)));
+        List<ProductVariant> variants = productVariantRepository.findByProductId(id);
+        List<ProductVariantResponse> variantResponses = productVariantMapper.toResponseList(variants);
+        for (int i = 0; i < variants.size(); i++) {
+            BigDecimal salePrice = discountService.calculateEffectivePrice(variants.get(i));
+            variantResponses.get(i).setSalePrice(salePrice);
+        }
+        response.setVariants(variantResponses);
         response.setAvailableSizes(getAvailableSizes(id));
         response.setAvailableColors(getAvailableColors(id));
         response.setAverageRating(reviewService.getAverageRating(id));
@@ -226,7 +267,7 @@ public class ProductServiceImpl implements ProductService{
     public Page<ProductResponse> getAllProductsForAdmin(Long categoryId, String search, String status, Pageable pageable) {
         String statusParam = (status != null && !status.trim().isEmpty()) ? status.trim().toUpperCase() : "DEFAULT";
         Page<Product> products = productRepository.findAllForAdmin(categoryId, search, statusParam, pageable);
-        return products.map(productMapper::toResponse);
+        return products.map(product -> populateSalePrices(productMapper.toResponse(product), product));
     }
 
     @Override
@@ -236,7 +277,7 @@ public class ProductServiceImpl implements ProductService{
 
         if (!curated.isEmpty()) {
             return curated.stream()
-                    .map(r -> productMapper.toResponse(r.getRecommendedProduct()))
+                    .map(r -> populateSalePrices(productMapper.toResponse(r.getRecommendedProduct()), r.getRecommendedProduct()))
                     .toList();
         }
 
@@ -245,14 +286,14 @@ public class ProductServiceImpl implements ProductService{
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
         return productRepository
                 .findRelatedProducts(product.getCategory().getId(), productId, PageRequest.of(0, 4))
-                .map(productMapper::toResponse)
+                .map(p -> populateSalePrices(productMapper.toResponse(p), p))
                 .toList();
     }
 
     @Override
     public List<ProductResponse> getRecommendationsForAdmin(Long productId) {
         return productRecommendationRepository.findByProductIdOrderByDisplayOrderAsc(productId).stream()
-                .map(r -> productMapper.toResponse(r.getRecommendedProduct()))
+                .map(r -> populateSalePrices(productMapper.toResponse(r.getRecommendedProduct()), r.getRecommendedProduct()))
                 .toList();
     }
 

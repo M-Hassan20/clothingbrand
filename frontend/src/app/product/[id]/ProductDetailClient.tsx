@@ -178,8 +178,17 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
   // Render price depending on selected variant or range
   const prices = variants.map((v) => v.price);
+  const salePrices = variants.map((v) => v.salePrice || v.price);
   const resolvedMinPrice = minPrice ?? (prices.length > 0 ? Math.min(...prices) : 0);
+  const resolvedMinSalePrice = prices.length > 0 ? Math.min(...salePrices) : resolvedMinPrice;
+
+  const isDiscounted = currentVariant 
+    ? (currentVariant.salePrice !== undefined && currentVariant.salePrice !== null && currentVariant.salePrice < currentVariant.price)
+    : (resolvedMinSalePrice < resolvedMinPrice);
+
   const priceToDisplay = currentVariant ? currentVariant.price : resolvedMinPrice;
+  const salePriceToDisplay = currentVariant ? (currentVariant.salePrice || currentVariant.price) : resolvedMinSalePrice;
+
   const isOutOfStock = currentVariant 
     ? currentVariant.stockQuantity === 0 
     : (variants.length > 0 && variants.every((v) => v.stockQuantity === 0));
@@ -233,9 +242,25 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
               )}
 
               {/* Price */}
-              <p className="font-sans text-xl font-bold text-charcoal pt-1">
-                ${priceToDisplay.toFixed(2)}
-              </p>
+              <div className="flex items-center gap-3 pt-1 font-sans">
+                {isDiscounted ? (
+                  <>
+                    <span className="text-xl font-bold text-accent">
+                      ${salePriceToDisplay.toFixed(2)}
+                    </span>
+                    <span className="text-sm text-brown-muted line-through">
+                      ${priceToDisplay.toFixed(2)}
+                    </span>
+                    <span className="bg-accent/10 border border-accent/20 text-accent text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                      Sale
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-xl font-bold text-charcoal">
+                    ${priceToDisplay.toFixed(2)}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Description Short */}
@@ -413,7 +438,16 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
       <div className="fixed bottom-0 inset-x-0 z-30 bg-background/95 backdrop-blur-md border-t border-border px-4 py-3 flex items-center justify-between md:hidden shadow-lg">
         <div className="flex flex-col">
           <span className="font-sans text-[10px] text-brown-muted uppercase tracking-wider">Price</span>
-          <span className="font-sans text-sm font-bold text-charcoal">${priceToDisplay.toFixed(2)}</span>
+          <span className="font-sans text-sm font-bold text-charcoal">
+            {isDiscounted ? (
+              <span className="flex items-center gap-1.5">
+                <span className="text-accent">${salePriceToDisplay.toFixed(2)}</span>
+                <span className="text-[10px] text-brown-muted line-through">${priceToDisplay.toFixed(2)}</span>
+              </span>
+            ) : (
+              `$${priceToDisplay.toFixed(2)}`
+            )}
+          </span>
         </div>
         
         {isOutOfStock ? (

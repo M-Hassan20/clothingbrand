@@ -20,6 +20,13 @@ public interface DiscountRepository extends JpaRepository<Discount, Long> {
             "AND (d.maxUsageCount IS NULL OR d.currentUsageCount < d.maxUsageCount)")
     Optional<Discount> findValidDiscountByCode(String code, LocalDateTime now);
 
+    @Query("SELECT d FROM Discount d " +
+            "LEFT JOIN FETCH d.applicableProducts " +
+            "LEFT JOIN FETCH d.applicableCategories " +
+            "WHERE d.isAutoApplied = true AND d.isActive = true " +
+            "AND d.validFrom <= :now AND d.validUntil >= :now")
+    List<Discount> findActiveAutoDiscounts(@Param("now") LocalDateTime now);
+
     @Modifying
     @Transactional
     @Query("UPDATE Discount d SET d.currentUsageCount = d.currentUsageCount + 1 " +

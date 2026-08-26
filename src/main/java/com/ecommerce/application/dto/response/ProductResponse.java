@@ -20,11 +20,14 @@ public class ProductResponse {
     private CategoryResponse category;
     private BigDecimal minPrice;
     private BigDecimal maxPrice;
+    private BigDecimal minSalePrice;
+    private BigDecimal maxSalePrice;
     private String thumbnailImage;
     private List<String> additionalImages;
     private Double averageRating;
     private Long reviewCount;
     private Boolean isActive;
     private String status;
+    private List<String> skus;
     private LocalDateTime createdAt;
 }

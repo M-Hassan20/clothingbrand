@@ -22,7 +22,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const { id, name, brand, minPrice, maxPrice, thumbnailImage } = product;
+  const { id, name, brand, minPrice, maxPrice, minSalePrice, maxSalePrice, thumbnailImage } = product;
 
   const router = useRouter();
   const { userId: authUserId, isAuthenticated } = useAuthStore();
@@ -178,10 +178,17 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   // Render price tag
+  const isProductDiscounted = minSalePrice !== undefined && minSalePrice !== null && minSalePrice < minPrice;
+
   const priceDisplay =
     minPrice === maxPrice
       ? `$${minPrice.toFixed(2)}`
       : `$${minPrice.toFixed(2)} - $${maxPrice.toFixed(2)}`;
+
+  const salePriceDisplay =
+    minSalePrice === maxSalePrice
+      ? `$${(minSalePrice ?? minPrice).toFixed(2)}`
+      : `$${(minSalePrice ?? minPrice).toFixed(2)} - $${(maxSalePrice ?? maxPrice).toFixed(2)}`;
 
   return (
     <div className="group relative block w-full">
@@ -445,9 +452,16 @@ export default function ProductCard({ product }: ProductCardProps) {
         <h3 className="font-serif text-sm text-charcoal font-medium line-clamp-1 group-hover:text-accent transition-colors">
           {name}
         </h3>
-        <p className="font-sans text-xs font-semibold text-charcoal/80">
-          {priceDisplay}
-        </p>
+        <div className="flex items-center gap-2 font-sans text-xs font-semibold">
+          {isProductDiscounted ? (
+            <>
+              <span className="text-accent">{salePriceDisplay}</span>
+              <span className="text-[10px] text-brown-muted line-through">{priceDisplay}</span>
+            </>
+          ) : (
+            <span className="text-charcoal/80">{priceDisplay}</span>
+          )}
+        </div>
       </Link>
     </div>
   );

@@ -15,8 +15,7 @@ import java.util.Set;
 @AllArgsConstructor
 public class DiscountRequest {
 
-    @NotBlank(message = "Discount code is required")
-    @Size(min = 3, max = 50, message = "Discount code must be between 3 and 50 characters")
+    @Size(max = 50, message = "Discount code must be less than 50 characters")
     private String code;
 
     @NotNull(message = "Discount type is required")
@@ -39,6 +38,10 @@ public class DiscountRequest {
     private Integer maxUsageCount;
 
     private Set<Long> applicableCategoryIds;
+
+    private Set<Long> applicableProductIds;
+
+    private Boolean isAutoApplied = false;
 
     private Boolean isActive = true;
 }
