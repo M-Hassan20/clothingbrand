@@ -69,7 +69,7 @@ export default function Footer() {
                 <FacebookIcon className="h-4 w-4" />
                 <span className="sr-only">Facebook</span>
               </a>
-              <a href="mailto:hausofhafsa@gmail.com" className="text-brown-muted hover:text-accent transition-colors">
+              <a href="mailto:info.hausofhafsah@gmail.com" className="text-brown-muted hover:text-accent transition-colors">
                 <Mail className="h-4 w-4" />
                 <span className="sr-only">Email</span>
               </a>
@@ -118,7 +118,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/assistance/contact" className="text-brown-muted hover:text-charcoal transition-colors">
+                <Link href="/contact" className="text-brown-muted hover:text-charcoal transition-colors">
                   Contact Us
                 </Link>
               </li>

@@ -52,6 +52,7 @@ export default function Navbar() {
     { label: 'Categories', href: '/categories' },
     { label: 'Journal', href: '/blog' },
     { label: 'About', href: '/about' },
+    { label: 'Contact', href: '/contact' },
   ];
 
   return (
