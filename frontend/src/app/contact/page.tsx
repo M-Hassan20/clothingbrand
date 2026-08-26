@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Mail, Phone, Globe, Loader2, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { submitContact } from '@/lib/api/contact';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -16,11 +17,16 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    toast.success('Your message has been received. We will get back to you shortly.');
-    setFormData({ name: '', email: '', subject: '', message: '' });
-    setLoading(false);
+    try {
+      await submitContact(formData);
+      toast.success('Your message has been received. We will get back to you shortly.');
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to send message';
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -63,10 +69,10 @@ export default function ContactPage() {
                   Email Inquiry
                 </span>
                 <a
-                  href="mailto:info.hausofhafsah@gmail.com"
+                  href="mailto:info@hausofhafsah.com"
                   className="block text-charcoal hover:text-accent transition-colors"
                 >
-                  info@hausofhafsah@gmail.com
+                  info@hausofhafsah.com
                 </a>
                 <span className="text-[10px] text-brown-muted font-normal block">
                   For business or general inquiries

@@ -160,4 +160,19 @@ public class EmailService {
 
         sendTemplateEmail(adminEmail, "Low Stock Alert - " + productName, "admin-low-stock", model);
     }
+
+    /**
+     * Send contact form inquiry to admin
+     */
+    public void sendContactInquiryEmail(String name, String email, String subject, String messageText) {
+        String content = String.format(
+                "You have received a new contact inquiry from the website:\n\n" +
+                "Name: %s\n" +
+                "Email: %s\n" +
+                "Subject: %s\n\n" +
+                "Message:\n%s",
+                name, email, subject, messageText
+        );
+        sendSimpleEmail(adminEmail, "New Contact Inquiry: " + subject, content);
+    }
 }

@@ -42,13 +42,20 @@ export default function Layout() {
     <div className="flex flex-col h-full bg-surface border-r border-border">
       {/* Brand Logo */}
       <div className="p-6 border-b border-border">
-        <Link to="/" className="block">
-          <span className="font-serif text-xl font-bold tracking-widest text-text-primary uppercase block">
-            Haus of Hafsah
-          </span>
-          <span className="text-[10px] uppercase tracking-wider text-text-secondary mt-0.5 block">
-            Management Panel
-          </span>
+        <Link to="/" className="flex items-center gap-3">
+          <img
+            src="/favicon.png"
+            alt="Haus of Hafsah Logo"
+            className="h-8 w-8 object-contain shrink-0"
+          />
+          <div className="min-w-0">
+            <span className="font-serif text-sm font-bold tracking-widest text-text-primary uppercase block truncate">
+              Haus of Hafsah
+            </span>
+            <span className="text-[9px] uppercase tracking-wider text-text-secondary mt-0.5 block">
+              Management Panel
+            </span>
+          </div>
         </Link>
       </div>
 
@@ -62,11 +69,10 @@ export default function Layout() {
               key={item.name}
               to={item.path}
               onClick={handleLinkClick}
-              className={`flex items-center gap-3.5 px-4 py-3 rounded text-xs font-semibold uppercase tracking-wider transition-colors ${
-                isActive
+              className={`flex items-center gap-3.5 px-4 py-3 rounded text-xs font-semibold uppercase tracking-wider transition-colors ${isActive
                   ? 'bg-accent text-white'
                   : 'text-text-secondary hover:bg-background hover:text-text-primary'
-              }`}
+                }`}
             >
               <Icon className="h-4.5 w-4.5 shrink-0" />
               <span>{item.name}</span>

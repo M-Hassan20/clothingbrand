@@ -69,16 +69,24 @@ export default function Navbar() {
             } />
             <SheetContent side="left" className="w-[300px] bg-background p-0 border-r border-border">
               <SheetHeader className="px-6 pt-6 pb-2 text-left">
-                <SheetTitle className="font-serif text-2xl text-charcoal tracking-wide">
-                  HAUS OF HAFSAH
+                <SheetTitle className="flex items-center">
+                  <img
+                    src="/icon.png"
+                    alt="Haus of Hafsah Logo"
+                    className="h-10 w-auto object-contain shrink-0"
+                  />
                 </SheetTitle>
               </SheetHeader>
               <MobileNav onClose={() => setMobileMenuOpen(false)} links={navLinks} />
             </SheetContent>
           </Sheet>
 
-          <Link href="/" className="font-serif text-xl sm:text-2xl font-semibold tracking-wider text-charcoal">
-            HAUS OF HAFSAH
+          <Link href="/" className="flex items-center">
+            <img
+              src="/icon.png"
+              alt="Haus of Hafsah Logo"
+              className="h-27 w-auto object-contain shrink-0"
+            />
           </Link>
         </div>
 
