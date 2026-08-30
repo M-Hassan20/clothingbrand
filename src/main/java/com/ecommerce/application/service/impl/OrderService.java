@@ -16,6 +16,7 @@ import com.ecommerce.application.repository.OrderItemRepository;
 import com.ecommerce.application.repository.OrderRepository;
 import com.ecommerce.application.enums.PaymentStatus;
 import com.ecommerce.application.repository.PaymentRepository;
+import com.ecommerce.application.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,6 +43,7 @@ public class OrderService {
     private final OrderItemMapper orderItemMapper;
     private final EmailService emailService;
     private final InvoiceService invoiceService;
+    private final JwtUtil jwtUtil;
 
     public OrderResponse getOrderById(Long id) {
         return enrichOrderResponse(orderMapper.toResponse(orderRepository.findById(id)
@@ -304,7 +306,10 @@ public class OrderService {
         orderCreateRequest.setItems(request.getItems());
         orderCreateRequest.setDiscountCode(request.getDiscountCode());
 
-        return createOrder(guestUser.getId(), orderCreateRequest);
+        OrderResponse response = createOrder(guestUser.getId(), orderCreateRequest);
+        String token = jwtUtil.generateToken(guestUser.getEmail(), guestUser.getId(), guestUser.getRole().name());
+        response.setGuestToken(token);
+        return response;
     }
 
     public OrderResponse enrichOrderResponse(OrderResponse response) {

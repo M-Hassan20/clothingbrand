@@ -32,6 +32,7 @@ export default function MobileNav({ onClose, links }: MobileNavProps) {
               key={link.href}
               href={link.href}
               onClick={onClose}
+              data-testid={`mobilenav-link-${link.label.toLowerCase()}`}
               className={`font-sans text-lg tracking-wide transition-colors duration-200 ${
                 isActive
                   ? 'text-accent font-medium'

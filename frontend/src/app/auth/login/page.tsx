@@ -92,6 +92,7 @@ export default function LoginPage() {
                 <Mail className="absolute left-3 top-2.5 h-4.5 w-4.5 text-brown-muted" />
                 <Input
                   type="email"
+                  data-testid="login-email-input"
                   placeholder="name@example.com"
                   className={`pl-10 ${errors.email ? 'border-error' : 'border-border'}`}
                   {...register('email')}
@@ -119,6 +120,7 @@ export default function LoginPage() {
                 <Lock className="absolute left-3 top-2.5 h-4.5 w-4.5 text-brown-muted" />
                 <Input
                   type="password"
+                  data-testid="login-password-input"
                   placeholder="••••••••"
                   className={`pl-10 ${errors.password ? 'border-error' : 'border-border'}`}
                   {...register('password')}
@@ -133,6 +135,7 @@ export default function LoginPage() {
           <div>
             <Button
               type="submit"
+              data-testid="login-submit-button"
               disabled={isSubmitting || googleLoading}
               className="w-full bg-accent text-background hover:bg-accent/90 py-3 rounded-md font-sans text-xs font-semibold flex items-center justify-center gap-1.5"
             >
@@ -153,6 +156,7 @@ export default function LoginPage() {
           <Button
             type="button"
             variant="outline"
+            data-testid="google-signin-button"
             onClick={handleGoogleSignIn}
             disabled={googleLoading || isSubmitting}
             className="w-full border-border text-brown-muted hover:bg-beige/10 py-2.5 rounded-md text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition duration-150"

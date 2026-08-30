@@ -281,7 +281,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
 
             {/* Stock indicator */}
             {currentVariant && (
-              <div className="font-sans text-xs">
+              <div data-testid="product-stock-indicator" className="font-sans text-xs">
                 {isOutOfStock ? (
                   <span className="text-error font-semibold">Out of Stock</span>
                 ) : isLowStock ? (
@@ -298,6 +298,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
               {isOutOfStock ? (
                 <Button
                   disabled
+                  data-testid="product-add-to-cart"
                   className="flex-1 bg-beige/40 text-brown-muted py-3 rounded-md font-sans text-xs font-semibold flex items-center justify-center gap-2 cursor-not-allowed border border-border/20"
                 >
                   Out of Stock
@@ -328,6 +329,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                   {/* Add to Cart CTA */}
                   <Button
                     onClick={handleAddToCart}
+                    data-testid="product-add-to-cart"
                     disabled={addingToCart || !currentVariant || quantity > (currentVariant?.stockQuantity || 0)}
                     className="flex-1 bg-accent text-background hover:bg-accent/90 py-3 rounded-md font-sans text-xs font-semibold flex items-center justify-center gap-2 shadow-xs transition-transform duration-200 active:scale-98 cursor-pointer"
                   >
@@ -345,6 +347,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
               <button
                 onClick={handleToggleWishlist}
                 disabled={updatingWishlist}
+                data-testid="product-add-to-wishlist"
                 className={`flex h-[46px] w-[46px] items-center justify-center rounded-md border transition-all cursor-pointer ${
                   isWishlisted
                     ? 'border-error/30 bg-error/5 text-error'
@@ -390,6 +393,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
               </TabsTrigger>
               <TabsTrigger
                 value="reviews"
+                data-testid="product-reviews-tab"
                 className="font-serif text-sm tracking-wide rounded-none border-b-2 border-transparent data-[state=active]:border-accent data-[state=active]:text-charcoal text-brown-muted pb-3 bg-transparent p-0"
               >
                 Customer Reviews ({currentReviewCount})

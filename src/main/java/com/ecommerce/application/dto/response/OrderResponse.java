@@ -26,4 +26,5 @@ public class OrderResponse {
     private AddressResponse shippingAddress;
     private List<OrderItemResponse> items;
     private LocalDateTime createdAt;
+    private String guestToken;
 }

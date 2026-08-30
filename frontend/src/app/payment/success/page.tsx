@@ -36,7 +36,10 @@ function PaymentSuccessContent() {
 
       try {
         setLoading(true);
-        const result = await verifySafePayPayment(trackerToken);
+        const guestTokenKey = orderIdParam ? `guest_token_${orderIdParam}` : '';
+        const guestToken = guestTokenKey ? sessionStorage.getItem(guestTokenKey) : null;
+        
+        const result = await verifySafePayPayment(trackerToken, guestToken);
         setPayment(result);
 
         // Clear cart in store and server
@@ -59,7 +62,7 @@ function PaymentSuccessContent() {
     }
 
     verify();
-  }, [trackerToken, userId, setCart, cart]);
+  }, [trackerToken, orderIdParam, userId, setCart, cart]);
 
   const handleDownloadInvoice = async (orderId: number) => {
     try {

@@ -107,6 +107,7 @@ export default function RegisterPage() {
                 <User className="absolute left-3 top-2.5 h-4.5 w-4.5 text-brown-muted" />
                 <Input
                   type="text"
+                  data-testid="register-fullname-input"
                   placeholder="Your Full Name"
                   className={`pl-10 ${errors.fullName ? 'border-error' : 'border-border'}`}
                   {...register('fullName')}
@@ -126,6 +127,7 @@ export default function RegisterPage() {
                 <Mail className="absolute left-3 top-2.5 h-4.5 w-4.5 text-brown-muted" />
                 <Input
                   type="email"
+                  data-testid="register-email-input"
                   placeholder="name@example.com"
                   className={`pl-10 ${errors.email ? 'border-error' : 'border-border'}`}
                   {...register('email')}
@@ -145,6 +147,7 @@ export default function RegisterPage() {
                 <Phone className="absolute left-3 top-2.5 h-4.5 w-4.5 text-brown-muted" />
                 <Input
                   type="tel"
+                  data-testid="register-phone-input"
                   placeholder="+1 (555) 000-0000"
                   className={`pl-10 ${errors.phone ? 'border-error' : 'border-border'}`}
                   {...register('phone')}
@@ -164,6 +167,7 @@ export default function RegisterPage() {
                 <Lock className="absolute left-3 top-2.5 h-4.5 w-4.5 text-brown-muted" />
                 <Input
                   type="password"
+                  data-testid="register-password-input"
                   placeholder="••••••••"
                   className={`pl-10 ${errors.password ? 'border-error' : 'border-border'}`}
                   {...register('password')}
@@ -183,6 +187,7 @@ export default function RegisterPage() {
                 <Lock className="absolute left-3 top-2.5 h-4.5 w-4.5 text-brown-muted" />
                 <Input
                   type="password"
+                  data-testid="register-confirmpassword-input"
                   placeholder="••••••••"
                   className={`pl-10 ${errors.confirmPassword ? 'border-error' : 'border-border'}`}
                   {...register('confirmPassword')}
@@ -197,6 +202,7 @@ export default function RegisterPage() {
           <div>
             <Button
               type="submit"
+              data-testid="register-submit-button"
               disabled={isSubmitting || googleLoading}
               className="w-full bg-accent text-background hover:bg-accent/90 py-3 rounded-md font-sans text-xs font-semibold flex items-center justify-center gap-1.5"
             >

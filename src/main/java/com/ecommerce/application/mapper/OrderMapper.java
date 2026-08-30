@@ -15,6 +15,7 @@ public interface OrderMapper {
     @Mapping(target = "userId", source = "order.user.id")
     @Mapping(target = "userEmail", source = "order.user.email")
     @Mapping(target = "userFullName", source = "order.user.fullName")
+    @Mapping(target = "guestToken", ignore = true)
     OrderResponse toResponse(Order order);
 
     List<OrderResponse> toResponseList(List<Order> orders);

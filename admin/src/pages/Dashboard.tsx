@@ -181,7 +181,7 @@ export default function Dashboard() {
     <div className="space-y-6 font-sans">
       {/* Low Stock Alert Banner */}
       {lowStockCount > 0 && (
-        <div className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-md flex items-center justify-between text-xs font-medium">
+        <div data-testid="dashboard-low-stock-banner" className="bg-error/10 border border-error/20 text-error px-4 py-3 rounded-md flex items-center justify-between text-xs font-medium">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4.5 w-4.5 text-error shrink-0" />
             <span>
@@ -201,7 +201,7 @@ export default function Dashboard() {
       {/* Stat Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Card 1: Pending Orders */}
-        <div className="bg-surface border border-border p-5 rounded-md flex items-center justify-between shadow-sm">
+        <div data-testid="dashboard-pending-orders" className="bg-surface border border-border p-5 rounded-md flex items-center justify-between shadow-sm">
           <div className="space-y-1.5">
             <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">
               Pending Orders
@@ -219,7 +219,7 @@ export default function Dashboard() {
         </div>
 
         {/* Card 2: Today's Revenue */}
-        <div className="bg-surface border border-border p-5 rounded-md flex items-center justify-between shadow-sm">
+        <div data-testid="dashboard-today-revenue" className="bg-surface border border-border p-5 rounded-md flex items-center justify-between shadow-sm">
           <div className="space-y-1.5">
             <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">
               Today's Revenue
@@ -237,7 +237,7 @@ export default function Dashboard() {
         </div>
 
         {/* Card 3: Low Stock Items */}
-        <div className="bg-surface border border-border p-5 rounded-md flex items-center justify-between shadow-sm">
+        <div data-testid="dashboard-low-stock-count" className="bg-surface border border-border p-5 rounded-md flex items-center justify-between shadow-sm">
           <div className="space-y-1.5">
             <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">
               Low Stock Items
@@ -255,7 +255,7 @@ export default function Dashboard() {
         </div>
 
         {/* Card 4: Total Products */}
-        <div className="bg-surface border border-border p-5 rounded-md flex items-center justify-between shadow-sm">
+        <div data-testid="dashboard-total-products" className="bg-surface border border-border p-5 rounded-md flex items-center justify-between shadow-sm">
           <div className="space-y-1.5">
             <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block">
               Total Products

@@ -55,6 +55,7 @@ export default function PaymentStep({
         {/* Cash on Delivery */}
         <div
           onClick={() => onPaymentMethodChange('cod')}
+          data-testid="payment-method-cod"
           className={`flex items-start gap-4 p-4 rounded-md border cursor-pointer transition-all duration-200 ${
             paymentMethod === 'cod'
               ? 'border-accent bg-accent/5 ring-1 ring-accent'
@@ -78,6 +79,7 @@ export default function PaymentStep({
         {/* Credit/Debit Card & Digital Payments via SafePay */}
         <div
           onClick={() => onPaymentMethodChange('card')}
+          data-testid="payment-method-card"
           className={`flex items-start gap-4 p-4 rounded-md border cursor-pointer transition-all duration-200 ${
             paymentMethod === 'card'
               ? 'border-accent bg-accent/5 ring-1 ring-accent'
@@ -109,6 +111,7 @@ export default function PaymentStep({
                     <div
                       key={opt.id}
                       onClick={() => onCardIntentChange(opt.id)}
+                      data-testid={`payment-channel-${opt.id.toLowerCase()}`}
                       className={`p-2.5 rounded border text-xs cursor-pointer transition-colors ${
                         cardIntent === opt.id
                           ? 'border-accent bg-accent/10 text-charcoal font-semibold'
@@ -135,6 +138,7 @@ export default function PaymentStep({
         <Button
           type="submit"
           disabled={loading}
+          data-testid="checkout-place-order-button"
           className="w-full bg-accent text-background hover:bg-accent/90 py-3 rounded-md font-sans text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm"
         >
           {loading ? (
