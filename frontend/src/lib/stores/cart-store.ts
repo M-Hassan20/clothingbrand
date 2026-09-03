@@ -56,6 +56,7 @@ export const useCartStore = create<CartState>()(
         guestUserId: state.guestUserId || generateUUID(),
         appliedDiscountCode: state.appliedDiscountCode,
         discountAmount: state.discountAmount,
+        cart: state.cart,
       }),
     }
   )

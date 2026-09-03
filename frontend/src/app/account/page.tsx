@@ -1,11 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { User, Shield } from 'lucide-react';
 
 export default function AccountOverviewPage() {
   const { fullName, email, role } = useAuthStore();
+
+  useEffect(() => {
+    document.title = 'My Account — Haus of Hafsah';
+  }, []);
 
   return (
     <div className="space-y-8 font-sans">

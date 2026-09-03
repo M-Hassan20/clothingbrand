@@ -38,6 +38,12 @@ export default function BlogDetailPage() {
     }
   }, [slug, previewToken]);
 
+  useEffect(() => {
+    if (post?.title) {
+      document.title = `${post.title} — Haus of Hafsah`;
+    }
+  }, [post]);
+
   if (loading) {
     return (
       <div className="w-full min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background">

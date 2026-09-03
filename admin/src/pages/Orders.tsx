@@ -56,6 +56,10 @@ interface PaginatedResponse<T> {
 }
 
 export default function Orders() {
+  useEffect(() => {
+    document.title = 'Orders Ledger — Haus of Hafsah Admin';
+  }, []);
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -359,7 +363,7 @@ export default function Orders() {
                       </span>
                     </td>
                     <td className="py-3.5 px-6 font-semibold text-text-primary">
-                      ${order.totalAmount.toFixed(2)}
+                      Rs. {order.totalAmount.toFixed(2)}
                     </td>
                     <td className="py-3.5 px-6">
                       <span
@@ -571,10 +575,10 @@ export default function Orders() {
                               {item.quantity}
                             </td>
                             <td className="py-3 px-4 text-right text-text-secondary">
-                              ${item.price.toFixed(2)}
+                              Rs. {item.price.toFixed(2)}
                             </td>
                             <td className="py-3 px-4 text-right font-semibold text-text-primary">
-                              ${item.subtotal.toFixed(2)}
+                              Rs. {item.subtotal.toFixed(2)}
                             </td>
                           </tr>
                         ))}
@@ -585,10 +589,7 @@ export default function Orders() {
                             Grand Total:
                           </td>
                           <td className="py-2.5 px-4 text-right text-xs font-bold text-accent">
-                            <div className="flex justify-end items-center">
-                              <DollarSign className="h-3.5 w-3.5 inline shrink-0" />
-                              <span>{selectedOrder.totalAmount.toFixed(2)}</span>
-                            </div>
+                            <span>Rs. {selectedOrder.totalAmount.toFixed(2)}</span>
                           </td>
                         </tr>
                       </tfoot>

@@ -54,6 +54,10 @@ export default function Homepage() {
   const [searching, setSearching] = useState(false);
 
   useEffect(() => {
+    document.title = 'Homepage CMS — Haus of Hafsah Admin';
+  }, []);
+
+  useEffect(() => {
     fetchConfig();
   }, []);
 
@@ -447,7 +451,7 @@ export default function Homepage() {
                           {product.name}
                         </p>
                         <p className="text-[10px] text-text-secondary">
-                          ${product.minPrice ? product.minPrice.toFixed(2) : '0.00'}
+                          Rs. {product.minPrice ? product.minPrice.toFixed(2) : '0.00'}
                         </p>
                       </div>
                       <div className="flex items-center gap-1">

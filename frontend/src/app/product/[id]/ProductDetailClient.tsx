@@ -246,10 +246,10 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                 {isDiscounted ? (
                   <>
                     <span className="text-xl font-bold text-accent">
-                      ${salePriceToDisplay.toFixed(2)}
+                      Rs. {salePriceToDisplay.toFixed(2)}
                     </span>
                     <span className="text-sm text-brown-muted line-through">
-                      ${priceToDisplay.toFixed(2)}
+                      Rs. {priceToDisplay.toFixed(2)}
                     </span>
                     <span className="bg-accent/10 border border-accent/20 text-accent text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
                       Sale
@@ -257,7 +257,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                   </>
                 ) : (
                   <span className="text-xl font-bold text-charcoal">
-                    ${priceToDisplay.toFixed(2)}
+                    Rs. {priceToDisplay.toFixed(2)}
                   </span>
                 )}
               </div>
@@ -441,11 +441,11 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
           <span className="font-sans text-sm font-bold text-charcoal">
             {isDiscounted ? (
               <span className="flex items-center gap-1.5">
-                <span className="text-accent">${salePriceToDisplay.toFixed(2)}</span>
-                <span className="text-[10px] text-brown-muted line-through">${priceToDisplay.toFixed(2)}</span>
+                <span className="text-accent">Rs. {salePriceToDisplay.toFixed(2)}</span>
+                <span className="text-[10px] text-brown-muted line-through">Rs. {priceToDisplay.toFixed(2)}</span>
               </span>
             ) : (
-              `$${priceToDisplay.toFixed(2)}`
+              `Rs. ${priceToDisplay.toFixed(2)}`
             )}
           </span>
         </div>

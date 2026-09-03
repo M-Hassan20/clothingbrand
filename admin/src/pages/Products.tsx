@@ -66,6 +66,10 @@ interface Product {
 }
 
 export default function Products() {
+  useEffect(() => {
+    document.title = 'Product Catalog — Haus of Hafsah Admin';
+  }, []);
+
   // Lists State
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -593,7 +597,7 @@ export default function Products() {
                         {product.categoryName || 'Unassigned'}
                       </td>
                       <td className="py-3 px-4 font-semibold text-text-primary">
-                        {minPrice === maxPrice ? `$${minPrice.toFixed(2)}` : `$${minPrice.toFixed(2)} - $${maxPrice.toFixed(2)}`}
+                        {minPrice === maxPrice ? `Rs. ${minPrice.toFixed(2)}` : `Rs. ${minPrice.toFixed(2)} - Rs. ${maxPrice.toFixed(2)}`}
                       </td>
                       <td className="py-3 px-4 font-medium">
                         <span className={product.totalStock && product.totalStock < 10 ? 'text-error' : 'text-text-primary'}>
@@ -880,7 +884,7 @@ export default function Products() {
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="block text-[10px] font-semibold uppercase text-text-secondary">Price ($)</label>
+                          <label className="block text-[10px] font-semibold uppercase text-text-secondary">Price (Rs.)</label>
                           <input
                             type="number"
                             required

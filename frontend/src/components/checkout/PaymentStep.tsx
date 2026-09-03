@@ -29,12 +29,44 @@ export default function PaymentStep({
     await onPlaceOrder();
   };
 
-  const intentOptions: { id: PaymentIntentType; name: string; desc: string }[] = [
-    { id: 'CYBERSOURCE', name: 'Visa / Mastercard (CyberSource)', desc: 'Credit & Debit Cards' },
-    { id: 'MPGS', name: 'Mastercard MPGS', desc: 'Mastercard Payment Gateway Services' },
-    { id: 'PAYFAST', name: 'PayFast / UnionPay', desc: 'Local Cards & Digital Wallets' },
-    { id: 'RAAST', name: 'Raast Instant Payment', desc: 'State Bank Raast QR & Instant Transfer' },
+  const intentOptions: {
+    id: PaymentIntentType;
+    name: string;
+    badge: string;
+    desc: string;
+    icon: React.ReactNode;
+  }[] = [
+    {
+      id: 'CYBERSOURCE',
+      name: 'Credit / Debit Card',
+      badge: 'Visa & Mastercard',
+      desc: 'Pay using any Visa or Mastercard credit/debit card',
+      icon: <CreditCard className="h-4 w-4 text-accent shrink-0" />,
+    },
+    {
+      id: 'MPGS',
+      name: 'Mastercard Direct',
+      badge: 'Mastercard MPGS',
+      desc: 'Direct payment gateway for Mastercard cardholders',
+      icon: <CreditCard className="h-4 w-4 text-accent shrink-0" />,
+    },
+    {
+      id: 'PAYFAST',
+      name: 'PayFast & Mobile Wallets',
+      badge: 'UnionPay & Wallets',
+      desc: 'UnionPay cards, EasyPaisa, JazzCash & local wallets',
+      icon: <Wallet className="h-4 w-4 text-accent shrink-0" />,
+    },
+    {
+      id: 'RAAST',
+      name: 'Raast Instant Payment',
+      badge: 'Zero Fee',
+      desc: 'Instant Bank Transfer / QR scan via State Bank Raast',
+      icon: <Smartphone className="h-4 w-4 text-accent shrink-0" />,
+    },
   ];
+
+  const selectedIntentObj = intentOptions.find((opt) => opt.id === cardIntent) || intentOptions[0];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 font-sans">
@@ -69,7 +101,7 @@ export default function PaymentStep({
                 Cash on Delivery (COD)
               </label>
               <p className="mt-1 text-[11px] leading-relaxed text-brown-muted">
-                Settle payment in cash upon physical receipt of delivery. Compliant package verification allowed at your doorstep.
+                Settle payment in cash upon physical receipt of delivery. Doorstep package inspection available.
               </p>
             </div>
           </div>
@@ -93,36 +125,53 @@ export default function PaymentStep({
                   Online Payment (SafePay Gateway)
                 </label>
                 <p className="mt-1 text-[11px] leading-relaxed text-brown-muted">
-                  Pay securely using Visa, Mastercard, PayFast, or Raast via SafePay checkout.
+                  Instant secure payment via Credit/Debit Cards, Mobile Wallets, or Raast Bank Transfer.
                 </p>
               </div>
             </div>
 
             {/* Payment Channel Intent Selector */}
             {paymentMethod === 'card' && (
-              <div className="pt-2 border-t border-border/40 space-y-2" onClick={(e) => e.stopPropagation()}>
+              <div className="pt-3 border-t border-border/40 space-y-2.5" onClick={(e) => e.stopPropagation()}>
                 <span className="block text-[10px] font-semibold uppercase tracking-wider text-brown-muted">
-                  Select Preferred Payment Channel:
+                  Select Your Preferred Payment Method:
                 </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {intentOptions.map((opt) => (
-                    <div
-                      key={opt.id}
-                      onClick={() => onCardIntentChange(opt.id)}
-                      className={`p-2.5 rounded border text-xs cursor-pointer transition-colors ${
-                        cardIntent === opt.id
-                          ? 'border-accent bg-accent/10 text-charcoal font-semibold'
-                          : 'border-border/60 bg-background hover:border-charcoal/30 text-brown-muted'
-                      }`}
-                    >
-                      <div className="font-semibold text-charcoal text-[11px]">{opt.name}</div>
-                      <div className="text-[10px] text-brown-muted mt-0.5">{opt.desc}</div>
-                    </div>
-                  ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {intentOptions.map((opt) => {
+                    const isSelected = cardIntent === opt.id;
+                    return (
+                      <div
+                        key={opt.id}
+                        onClick={() => onCardIntentChange(opt.id)}
+                        className={`p-3 rounded-md border text-xs cursor-pointer transition-all duration-200 ${
+                          isSelected
+                            ? 'border-accent bg-accent/10 shadow-xs ring-1 ring-accent/60'
+                            : 'border-border/60 bg-background hover:border-charcoal/30'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1.5 mb-1">
+                          <div className="flex items-center gap-2 font-bold text-charcoal text-xs">
+                            {opt.icon}
+                            <span>{opt.name}</span>
+                          </div>
+                          <span
+                            className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wide shrink-0 ${
+                              isSelected
+                                ? 'bg-accent text-background'
+                                : 'bg-beige/40 text-brown-muted border border-border/40'
+                            }`}
+                          >
+                            {opt.badge}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-brown-muted leading-tight pl-6">{opt.desc}</div>
+                      </div>
+                    );
+                  })}
                 </div>
                 <div className="mt-2 flex items-center gap-2 text-[10px] text-accent font-medium pt-1">
                   <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
-                  <span>256-bit encrypted SSL payment via SafePay</span>
+                  <span>256-bit Bank Grade Encrypted SSL Payment via SafePay</span>
                 </div>
               </div>
             )}
@@ -145,7 +194,7 @@ export default function PaymentStep({
           ) : paymentMethod === 'card' ? (
             <>
               <ExternalLink className="h-4 w-4" />
-              Pay via SafePay ({cardIntent})
+              Proceed to SafePay ({selectedIntentObj.name})
             </>
           ) : (
             <>

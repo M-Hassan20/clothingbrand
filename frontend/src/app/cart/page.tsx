@@ -46,6 +46,10 @@ export default function CartPage() {
   }, [userId, setCart, setLoading]);
 
   useEffect(() => {
+    document.title = 'Shopping Bag — Haus of Hafsah';
+  }, []);
+
+  useEffect(() => {
     fetchCartData();
   }, [fetchCartData]);
 
@@ -68,7 +72,7 @@ export default function CartPage() {
       const res = await validateDiscountCode(promoCodeInput.trim(), totalPrice);
       if (res.valid) {
         setDiscount(res.code, res.discountAmount);
-        toast.success(`Promo code ${res.code} applied! Saved $${res.discountAmount.toFixed(2)}`);
+        toast.success(`Promo code ${res.code} applied! Saved Rs. ${res.discountAmount.toFixed(2)}`);
         setPromoCodeInput('');
       } else {
         setPromoError(res.message || 'Invalid promo code');
@@ -225,7 +229,7 @@ export default function CartPage() {
                             )}
                           </h3>
                           <span className="font-sans font-semibold text-charcoal">
-                            ${item.subtotal.toFixed(2)}
+                            Rs. {item.subtotal.toFixed(2)}
                           </span>
                         </div>
                         {item.productId ? (
@@ -242,7 +246,7 @@ export default function CartPage() {
                           </p>
                         )}
                         <p className="mt-1 font-sans text-xs text-brown-muted">
-                          Unit Price: ${item.price.toFixed(2)}
+                          Unit Price: Rs. {item.price.toFixed(2)}
                         </p>
                       </div>
 
@@ -300,12 +304,12 @@ export default function CartPage() {
               <div className="space-y-4 font-sans text-xs text-brown-muted">
                 <div className="flex justify-between">
                   <span>Subtotal ({cartItemCount} items)</span>
-                  <span className="text-charcoal font-medium">${totalPrice.toFixed(2)}</span>
+                  <span className="text-charcoal font-medium">Rs. {totalPrice.toFixed(2)}</span>
                 </div>
                 {appliedDiscountCode && discountAmount > 0 && (
                   <div className="flex justify-between text-success font-semibold">
                     <span>Discount ({appliedDiscountCode})</span>
-                    <span>-${discountAmount.toFixed(2)}</span>
+                    <span>-Rs. {discountAmount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
@@ -314,12 +318,12 @@ export default function CartPage() {
                 </div>
                 <div className="flex justify-between">
                   <span>Estimated Tax</span>
-                  <span className="text-charcoal font-medium">$0.00</span>
+                  <span className="text-charcoal font-medium">Rs. 0.00</span>
                 </div>
 
                 <div className="border-t border-border/40 pt-4 flex justify-between text-sm sm:text-base font-semibold text-charcoal">
                   <span>Total</span>
-                  <span>${finalTotal.toFixed(2)}</span>
+                  <span>Rs. {finalTotal.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -332,7 +336,7 @@ export default function CartPage() {
                   <div className="flex items-center justify-between bg-success/10 border border-success/30 px-3 py-2 rounded-md text-xs text-success font-sans">
                     <div className="flex items-center gap-1.5 font-semibold">
                       <Tag className="h-3.5 w-3.5" />
-                      <span>PROMO: {appliedDiscountCode} (-${discountAmount.toFixed(2)})</span>
+                      <span>PROMO: {appliedDiscountCode} (-Rs. {discountAmount.toFixed(2)})</span>
                     </div>
                     <button
                       type="button"

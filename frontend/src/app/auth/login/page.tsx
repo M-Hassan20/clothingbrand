@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -26,6 +26,10 @@ export default function LoginPage() {
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    document.title = 'Sign In — Haus of Hafsah';
+  }, []);
 
   const {
     register,

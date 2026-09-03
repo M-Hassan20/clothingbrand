@@ -26,6 +26,10 @@ interface ProductVariantResponse {
 }
 
 export default function Inventory() {
+  useEffect(() => {
+    document.title = 'Stock Inventory — Haus of Hafsah Admin';
+  }, []);
+
   const [variants, setVariants] = useState<ProductVariantResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [threshold, setThreshold] = useState(10);
@@ -262,7 +266,7 @@ export default function Inventory() {
                         </div>
                       </td>
                       <td className="p-4 text-right font-semibold text-text-primary">
-                        ${v.price.toFixed(2)}
+                        Rs. {v.price.toFixed(2)}
                       </td>
                     </tr>
                   );

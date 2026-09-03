@@ -5,6 +5,11 @@ import { getCategories } from '@/lib/api/categories';
 
 export const revalidate = 3600;
 
+export const metadata = {
+  title: "Browse Categories",
+  description: "Browse curated clothing categories and collections at Haus of Hafsah.",
+};
+
 export default async function CategoriesOverviewPage() {
   const categoriesList = await getCategories();
 

@@ -182,13 +182,13 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const priceDisplay =
     minPrice === maxPrice
-      ? `$${minPrice.toFixed(2)}`
-      : `$${minPrice.toFixed(2)} - $${maxPrice.toFixed(2)}`;
+      ? `Rs. ${minPrice.toFixed(2)}`
+      : `Rs. ${minPrice.toFixed(2)} - Rs. ${maxPrice.toFixed(2)}`;
 
   const salePriceDisplay =
     minSalePrice === maxSalePrice
-      ? `$${(minSalePrice ?? minPrice).toFixed(2)}`
-      : `$${(minSalePrice ?? minPrice).toFixed(2)} - $${(maxSalePrice ?? maxPrice).toFixed(2)}`;
+      ? `Rs. ${(minSalePrice ?? minPrice).toFixed(2)}`
+      : `Rs. ${(minSalePrice ?? minPrice).toFixed(2)} - Rs. ${(maxSalePrice ?? maxPrice).toFixed(2)}`;
 
   return (
     <div className="group relative block w-full">

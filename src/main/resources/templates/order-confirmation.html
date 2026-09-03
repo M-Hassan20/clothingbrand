@@ -2,73 +2,199 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation - Haus of Hafsah</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #FAF7F2;
+            color: #2B2622;
+            margin: 0;
+            padding: 0;
             line-height: 1.6;
-            color: #333;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrapper {
+            width: 100%;
+            background-color: #FAF7F2;
+            padding: 40px 15px;
+            box-sizing: border-box;
+        }
+        .container {
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
+            background-color: #FFFFFF;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #E8DFD3;
+            box-shadow: 0 4px 16px rgba(43, 38, 34, 0.04);
         }
         .header {
-            background-color: #000;
-            color: #fff;
-            padding: 20px;
+            background-color: #2B2622;
+            padding: 32px 20px;
             text-align: center;
         }
+        .brand-title {
+            font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+            color: #FAF7F2;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+        .brand-subtitle {
+            color: #B08968;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 6px;
+        }
+        .banner {
+            background-color: #F5EFE6;
+            border-bottom: 1px solid #E8DFD3;
+            padding: 18px 20px;
+            text-align: center;
+        }
+        .banner-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            color: #2B2622;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
         .content {
-            padding: 30px 20px;
-            background-color: #f9f9f9;
+            padding: 36px 32px;
+        }
+        .greeting {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2B2622;
+            margin-bottom: 16px;
+        }
+        .message {
+            font-size: 14px;
+            color: #4A423A;
+            margin-bottom: 24px;
         }
         .order-summary {
-            background-color: #fff;
-            padding: 20px;
-            margin: 20px 0;
-            border-left: 4px solid #000;
+            background-color: #FAF7F2;
+            border: 1px solid #E8DFD3;
+            border-left: 4px solid #B08968;
+            border-radius: 6px;
+            padding: 20px 24px;
+            margin: 24px 0;
+        }
+        .order-summary h3 {
+            font-family: 'Playfair Display', Georgia, serif;
+            color: #2B2622;
+            font-size: 16px;
+            margin: 0 0 14px 0;
+            letter-spacing: 0.5px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .summary-row:last-child {
+            margin-bottom: 0;
+        }
+        .summary-label {
+            color: #8A7B6C;
+        }
+        .summary-value {
+            color: #2B2622;
+            font-weight: 600;
+        }
+        .cta-container {
+            text-align: center;
+            margin: 32px 0 24px 0;
         }
         .button {
             display: inline-block;
-            padding: 12px 30px;
-            background-color: #000;
-            color: #fff;
+            padding: 14px 36px;
+            background-color: #B08968;
+            color: #FFFFFF !important;
             text-decoration: none;
-            border-radius: 5px;
-            margin: 20px 0;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(176, 137, 104, 0.25);
+            transition: background-color 0.2s ease;
+        }
+        .signoff {
+            font-size: 14px;
+            color: #8A7B6C;
+            border-top: 1px solid #E8DFD3;
+            padding-top: 24px;
+            margin-top: 32px;
+        }
+        .signoff strong {
+            color: #2B2622;
         }
         .footer {
+            background-color: #FAF7F2;
+            border-top: 1px solid #E8DFD3;
+            padding: 24px 20px;
             text-align: center;
-            padding: 20px;
-            color: #666;
             font-size: 12px;
+            color: #8A7B6C;
+        }
+        .footer p {
+            margin: 4px 0;
         }
     </style>
 </head>
 <body>
-<div class="header">
-    <h1>Order Confirmed!</h1>
-</div>
+<div class="wrapper">
+    <div class="container">
+        <div class="header">
+            <h1 class="brand-title">Haus of Hafsah</h1>
+            <div class="brand-subtitle">Luxury Clothing &amp; Accessories</div>
+        </div>
 
-<div class="content">
-    <p>Hi <span th:text="${userName}">User</span>,</p>
+        <div class="banner">
+            <h2 class="banner-title">✨ Order Confirmed</h2>
+        </div>
 
-    <p>Thank you for your order! We've received your order and it's being processed.</p>
+        <div class="content">
+            <p class="greeting">Hi <span th:text="${userName}">User</span>,</p>
 
-    <div class="order-summary">
-        <h3>Order Details</h3>
-        <p><strong>Order Number:</strong> #<span th:text="${orderId}">12345</span></p>
-        <p><strong>Order Total:</strong> $<span th:text="${orderTotal}">0.00</span></p>
+            <p class="message">Thank you for shopping with Haus of Hafsah! We've received your order and our artisan team is preparing it for dispatch.</p>
+
+            <div class="order-summary">
+                <h3>Order Details</h3>
+                <div class="summary-row">
+                    <span class="summary-label">Order Number:</span>
+                    <span class="summary-value">#<span th:text="${orderId}">12345</span></span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Order Total:</span>
+                    <span class="summary-value">Rs. <span th:text="${orderTotal}">0.00</span></span>
+                </div>
+            </div>
+
+            <p class="message">We will notify you with dispatch details and tracking updates as soon as your shipment is on its way.</p>
+
+            <div class="cta-container">
+                <a th:href="${orderUrl}" class="button">View Order Details</a>
+            </div>
+
+            <div class="signoff">
+                Warm regards,<br>
+                <strong>The Haus of Hafsah Team</strong>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2026 Haus of Hafsah. All rights reserved.</p>
+            <p>Refined Elegance &amp; Timeless Couture</p>
+        </div>
     </div>
-
-    <p>We'll send you another email when your order ships.</p>
-
-    <a th:href="${orderUrl}" class="button">View Order Details</a>
-
-    <p>Best regards,<br>The Haus of Hafsah Team</p>
-</div>
-
-<div class="footer">
-    <p>&copy; 2026 Haus of Hafsah. All rights reserved.</p>
 </div>
 </body>
 </html>

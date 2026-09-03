@@ -18,7 +18,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Haus of Hafsah — Next.js Storefront",
+  title: {
+    default: "Haus of Hafsah — Luxury Clothing & Accessories",
+    template: "%s — Haus of Hafsah",
+  },
   description: "Customer-facing boutique storefront for Haus of Hafsah premium clothing brand.",
   icons: {
     icon: "/icon.png",
@@ -43,7 +46,7 @@ export default function RootLayout({
         </main>
         <Footer />
         <CartDrawer />
-        <Toaster position="bottom-right" />
+        <Toaster position="bottom-right" duration={1400} />
       </body>
     </html>
   );

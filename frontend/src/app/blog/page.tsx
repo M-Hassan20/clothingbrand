@@ -65,10 +65,10 @@ export default function BlogListingPage() {
               {posts.map((post) => {
                 const publishDate = post.publishedAt
                   ? new Date(post.publishedAt).toLocaleDateString(undefined, {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })
                   : 'Recent';
 
                 return (

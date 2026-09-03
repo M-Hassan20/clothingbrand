@@ -67,6 +67,10 @@ function ShopContent() {
   const [sortBy, setSortBy] = useState<string>('createdAt');
   const [sortDir, setSortDir] = useState<'ASC' | 'DESC'>('DESC');
 
+  useEffect(() => {
+    document.title = 'Shop Collections — Haus of Hafsah';
+  }, []);
+
   // Load static filter parameters (Categories and Brands)
   useEffect(() => {
     const loadFiltersData = async () => {

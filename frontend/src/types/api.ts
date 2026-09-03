@@ -26,6 +26,8 @@ export interface ProductResponse {
   };
   minPrice: number;
   maxPrice: number;
+  minSalePrice?: number;
+  maxSalePrice?: number;
   thumbnailImage: string | null;
   averageRating: number | null;
   reviewCount: number | null;
@@ -38,6 +40,7 @@ export interface ProductVariantResponse {
   size: string;
   color: string;
   price: number;
+  salePrice?: number;
   stockQuantity: number;
   sku: string;
   publicImageUrl: string;

@@ -49,6 +49,10 @@ interface DiscountFormData {
 }
 
 export default function Discounts() {
+  useEffect(() => {
+    document.title = 'Promotions & Discounts — Haus of Hafsah Admin';
+  }, []);
+
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -319,15 +323,15 @@ export default function Discounts() {
                         </span>
                       ) : (
                         <span className="flex items-center gap-1 text-success font-bold">
-                          ${discount.discountValue.toFixed(2)} OFF
+                          Rs. {discount.discountValue.toFixed(2)} OFF
                         </span>
                       )}
                     </td>
                     <td className="py-4 px-6 text-text-secondary font-semibold">
-                      {discount.minOrderAmount ? `$${discount.minOrderAmount.toFixed(2)}` : 'No Min'}
+                      {discount.minOrderAmount ? `Rs. ${discount.minOrderAmount.toFixed(2)}` : 'No Min'}
                     </td>
                     <td className="py-4 px-6 text-text-secondary font-semibold">
-                      {discount.maxDiscountAmount ? `$${discount.maxDiscountAmount.toFixed(2)}` : 'No Cap'}
+                      {discount.maxDiscountAmount ? `Rs. ${discount.maxDiscountAmount.toFixed(2)}` : 'No Cap'}
                     </td>
                     <td className="py-4 px-6 text-text-primary font-mono font-semibold">
                       {discount.currentUsageCount || 0}{' '}
@@ -581,7 +585,7 @@ export default function Discounts() {
                     className="w-full bg-background border border-border px-3 py-2 rounded font-semibold focus:outline-none focus:ring-1 focus:ring-accent text-text-primary"
                   >
                     <option value="PERCENTAGE">Percentage (%)</option>
-                    <option value="FIXED_AMOUNT">Fixed Amount ($)</option>
+                    <option value="FIXED_AMOUNT">Fixed Amount (Rs.)</option>
                   </select>
                 </div>
 
@@ -593,7 +597,7 @@ export default function Discounts() {
                     type="number"
                     step="0.01"
                     required
-                    placeholder={formData.discountType === 'PERCENTAGE' ? '10 (for 10%)' : '20 (for $20)'}
+                    placeholder={formData.discountType === 'PERCENTAGE' ? '10 (for 10%)' : '200 (for Rs. 200)'}
                     value={formData.discountValue}
                     onChange={(e) => setFormData({ ...formData, discountValue: e.target.value })}
                     className="w-full bg-background border border-border px-3 py-2 rounded font-semibold focus:outline-none focus:ring-1 focus:ring-accent text-text-primary"
@@ -604,7 +608,7 @@ export default function Discounts() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block font-semibold uppercase text-text-secondary">
-                    Min Order Amount ($)
+                    Min Order Amount (Rs.)
                   </label>
                   <input
                     type="number"
@@ -618,7 +622,7 @@ export default function Discounts() {
 
                 <div className="space-y-1.5">
                   <label className="block font-semibold uppercase text-text-secondary">
-                    Max Discount Cap ($)
+                    Max Discount Cap (Rs.)
                   </label>
                   <input
                     type="number"

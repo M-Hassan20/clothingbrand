@@ -23,6 +23,10 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
+  useEffect(() => {
+    document.title = `Order #${orderId} — Haus of Hafsah`;
+  }, [orderId]);
+
   const fetchOrderDetails = useCallback(async () => {
     try {
       setLoading(true);
@@ -167,11 +171,11 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
                     <div>
                       <h4 className="font-serif text-charcoal font-semibold">{item.productName}</h4>
                       <p className="mt-1 text-[10px] text-brown-muted">Variant: {item.variantName}</p>
-                      <p className="mt-0.5 text-[10px] text-brown-muted">Unit price: ${item.price.toFixed(2)}</p>
+                      <p className="mt-0.5 text-[10px] text-brown-muted">Unit price: Rs. {item.price.toFixed(2)}</p>
                     </div>
                     <div className="text-right space-y-1">
                       <span className="block text-brown-muted">Qty: {item.quantity}</span>
-                      <span className="block font-bold text-charcoal">${(item.price * item.quantity).toFixed(2)}</span>
+                      <span className="block font-bold text-charcoal">Rs. {(item.price * item.quantity).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -212,7 +216,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
               
               <div className="border-t border-border/40 pt-3 flex justify-between text-sm font-bold text-charcoal">
                 <span>Total Amount:</span>
-                <span>${Number(order.totalAmount ?? (order as { totalPrice?: number }).totalPrice ?? 0).toFixed(2)}</span>
+                <span>Rs. {Number(order.totalAmount ?? (order as { totalPrice?: number }).totalPrice ?? 0).toFixed(2)}</span>
               </div>
             </div>
           </div>

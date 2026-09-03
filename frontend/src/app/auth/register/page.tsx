@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -32,6 +32,10 @@ export default function RegisterPage() {
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    document.title = 'Create Account — Haus of Hafsah';
+  }, []);
 
   const {
     register,

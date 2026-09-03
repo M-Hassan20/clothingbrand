@@ -55,6 +55,10 @@ interface PaginatedResponse<T> {
 
 export default function Blog() {
   const { user, token } = useAuth();
+
+  useEffect(() => {
+    document.title = 'Journal & Blog CMS — Haus of Hafsah Admin';
+  }, []);
   
   // View State: list or edit
   const [editingPost, setEditingPost] = useState<BlogPostAdminResponse | null>(null);

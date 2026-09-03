@@ -64,6 +64,10 @@ interface PaginatedResponse<T> {
 export default function Reviews() {
   const [searchParams, setSearchParams] = useSearchParams();
 
+  useEffect(() => {
+    document.title = 'Product Reviews — Haus of Hafsah Admin';
+  }, []);
+
   // Filters State derived from URL searchParams
   const searchParam = searchParams.get('search') || '';
   const ratingParam = searchParams.get('rating') || '';

@@ -1,6 +1,11 @@
 import React from 'react';
 import Image from 'next/image';
 
+export const metadata = {
+  title: "About Us",
+  description: "Learn about the heritage, craftsmanship, and quiet luxury philosophy of Haus of Hafsah.",
+};
+
 export default function AboutPage() {
   return (
     <div className="w-full bg-background min-h-[calc(100vh-4rem)]">

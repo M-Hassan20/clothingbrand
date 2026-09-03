@@ -217,7 +217,7 @@ export default function CartDrawer() {
                           </h4>
                         )}
                         <span className="font-sans font-medium text-charcoal">
-                          ${item.subtotal.toFixed(2)}
+                          Rs. {item.subtotal.toFixed(2)}
                         </span>
                       </div>
                       {item.productId ? (
@@ -279,7 +279,7 @@ export default function CartDrawer() {
             <div className="flex items-center justify-between text-sm">
               <span className="font-sans text-brown-muted font-medium">Subtotal</span>
               <span className="font-sans text-lg font-semibold text-charcoal">
-                ${totalPrice.toFixed(2)}
+                Rs. {totalPrice.toFixed(2)}
               </span>
             </div>
             <p className="font-sans text-[11px] text-brown-muted">

@@ -22,6 +22,10 @@ function PaymentSuccessContent() {
   const { userId: authUserId } = useAuthStore();
   const userId = getEffectiveUserId(authUserId);
 
+  useEffect(() => {
+    document.title = 'Payment Confirmation — Haus of Hafsah';
+  }, []);
+
   const [loading, setLoading] = useState(true);
   const [payment, setPayment] = useState<PaymentResponse | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -286,11 +286,11 @@ public class InvoiceService {
                     .setPadding(8)
                     .setTextAlignment(TextAlignment.CENTER));
 
-            itemsTable.addCell(new Cell().add(new Paragraph("$" + item.getPriceSnapshot().toString()).setFont(regularFont))
+            itemsTable.addCell(new Cell().add(new Paragraph("Rs. " + item.getPriceSnapshot().toString()).setFont(regularFont))
                     .setPadding(8)
                     .setTextAlignment(TextAlignment.RIGHT));
 
-            itemsTable.addCell(new Cell().add(new Paragraph("$" + itemTotal.toString()).setFont(regularFont))
+            itemsTable.addCell(new Cell().add(new Paragraph("Rs. " + itemTotal.toString()).setFont(regularFont))
                     .setPadding(8)
                     .setTextAlignment(TextAlignment.RIGHT));
         }
@@ -309,7 +309,7 @@ public class InvoiceService {
                 .setBorder(Border.NO_BORDER)
                 .setTextAlignment(TextAlignment.RIGHT)
                 .setPadding(5));
-        totalsTable.addCell(new Cell().add(new Paragraph("$" + data.getSubtotal().toString()).setFont(regularFont))
+        totalsTable.addCell(new Cell().add(new Paragraph("Rs. " + data.getSubtotal().toString()).setFont(regularFont))
                 .setBorder(Border.NO_BORDER)
                 .setTextAlignment(TextAlignment.RIGHT)
                 .setPadding(5));
@@ -320,7 +320,7 @@ public class InvoiceService {
                     .setBorder(Border.NO_BORDER)
                     .setTextAlignment(TextAlignment.RIGHT)
                     .setPadding(5));
-            totalsTable.addCell(new Cell().add(new Paragraph("$" + data.getShippingFee().toString()).setFont(regularFont))
+            totalsTable.addCell(new Cell().add(new Paragraph("Rs. " + data.getShippingFee().toString()).setFont(regularFont))
                     .setBorder(Border.NO_BORDER)
                     .setTextAlignment(TextAlignment.RIGHT)
                     .setPadding(5));
@@ -332,7 +332,7 @@ public class InvoiceService {
                     .setBorder(Border.NO_BORDER)
                     .setTextAlignment(TextAlignment.RIGHT)
                     .setPadding(5));
-            totalsTable.addCell(new Cell().add(new Paragraph("-$" + data.getDiscount().toString()).setFont(regularFont))
+            totalsTable.addCell(new Cell().add(new Paragraph("-Rs. " + data.getDiscount().toString()).setFont(regularFont))
                     .setBorder(Border.NO_BORDER)
                     .setTextAlignment(TextAlignment.RIGHT)
                     .setPadding(5));
@@ -344,7 +344,7 @@ public class InvoiceService {
                     .setBorder(Border.NO_BORDER)
                     .setTextAlignment(TextAlignment.RIGHT)
                     .setPadding(5));
-            totalsTable.addCell(new Cell().add(new Paragraph("$" + data.getTax().toString()).setFont(regularFont))
+            totalsTable.addCell(new Cell().add(new Paragraph("Rs. " + data.getTax().toString()).setFont(regularFont))
                     .setBorder(Border.NO_BORDER)
                     .setTextAlignment(TextAlignment.RIGHT)
                     .setPadding(5));
@@ -356,7 +356,7 @@ public class InvoiceService {
                 .setTextAlignment(TextAlignment.RIGHT)
                 .setPadding(5)
                 .setPaddingTop(10));
-        totalsTable.addCell(new Cell().add(new Paragraph("$" + data.getTotal().toString()).setFont(boldFont).setFontSize(14))
+        totalsTable.addCell(new Cell().add(new Paragraph("Rs. " + data.getTotal().toString()).setFont(boldFont).setFontSize(14))
                 .setBorder(Border.NO_BORDER)
                 .setTextAlignment(TextAlignment.RIGHT)
                 .setPadding(5)

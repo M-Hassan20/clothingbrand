@@ -68,6 +68,10 @@ const RANGE_OPTIONS: { label: string; value: ChartRange }[] = [
 export default function Dashboard() {
   const navigate = useNavigate();
 
+  useEffect(() => {
+    document.title = 'Dashboard — Haus of Hafsah Admin';
+  }, []);
+
   // Metrics States
   const [loading, setLoading] = useState(true);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
@@ -225,7 +229,7 @@ export default function Dashboard() {
               Today's Revenue
             </span>
             <span className="font-serif text-3xl font-bold text-text-primary block">
-              ${todayRevenue.toFixed(2)}
+              Rs. {todayRevenue.toFixed(2)}
             </span>
             <span className="text-[10px] text-text-secondary block">
               Cleared checkouts
@@ -350,7 +354,7 @@ export default function Dashboard() {
                   <div key={order.id} className="py-3 flex flex-col gap-1 text-xs">
                     <div className="flex justify-between items-center">
                       <span className="font-semibold text-text-primary">Order #{order.id}</span>
-                      <span className="font-semibold text-text-primary">${order.totalAmount.toFixed(2)}</span>
+                      <span className="font-semibold text-text-primary">Rs. {order.totalAmount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center text-[10px] text-text-secondary">
                       <span>{order.userFullName || order.userEmail}</span>

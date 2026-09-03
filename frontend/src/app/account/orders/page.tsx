@@ -13,6 +13,10 @@ export default function AccountOrdersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    document.title = 'Order History — Haus of Hafsah';
+  }, []);
+
+  useEffect(() => {
     const fetchOrders = async () => {
       if (!authUserId) return;
       try {
@@ -125,7 +129,7 @@ export default function AccountOrdersPage() {
                     Total Amount
                   </span>
                   <span className="font-bold text-charcoal">
-                    ${Number(order.totalAmount ?? (order as { totalPrice?: number }).totalPrice ?? 0).toFixed(2)}
+                    Rs. {Number(order.totalAmount ?? (order as { totalPrice?: number }).totalPrice ?? 0).toFixed(2)}
                   </span>
                 </div>
                 <div>

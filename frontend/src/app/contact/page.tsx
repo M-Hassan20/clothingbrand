@@ -1,11 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, Phone, Globe, Loader2, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { submitContact } from '@/lib/api/contact';
 
 export default function ContactPage() {
+  useEffect(() => {
+    document.title = 'Contact Us — Haus of Hafsah';
+  }, []);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',

@@ -2,47 +2,157 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Low Stock Alert - Haus of Hafsah Admin</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #FAF7F2;
+            color: #2B2622;
+            margin: 0;
+            padding: 0;
             line-height: 1.6;
-            color: #333;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrapper {
+            width: 100%;
+            background-color: #FAF7F2;
+            padding: 40px 15px;
+            box-sizing: border-box;
+        }
+        .container {
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
+            background-color: #FFFFFF;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #E8DFD3;
+            box-shadow: 0 4px 16px rgba(43, 38, 34, 0.04);
         }
         .header {
-            background-color: #ffc107;
-            color: #000;
-            padding: 20px;
+            background-color: #2B2622;
+            padding: 32px 20px;
             text-align: center;
         }
-        .content {
-            padding: 30px 20px;
-            background-color: #f9f9f9;
+        .brand-title {
+            font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+            color: #FAF7F2;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            margin: 0;
+            text-transform: uppercase;
         }
-        .alert {
-            background-color: #fff3cd;
-            padding: 20px;
-            margin: 20px 0;
-            border-left: 4px solid #ffc107;
+        .brand-subtitle {
+            color: #B08968;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 6px;
+        }
+        .banner {
+            background-color: #FFF8F0;
+            border-bottom: 1px solid #E8DFD3;
+            padding: 18px 20px;
+            text-align: center;
+        }
+        .banner-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            color: #B3452F;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+        .content {
+            padding: 36px 32px;
+        }
+        .greeting {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2B2622;
+            margin-bottom: 16px;
+        }
+        .message {
+            font-size: 14px;
+            color: #4A423A;
+            margin-bottom: 24px;
+        }
+        .alert-card {
+            background-color: #FFF8F0;
+            border: 1px solid #E8DFD3;
+            border-left: 4px solid #B3452F;
+            border-radius: 6px;
+            padding: 20px 24px;
+            margin: 24px 0;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .summary-row:last-child {
+            margin-bottom: 0;
+        }
+        .summary-label {
+            color: #8A7B6C;
+        }
+        .summary-value {
+            color: #2B2622;
+            font-weight: 600;
+        }
+        .stock-badge {
+            color: #B3452F;
+            font-weight: 700;
+        }
+        .footer {
+            background-color: #FAF7F2;
+            border-top: 1px solid #E8DFD3;
+            padding: 24px 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #8A7B6C;
+        }
+        .footer p {
+            margin: 4px 0;
         }
     </style>
 </head>
 <body>
-<div class="header">
-    <h1>⚠️ Low Stock Alert</h1>
-</div>
+<div class="wrapper">
+    <div class="container">
+        <div class="header">
+            <h1 class="brand-title">Haus of Hafsah</h1>
+            <div class="brand-subtitle">Admin Inventory Alert</div>
+        </div>
 
-<div class="content">
-    <p>Hello Admin,</p>
+        <div class="banner">
+            <h2 class="banner-title">⚠️ Low Stock Threshold Reached</h2>
+        </div>
 
-    <div class="alert">
-        <p><strong>Product:</strong> <span th:text="${productName}">Product Name</span></p>
-        <p><strong>Current Stock:</strong> <span th:text="${currentStock}">0</span> units</p>
+        <div class="content">
+            <p class="greeting">Hello Admin,</p>
+
+            <p class="message">The stock level for the following item has dropped below the minimum threshold:</p>
+
+            <div class="alert-card">
+                <div class="summary-row">
+                    <span class="summary-label">Product Name:</span>
+                    <span class="summary-value" th:text="${productName}">Product Name</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Remaining Units:</span>
+                    <span class="summary-value stock-badge"><span th:text="${currentStock}">0</span> units</span>
+                </div>
+            </div>
+
+            <p class="message" style="color: #8A7B6C;">Please restock this item promptly in the admin portal to maintain inventory availability on the storefront.</p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2026 Haus of Hafsah Admin Management</p>
+        </div>
     </div>
-
-    <p>Please restock this product soon to avoid running out.</p>
 </div>
 </body>
 </html>

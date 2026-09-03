@@ -23,6 +23,10 @@ export default function AccountWishlistPage() {
 
   const userId = getEffectiveUserId(authUserId);
 
+  useEffect(() => {
+    document.title = 'My Wishlist — Haus of Hafsah';
+  }, []);
+
   const fetchWishlist = useCallback(async () => {
     if (!authUserId) {
       setWishlistItems(guestWishlistItems);
@@ -147,7 +151,7 @@ export default function AccountWishlistPage() {
                       Variant: {variant.size} / {variant.color}
                     </p>
                     <p className="font-bold text-charcoal pt-0.5">
-                      ${variant.price.toFixed(2)}
+                      Rs. {variant.price.toFixed(2)}
                     </p>
                     <p className="text-[10px] text-brown-muted italic">
                       Added on {new Date(item.addedAt).toLocaleDateString()}

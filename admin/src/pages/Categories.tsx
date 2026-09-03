@@ -19,6 +19,10 @@ interface Category {
 }
 
 export default function Categories() {
+  useEffect(() => {
+    document.title = 'Categories — Haus of Hafsah Admin';
+  }, []);
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 

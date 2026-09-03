@@ -3,13 +3,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, ChevronRight, ArrowLeft, Download, MapPin } from 'lucide-react';
+import { CheckCircle2, ChevronRight, ArrowLeft, Download, MapPin, Loader2 } from 'lucide-react';
 import { useCartStore } from '@/lib/stores/cart-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { getAddresses, createAddress } from '@/lib/api/addresses';
 import { createOrder, createGuestOrder, downloadOrderInvoice } from '@/lib/api/orders';
 import { initiateSafePayCheckout } from '@/lib/api/payment';
-import { clearCart } from '@/lib/api/cart';
+import { clearCart, getCart } from '@/lib/api/cart';
 import { validateDiscountCode } from '@/lib/api/discounts';
 import { AddressResponse, AddressCreateRequest, OrderResponse } from '@/types/api';
 import AddressSelector from '@/components/checkout/AddressSelector';
@@ -38,6 +38,7 @@ export default function CheckoutPage() {
   const [addresses, setAddresses] = useState<AddressResponse[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [createdOrder, setCreatedOrder] = useState<OrderResponse | null>(null);
 
   const [guestInfo, setGuestInfo] = useState({
@@ -53,6 +54,25 @@ export default function CheckoutPage() {
   const items = cart?.items || [];
   const totalPrice = cart?.totalPrice || 0;
 
+  const fetchCartData = useCallback(async () => {
+    try {
+      const updatedCart = await getCart(userId);
+      setCart(updatedCart);
+    } catch (error) {
+      console.error('Failed to load cart on checkout:', error);
+    } finally {
+      setIsInitializing(false);
+    }
+  }, [userId, setCart]);
+
+  useEffect(() => {
+    document.title = 'Checkout — Haus of Hafsah';
+  }, []);
+
+  useEffect(() => {
+    fetchCartData();
+  }, [fetchCartData]);
+
   const handleApplyDiscount = async (code: string) => {
     if (appliedDiscountCode) {
       toast.error('A promo code is already applied. Remove it first to use another.');
@@ -61,7 +81,7 @@ export default function CheckoutPage() {
     const res = await validateDiscountCode(code, totalPrice);
     if (res.valid) {
       setDiscount(res.code, res.discountAmount);
-      toast.success(`Promo code ${res.code} applied! Saved $${res.discountAmount.toFixed(2)}`);
+      toast.success(`Promo code ${res.code} applied! Saved Rs. ${res.discountAmount.toFixed(2)}`);
     } else {
       throw new Error(res.message || 'Invalid promo code');
     }
@@ -73,12 +93,14 @@ export default function CheckoutPage() {
   };
 
   useEffect(() => {
-    // Redirect if cart is empty and not on confirmation page
-    if (step !== 'confirmation' && (!cart || !cart.items || cart.items.length === 0)) {
-      toast.error('Your bag is empty.');
-      router.push('/cart');
+    // Redirect if initialization is finished, cart is empty, and not on confirmation page
+    if (!isInitializing && step !== 'confirmation') {
+      if (!cart || !cart.items || cart.items.length === 0) {
+        toast.error('Your bag is empty.');
+        router.push('/cart');
+      }
     }
-  }, [cart, step, router]);
+  }, [isInitializing, cart, step, router]);
 
   const fetchAddresses = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -201,6 +223,17 @@ export default function CheckoutPage() {
     }
   };
 
+  if (isInitializing && (!cart || !cart.items || cart.items.length === 0)) {
+    return (
+      <div className="w-full bg-background min-h-[calc(100vh-4rem)] flex items-center justify-center py-24">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-accent" />
+          <p className="font-serif text-sm text-brown-muted tracking-wide">Loading checkout details...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (step === 'confirmation' && createdOrder) {
     const orderTotal = Number(createdOrder.totalAmount ?? (createdOrder as { totalPrice?: number }).totalPrice ?? 0);
     return (
@@ -225,7 +258,7 @@ export default function CheckoutPage() {
             </div>
             <div className="flex justify-between border-b border-border/40 pb-3">
               <span className="text-brown-muted">Total Amount</span>
-              <span className="font-semibold text-charcoal">${orderTotal.toFixed(2)}</span>
+              <span className="font-semibold text-charcoal">Rs. {orderTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-brown-muted">Payment Method</span>
