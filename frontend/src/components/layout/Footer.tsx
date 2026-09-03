@@ -103,7 +103,7 @@ export default function Footer() {
             <h4 className="font-serif text-sm font-semibold text-charcoal tracking-wide mb-4">Assistance</h4>
             <ul className="space-y-2.5 font-sans text-xs">
               <li>
-                <Link href="/assistance/shipping" className="text-brown-muted hover:text-charcoal transition-colors">
+                <Link href="/shipping-returns" className="text-brown-muted hover:text-charcoal transition-colors">
                   Shipping & Returns
                 </Link>
               </li>

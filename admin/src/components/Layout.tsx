@@ -24,7 +24,7 @@ export default function Layout() {
 
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { name: 'Homepage Config', path: '/homepage', icon: Home },
+    { name: 'Store Config & Pages', path: '/config', icon: Home },
     { name: 'Products', path: '/products', icon: ShoppingBag },
     { name: 'Categories', path: '/categories', icon: Layers },
     { name: 'Orders', path: '/orders', icon: ListCollapse },

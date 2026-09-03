@@ -105,4 +105,14 @@ public class JwtUtil {
             return false;
         }
     }
+
+    public boolean validatePreviewToken(String token) {
+        try {
+            if (isTokenExpired(token)) return false;
+            String scope = extractScope(token);
+            return "PREVIEW".equals(scope);
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

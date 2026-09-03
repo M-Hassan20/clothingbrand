@@ -1,15 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Mail, Phone, Globe, Loader2, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Mail, Phone, Globe, Loader2, ArrowRight, AlertCircle, MapPin, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { submitContact } from '@/lib/api/contact';
+import { getPageConfig, PageConfigDTO } from '@/lib/api/pages';
+import UrlSanitizer from '@/components/common/UrlSanitizer';
 
-export default function ContactPage() {
-  useEffect(() => {
-    document.title = 'Contact Us — Haus of Hafsah';
-  }, []);
-
+function ContactContent() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -17,6 +16,28 @@ export default function ContactPage() {
     message: '',
   });
   const [loading, setLoading] = useState(false);
+
+  const [pageConfig, setPageConfig] = useState<PageConfigDTO | null>(null);
+
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token') || undefined;
+
+  useEffect(() => {
+    async function loadConfig() {
+      try {
+        const res = await getPageConfig('CONTACT', token);
+        setPageConfig(res);
+        if (res?.metaTitle || res?.title) {
+          document.title = `${res.metaTitle || res.title} — Haus of Hafsah`;
+        } else {
+          document.title = 'Contact Us — Haus of Hafsah';
+        }
+      } catch (err) {
+        console.error('Failed to load contact page config:', err);
+      }
+    }
+    loadConfig();
+  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,19 +54,34 @@ export default function ContactPage() {
     }
   };
 
+  const headerTitle = pageConfig?.title || 'We would love to hear from you';
+  const headerSubtitle = pageConfig?.subtitle || 'For order inquiries, bespoke sizing guidance, or collaborator discussions, reach out to our dedicated concierge.';
+  const email = pageConfig?.contactEmail || 'info@hausofhafsah.com';
+  const phone = pageConfig?.contactPhone || '+92 314 8730683';
+  const address = pageConfig?.contactAddress || 'Block 4, Clifton, Karachi, Pakistan';
+  const hours = pageConfig?.workingHours || 'Monday to Friday, 9:00 AM – 6:00 PM (PKT)';
+
   return (
     <div className="w-full bg-background min-h-[calc(100vh-4rem)]">
+      <UrlSanitizer paramKey="token" />
+      {/* Preview Banner */}
+      {pageConfig?.isPreview && (
+        <div className="w-full bg-accent/15 text-accent text-xs font-semibold px-4 py-3 text-center border-b border-accent/20 flex items-center justify-center gap-1.5 font-sans">
+          <AlertCircle className="h-4 w-4" />
+          <span>Preview Mode: You are viewing an unpublished draft of the Contact page.</span>
+        </div>
+      )}
+
       {/* Editorial Header */}
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 text-center space-y-4">
         <span className="font-sans text-xs font-semibold uppercase tracking-widest text-accent">
           Contact Us
         </span>
         <h1 className="font-serif text-4xl sm:text-5xl text-charcoal tracking-wide max-w-2xl mx-auto leading-tight">
-          We would love to <br />
-          <span className="italic">hear from you</span>
+          {headerTitle}
         </h1>
         <p className="font-sans text-xs sm:text-sm text-brown-muted max-w-xl mx-auto leading-relaxed pt-2">
-          For order inquiries, bespoke sizing guidance, or collaborator discussions, reach out to our dedicated concierge.
+          {headerSubtitle}
         </p>
       </section>
 
@@ -58,7 +94,7 @@ export default function ContactPage() {
               Concierge Desk
             </h2>
             <p className="font-sans text-xs sm:text-sm text-brown-muted leading-relaxed">
-              Our support team operates from Monday to Friday, between 9:00 AM and 6:00 PM (PKT). We endeavor to respond to all inquiries within 24 hours.
+              Operating Hours: {hours}. We endeavor to respond to all customer inquiries promptly.
             </p>
           </div>
 
@@ -73,13 +109,13 @@ export default function ContactPage() {
                   Email Inquiry
                 </span>
                 <a
-                  href="mailto:info@hausofhafsah.com"
-                  className="block text-charcoal hover:text-accent transition-colors"
+                  href={`mailto:${email}`}
+                  className="block text-charcoal hover:text-accent transition-colors font-medium"
                 >
-                  info@hausofhafsah.com
+                  {email}
                 </a>
                 <span className="text-[10px] text-brown-muted font-normal block">
-                  For business or general inquiries
+                  For order status or boutique inquiries
                 </span>
               </div>
             </div>
@@ -94,10 +130,10 @@ export default function ContactPage() {
                   Direct Line
                 </span>
                 <a
-                  href="tel:+923148730683"
+                  href={`tel:${phone}`}
                   className="block text-charcoal hover:text-accent transition-colors font-mono"
                 >
-                  +92 314 8730683
+                  {phone}
                 </a>
                 <span className="text-[10px] text-brown-muted font-normal block">
                   Voice call or WhatsApp Support
@@ -108,17 +144,17 @@ export default function ContactPage() {
             {/* Location Info Card */}
             <div className="flex items-start gap-4 p-4 rounded-md border border-border/40 bg-beige/10 hover:bg-beige/20 transition-all duration-300">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10 text-accent shrink-0 font-normal">
-                <Globe className="h-5 w-5" />
+                <MapPin className="h-5 w-5" />
               </div>
               <div className="space-y-1">
                 <span className="block font-semibold uppercase text-[10px] tracking-wider text-brown-muted">
-                  Store Format
+                  Boutique Location / Address
                 </span>
-                <span className="block text-charcoal">
-                  Online-Only Atelier
+                <span className="block text-charcoal font-medium">
+                  {address}
                 </span>
                 <span className="text-[10px] text-brown-muted font-normal block leading-relaxed">
-                  We operate exclusively online, dispatching all items with direct trackable shipping. No physical showrooms.
+                  Headquarters & dispatch center
                 </span>
               </div>
             </div>
@@ -216,5 +252,17 @@ export default function ContactPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function ContactPage() {
+  return (
+    <Suspense fallback={
+      <div className="w-full min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-accent" />
+      </div>
+    }>
+      <ContactContent />
+    </Suspense>
   );
 }

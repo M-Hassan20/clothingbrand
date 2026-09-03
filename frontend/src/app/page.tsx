@@ -5,6 +5,7 @@ import Hero from '@/components/home/Hero';
 import CategoryTiles from '@/components/home/CategoryTiles';
 import FeaturedProducts from '@/components/home/FeaturedProducts';
 import NewsletterSignup from '@/components/home/NewsletterSignup';
+import UrlSanitizer from '@/components/common/UrlSanitizer';
 
 export const revalidate = 3600; // revalidate every hour
 
@@ -30,6 +31,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
   return (
     <div className="flex flex-col w-full">
+      <UrlSanitizer paramKey="token" />
       {/* 1. Split Hero Section */}
       <Hero
         title={homepageConfig?.heroTitle}
