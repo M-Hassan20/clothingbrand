@@ -1,13 +1,21 @@
 package com.ecommerce.application.service.impl;
 
+import com.ecommerce.application.dto.request.CarouselSlideRequest;
 import com.ecommerce.application.dto.request.PageConfigRequest;
+import com.ecommerce.application.dto.response.CarouselSlideResponse;
+import com.ecommerce.application.dto.response.CategoryResponse;
 import com.ecommerce.application.dto.response.PageConfigResponse;
 import com.ecommerce.application.dto.response.ProductResponse;
+import com.ecommerce.application.entity.Category;
+import com.ecommerce.application.entity.HomepageCarouselSlide;
 import com.ecommerce.application.entity.PageConfig;
 import com.ecommerce.application.entity.Product;
+import com.ecommerce.application.enums.CarouselLinkType;
+import com.ecommerce.application.enums.HeroType;
 import com.ecommerce.application.enums.PageConfigStatus;
 import com.ecommerce.application.enums.PageKey;
 import com.ecommerce.application.mapper.ProductMapper;
+import com.ecommerce.application.repository.CategoryRepository;
 import com.ecommerce.application.repository.PageConfigRepository;
 import com.ecommerce.application.repository.ProductRepository;
 import com.ecommerce.application.security.JwtUtil;
@@ -28,6 +36,7 @@ public class PageConfigService {
 
     private final PageConfigRepository repository;
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
     private final ProductMapper productMapper;
     private final JwtUtil jwtUtil;
 
@@ -43,11 +52,19 @@ public class PageConfigService {
         PageConfig draft = repository.findByPageKeyAndStatus(pageKey, PageConfigStatus.DRAFT)
                 .orElseGet(() -> seedDraftFromPublishedOrBlank(pageKey));
 
+        if (request.getHeroType() != null) {
+            draft.setHeroType(request.getHeroType());
+        }
         draft.setTitle(request.getTitle());
         draft.setSubtitle(request.getSubtitle());
         draft.setImageUrl(request.getImageUrl());
         draft.setCtaText(request.getCtaText());
         draft.setCtaLink(request.getCtaLink());
+
+        if (request.getCarouselIntervalSeconds() != null) {
+            draft.setCarouselIntervalSeconds(request.getCarouselIntervalSeconds());
+        }
+
         draft.setContentHtml(request.getContentHtml());
 
         draft.setContactEmail(request.getContactEmail());
@@ -60,6 +77,26 @@ public class PageConfigService {
 
         if (request.getFeaturedProductIds() != null) {
             draft.setFeaturedProductIds(new ArrayList<>(request.getFeaturedProductIds()));
+        }
+
+        // Replace slide collection for HOMEPAGE key
+        if (pageKey == PageKey.HOMEPAGE && request.getSlides() != null) {
+            draft.getSlides().clear();
+            int order = 0;
+            for (CarouselSlideRequest slideReq : request.getSlides()) {
+                HomepageCarouselSlide slide = HomepageCarouselSlide.builder()
+                        .imageUrl(slideReq.getImageUrl())
+                        .title(slideReq.getTitle())
+                        .subtitle(slideReq.getSubtitle())
+                        .ctaText(slideReq.getCtaText())
+                        .linkType(slideReq.getLinkType() != null ? slideReq.getLinkType() : CarouselLinkType.NONE)
+                        .targetId(slideReq.getTargetId())
+                        .customUrl(slideReq.getCustomUrl())
+                        .displayOrder(slideReq.getDisplayOrder() != null ? slideReq.getDisplayOrder() : order++)
+                        .pageConfig(draft)
+                        .build();
+                draft.getSlides().add(slide);
+            }
         }
 
         PageConfig saved = repository.save(draft);
@@ -77,11 +114,13 @@ public class PageConfigService {
                         .status(PageConfigStatus.PUBLISHED)
                         .build());
 
+        published.setHeroType(draft.getHeroType());
         published.setTitle(draft.getTitle());
         published.setSubtitle(draft.getSubtitle());
         published.setImageUrl(draft.getImageUrl());
         published.setCtaText(draft.getCtaText());
         published.setCtaLink(draft.getCtaLink());
+        published.setCarouselIntervalSeconds(draft.getCarouselIntervalSeconds());
         published.setContentHtml(draft.getContentHtml());
 
         published.setContactEmail(draft.getContactEmail());
@@ -93,6 +132,26 @@ public class PageConfigService {
         published.setMetaDescription(draft.getMetaDescription());
 
         published.setFeaturedProductIds(new ArrayList<>(draft.getFeaturedProductIds()));
+
+        // Deep copy slides on publish
+        if (pageKey == PageKey.HOMEPAGE) {
+            published.getSlides().clear();
+            int order = 0;
+            for (HomepageCarouselSlide draftSlide : draft.getSlides()) {
+                HomepageCarouselSlide pubSlide = HomepageCarouselSlide.builder()
+                        .imageUrl(draftSlide.getImageUrl())
+                        .title(draftSlide.getTitle())
+                        .subtitle(draftSlide.getSubtitle())
+                        .ctaText(draftSlide.getCtaText())
+                        .linkType(draftSlide.getLinkType())
+                        .targetId(draftSlide.getTargetId())
+                        .customUrl(draftSlide.getCustomUrl())
+                        .displayOrder(draftSlide.getDisplayOrder() != null ? draftSlide.getDisplayOrder() : order++)
+                        .pageConfig(published)
+                        .build();
+                published.getSlides().add(pubSlide);
+            }
+        }
 
         PageConfig savedPublished = repository.save(published);
         return toResponse(savedPublished, false);
@@ -118,8 +177,11 @@ public class PageConfigService {
         return PageConfigResponse.builder()
                 .pageKey(pageKey)
                 .status(PageConfigStatus.PUBLISHED)
+                .heroType(HeroType.SPLIT)
                 .title(getDefaultTitle(pageKey))
                 .subtitle(getDefaultSubtitle(pageKey))
+                .carouselIntervalSeconds(5)
+                .slides(new ArrayList<>())
                 .featuredProductIds(new ArrayList<>())
                 .featuredProducts(new ArrayList<>())
                 .isPreview(isPreview)
@@ -130,14 +192,16 @@ public class PageConfigService {
         Optional<PageConfig> pubOpt = repository.findByPageKeyAndStatus(pageKey, PageConfigStatus.PUBLISHED);
         if (pubOpt.isPresent()) {
             PageConfig pub = pubOpt.get();
-            return repository.save(PageConfig.builder()
+            PageConfig newDraft = PageConfig.builder()
                     .pageKey(pageKey)
                     .status(PageConfigStatus.DRAFT)
+                    .heroType(pub.getHeroType() != null ? pub.getHeroType() : HeroType.SPLIT)
                     .title(pub.getTitle())
                     .subtitle(pub.getSubtitle())
                     .imageUrl(pub.getImageUrl())
                     .ctaText(pub.getCtaText())
                     .ctaLink(pub.getCtaLink())
+                    .carouselIntervalSeconds(pub.getCarouselIntervalSeconds() != null ? pub.getCarouselIntervalSeconds() : 5)
                     .contentHtml(pub.getContentHtml())
                     .contactEmail(pub.getContactEmail())
                     .contactPhone(pub.getContactPhone())
@@ -146,14 +210,32 @@ public class PageConfigService {
                     .metaTitle(pub.getMetaTitle())
                     .metaDescription(pub.getMetaDescription())
                     .featuredProductIds(new ArrayList<>(pub.getFeaturedProductIds()))
-                    .build());
+                    .build();
+
+            for (HomepageCarouselSlide pubSlide : pub.getSlides()) {
+                HomepageCarouselSlide draftSlide = HomepageCarouselSlide.builder()
+                        .imageUrl(pubSlide.getImageUrl())
+                        .title(pubSlide.getTitle())
+                        .subtitle(pubSlide.getSubtitle())
+                        .ctaText(pubSlide.getCtaText())
+                        .linkType(pubSlide.getLinkType())
+                        .targetId(pubSlide.getTargetId())
+                        .customUrl(pubSlide.getCustomUrl())
+                        .displayOrder(pubSlide.getDisplayOrder())
+                        .pageConfig(newDraft)
+                        .build();
+                newDraft.getSlides().add(draftSlide);
+            }
+            return repository.save(newDraft);
         }
 
         return repository.save(PageConfig.builder()
                 .pageKey(pageKey)
                 .status(PageConfigStatus.DRAFT)
+                .heroType(HeroType.SPLIT)
                 .title(getDefaultTitle(pageKey))
                 .subtitle(getDefaultSubtitle(pageKey))
+                .carouselIntervalSeconds(5)
                 .featuredProductIds(new ArrayList<>())
                 .build());
     }
@@ -173,15 +255,53 @@ public class PageConfigService {
             }
         }
 
+        List<CarouselSlideResponse> slideResponses = new ArrayList<>();
+        if (config.getSlides() != null) {
+            for (HomepageCarouselSlide slide : config.getSlides()) {
+                ProductResponse resolvedProduct = null;
+                CategoryResponse resolvedCategory = null;
+
+                if (slide.getLinkType() == CarouselLinkType.PRODUCT && slide.getTargetId() != null) {
+                    Optional<Product> pOpt = productRepository.findById(slide.getTargetId());
+                    if (pOpt.isPresent()) {
+                        resolvedProduct = productMapper.toResponse(pOpt.get());
+                    }
+                } else if (slide.getLinkType() == CarouselLinkType.CATEGORY && slide.getTargetId() != null) {
+                    Optional<Category> cOpt = categoryRepository.findById(slide.getTargetId());
+                    if (cOpt.isPresent()) {
+                        Category c = cOpt.get();
+                        resolvedCategory = new CategoryResponse(c.getId(), c.getName());
+                    }
+                }
+
+                slideResponses.add(CarouselSlideResponse.builder()
+                        .id(slide.getId())
+                        .imageUrl(slide.getImageUrl())
+                        .title(slide.getTitle())
+                        .subtitle(slide.getSubtitle())
+                        .ctaText(slide.getCtaText())
+                        .linkType(slide.getLinkType() != null ? slide.getLinkType() : CarouselLinkType.NONE)
+                        .targetId(slide.getTargetId())
+                        .customUrl(slide.getCustomUrl())
+                        .displayOrder(slide.getDisplayOrder())
+                        .resolvedProduct(resolvedProduct)
+                        .resolvedCategory(resolvedCategory)
+                        .build());
+            }
+        }
+
         return PageConfigResponse.builder()
                 .id(config.getId())
                 .pageKey(config.getPageKey())
                 .status(config.getStatus())
+                .heroType(config.getHeroType() != null ? config.getHeroType() : HeroType.SPLIT)
                 .title(config.getTitle())
                 .subtitle(config.getSubtitle())
                 .imageUrl(config.getImageUrl())
                 .ctaText(config.getCtaText())
                 .ctaLink(config.getCtaLink())
+                .carouselIntervalSeconds(config.getCarouselIntervalSeconds() != null ? config.getCarouselIntervalSeconds() : 5)
+                .slides(slideResponses)
                 .contentHtml(config.getContentHtml())
                 .contactEmail(config.getContactEmail())
                 .contactPhone(config.getContactPhone())

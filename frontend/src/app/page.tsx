@@ -32,13 +32,16 @@ export default async function Home({ searchParams }: HomeProps) {
   return (
     <div className="flex flex-col w-full">
       <UrlSanitizer paramKey="token" />
-      {/* 1. Split Hero Section */}
+      {/* 1. Hero Section (Split or Carousel depending on config) */}
       <Hero
+        heroType={homepageConfig?.heroType || 'SPLIT'}
         title={homepageConfig?.heroTitle}
         subtitle={homepageConfig?.heroSubtitle}
         imageUrl={homepageConfig?.heroImageUrl}
         ctaText={homepageConfig?.ctaText}
         ctaLink={homepageConfig?.ctaLink}
+        carouselIntervalSeconds={homepageConfig?.carouselIntervalSeconds || 5}
+        slides={homepageConfig?.slides || []}
       />
 
       {/* 2. Category Tiles Section */}

@@ -89,16 +89,15 @@ public class ProductVariantServiceImpl implements ProductVariantService{
         return productVariantMapper.toResponse(updated);
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
-    public void decreaseStock(Long id, Integer newStockQuantity) {
-        ProductVariant variant = getVariantEntityById(id);
-        if(variant.getStockQuantity() < newStockQuantity) {
-            throw new RuntimeException("Insufficient Stock for Variant: " + id);
+    @Transactional
+    public void decreaseStock(Long id, Integer quantity) {
+        int updatedRows = productVariantRepository.decreaseStockAtomic(id, quantity);
+        if (updatedRows == 0) {
+            throw new IllegalArgumentException("Insufficient Stock for Variant: " + id);
         }
-        variant.setStockQuantity(variant.getStockQuantity() - newStockQuantity);
-        ProductVariant updated = productVariantRepository.save(variant);
-        if (updated.getProduct() != null) {
-            revalidationService.revalidate("products", "product-" + updated.getProduct().getId());
+        ProductVariant variant = getVariantEntityById(id);
+        if (variant.getProduct() != null) {
+            revalidationService.revalidate("products", "product-" + variant.getProduct().getId());
         }
     }
 

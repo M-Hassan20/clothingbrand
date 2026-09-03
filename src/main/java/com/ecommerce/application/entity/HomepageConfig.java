@@ -1,8 +1,25 @@
 package com.ecommerce.application.entity;
 
+import com.ecommerce.application.enums.HeroType;
 import com.ecommerce.application.enums.HomepageConfigStatus;
-import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -26,15 +43,30 @@ public class HomepageConfig extends BaseEntity {
     @Column(nullable = false)
     private HomepageConfigStatus status; // DRAFT or PUBLISHED
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private HeroType heroType = HeroType.SPLIT;
+
     private String heroTitle;
     private String heroSubtitle;
     private String heroImageUrl;
     private String ctaText;
     private String ctaLink;
 
+    @Builder.Default
+    private Integer carouselIntervalSeconds = 5;
+
+    @OneToMany(mappedBy = "homepageConfig", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OrderColumn(name = "slide_order")
+    @JsonManagedReference
+    @Builder.Default
+    private List<HomepageCarouselSlide> slides = new ArrayList<>();
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "homepage_featured_products", joinColumns = @JoinColumn(name = "homepage_config_id"))
     @Column(name = "product_id")
-    @OrderColumn(name = "display_order") // preserves the order the admin arranged them in
+    @OrderColumn(name = "display_order")
+    @Builder.Default
     private List<Long> featuredProductIds = new ArrayList<>();
 }

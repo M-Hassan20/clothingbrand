@@ -3,16 +3,33 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import HeroCarousel, { CarouselSlideDTO } from './HeroCarousel';
 
 interface HeroProps {
+  heroType?: 'SPLIT' | 'CAROUSEL';
   title?: string;
   subtitle?: string;
   imageUrl?: string;
   ctaText?: string;
   ctaLink?: string;
+  carouselIntervalSeconds?: number;
+  slides?: CarouselSlideDTO[];
 }
 
-export default function Hero({ title, subtitle, imageUrl, ctaText, ctaLink }: HeroProps) {
+export default function Hero({
+  heroType = 'SPLIT',
+  title,
+  subtitle,
+  imageUrl,
+  ctaText,
+  ctaLink,
+  carouselIntervalSeconds = 5,
+  slides,
+}: HeroProps) {
+  if (heroType === 'CAROUSEL' && slides && slides.length > 0) {
+    return <HeroCarousel slides={slides} intervalSeconds={carouselIntervalSeconds} />;
+  }
+
   const displaySubtitle = subtitle || "A curated capsule wardrobe constructed with soft beige palettes, luxurious cashmere knits, and editorial outerwear silhouettes designed for modern living.";
   const displayImage = imageUrl || "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1200";
   const displayCtaText = ctaText || "Shop the Collection";

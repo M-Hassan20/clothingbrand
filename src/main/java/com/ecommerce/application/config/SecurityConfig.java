@@ -3,6 +3,7 @@ package com.ecommerce.application.config;
 import jakarta.servlet.http.HttpServletResponse;
 import com.ecommerce.application.security.CustomUserDetailsService;
 import com.ecommerce.application.security.JwtAuthenticationFilter;
+import com.ecommerce.application.security.RateLimitingFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -32,6 +33,7 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthFilter;
+    private final RateLimitingFilter rateLimitingFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -66,6 +68,7 @@ public class SecurityConfig {
                                 "/api/test/**",
                                 "/api/blog/**",
                                 "/api/homepage/**",
+                                "/api/page-config/**",
                                 "/api/discounts/**",
                                 "/api/payments/webhook/safepay",
                                 "/error"
@@ -90,6 +93,7 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authenticationProvider(authenticationProvider())
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

@@ -3,6 +3,7 @@ package com.ecommerce.application.repository;
 import com.ecommerce.application.entity.Product;
 import com.ecommerce.application.entity.ProductVariant;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -24,6 +25,11 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     @Query("SELECT CASE WHEN v.stockQuantity > 0 THEN true ELSE false END " +
             "FROM ProductVariant v WHERE v.id = :variantId")
     boolean isInStock(@Param("variantId") Long variantId);
+
+    @Modifying
+    @Query("UPDATE ProductVariant v SET v.stockQuantity = v.stockQuantity - :quantity " +
+            "WHERE v.id = :id AND v.stockQuantity >= :quantity")
+    int decreaseStockAtomic(@Param("id") Long id, @Param("quantity") Integer quantity);
 
     // Get available sizes for a product
     @Query("SELECT DISTINCT v.size FROM ProductVariant v " +

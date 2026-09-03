@@ -1,5 +1,6 @@
 package com.ecommerce.application.dto.request;
 
+import com.ecommerce.application.enums.HeroType;
 import com.ecommerce.application.enums.PageKey;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -7,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -18,11 +20,21 @@ public class PageConfigRequest {
     @NotNull(message = "Page key is required")
     private PageKey pageKey;
 
+    @Builder.Default
+    private HeroType heroType = HeroType.SPLIT;
+
     private String title;
     private String subtitle;
     private String imageUrl;
     private String ctaText;
     private String ctaLink;
+
+    @Builder.Default
+    private Integer carouselIntervalSeconds = 5;
+
+    @Builder.Default
+    private List<CarouselSlideRequest> slides = new ArrayList<>();
+
     private String contentHtml;
 
     private String contactEmail;
@@ -33,5 +45,6 @@ public class PageConfigRequest {
     private String metaTitle;
     private String metaDescription;
 
-    private List<Long> featuredProductIds;
+    @Builder.Default
+    private List<Long> featuredProductIds = new ArrayList<>();
 }

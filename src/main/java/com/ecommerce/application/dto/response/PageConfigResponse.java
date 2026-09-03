@@ -1,5 +1,6 @@
 package com.ecommerce.application.dto.response;
 
+import com.ecommerce.application.enums.HeroType;
 import com.ecommerce.application.enums.PageConfigStatus;
 import com.ecommerce.application.enums.PageKey;
 import lombok.AllArgsConstructor;
@@ -7,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -19,11 +21,21 @@ public class PageConfigResponse {
     private PageKey pageKey;
     private PageConfigStatus status;
 
+    @Builder.Default
+    private HeroType heroType = HeroType.SPLIT;
+
     private String title;
     private String subtitle;
     private String imageUrl;
     private String ctaText;
     private String ctaLink;
+
+    @Builder.Default
+    private Integer carouselIntervalSeconds = 5;
+
+    @Builder.Default
+    private List<CarouselSlideResponse> slides = new ArrayList<>();
+
     private String contentHtml;
 
     private String contactEmail;
@@ -34,8 +46,11 @@ public class PageConfigResponse {
     private String metaTitle;
     private String metaDescription;
 
-    private List<Long> featuredProductIds;
-    private List<ProductResponse> featuredProducts;
+    @Builder.Default
+    private List<Long> featuredProductIds = new ArrayList<>();
+
+    @Builder.Default
+    private List<ProductResponse> featuredProducts = new ArrayList<>();
 
     private boolean isPreview;
 }

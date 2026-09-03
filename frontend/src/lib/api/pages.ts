@@ -1,14 +1,18 @@
 import { apiGet } from './client';
+import { CarouselSlideDTO } from '@/components/home/HeroCarousel';
 
 export interface PageConfigDTO {
   id?: number;
   pageKey: string;
   status: 'DRAFT' | 'PUBLISHED';
+  heroType?: 'SPLIT' | 'CAROUSEL';
   title?: string;
   subtitle?: string;
   imageUrl?: string;
   ctaText?: string;
   ctaLink?: string;
+  carouselIntervalSeconds?: number;
+  slides?: CarouselSlideDTO[];
   contentHtml?: string;
   contactEmail?: string;
   contactPhone?: string;
