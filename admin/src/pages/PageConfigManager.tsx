@@ -425,13 +425,17 @@ export default function PageConfigManager() {
     }
   };
 
-  const handleSearchSlideProducts = async () => {
-    if (!slideSearchQuery.trim()) return;
+  const [slideSearching, setSlideSearching] = useState(false);
+
+  const fetchSlideProducts = async (query: string = '') => {
     try {
-      const res = await api.get<{ content: Product[] }>(`/admin/products?search=${encodeURIComponent(slideSearchQuery)}&size=6`);
+      setSlideSearching(true);
+      const res = await api.get<{ content: Product[] }>(`/admin/products?search=${encodeURIComponent(query)}&size=10`);
       setSlideSearchResults(res.content || []);
     } catch (err) {
-      toast.error(getErrorMessage(err));
+      console.error('Failed to search slide products:', err);
+    } finally {
+      setSlideSearching(false);
     }
   };
 
@@ -844,48 +848,77 @@ export default function PageConfigManager() {
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      setActiveSlideSearchIndex(activeSlideSearchIndex === index ? null : index);
+                                      const nextIndex = activeSlideSearchIndex === index ? null : index;
+                                      setActiveSlideSearchIndex(nextIndex);
+                                      if (nextIndex !== null) {
+                                        fetchSlideProducts(slideSearchQuery);
+                                      }
                                     }}
-                                    className="w-full px-3 py-1.5 text-xs border border-border/60 rounded text-left flex items-center justify-between bg-white text-charcoal"
+                                    className="w-full px-3 py-1.5 text-xs border border-border/60 rounded text-left flex items-center justify-between bg-white text-charcoal shadow-xs hover:border-accent transition-colors"
                                   >
                                     <span className="truncate">
-                                      {slide.resolvedProduct ? slide.resolvedProduct.name : `Target Product ID: ${slide.targetId || 'Select...'}`}
+                                      {slide.resolvedProduct ? (
+                                        <span className="font-semibold text-charcoal">{slide.resolvedProduct.name} (#{slide.resolvedProduct.id})</span>
+                                      ) : slide.targetId ? (
+                                        <span>Target Product ID: #{slide.targetId}</span>
+                                      ) : (
+                                        <span className="text-brown-muted italic">Click to search and select product...</span>
+                                      )}
                                     </span>
-                                    <Search className="h-3 w-3 text-brown-muted shrink-0" />
+                                    <Search className="h-3.5 w-3.5 text-accent shrink-0" />
                                   </button>
 
                                   {activeSlideSearchIndex === index && (
-                                    <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-border/60 rounded-md shadow-lg p-2 space-y-2">
+                                    <div className="absolute z-30 top-full left-0 right-0 mt-1 bg-white border border-border/60 rounded-md shadow-xl p-2.5 space-y-2">
                                       <div className="flex items-center gap-1">
-                                        <input
-                                          type="text"
-                                          value={slideSearchQuery}
-                                          onChange={(e) => setSlideSearchQuery(e.target.value)}
-                                          placeholder="Search product..."
-                                          className="w-full px-2 py-1 text-xs border rounded"
-                                        />
-                                        <button
-                                          type="button"
-                                          onClick={handleSearchSlideProducts}
-                                          className="px-2 py-1 text-xs bg-accent text-white rounded"
-                                        >
-                                          Go
-                                        </button>
-                                      </div>
-                                      <div className="max-h-40 overflow-y-auto space-y-1">
-                                        {slideSearchResults.map((prod) => (
-                                          <div
-                                            key={prod.id}
-                                            onClick={() => {
-                                              updateSlideField(index, 'targetId', prod.id);
-                                              updateSlideField(index, 'resolvedProduct', prod);
-                                              setActiveSlideSearchIndex(null);
+                                        <div className="relative flex-1">
+                                          <Search className="absolute left-2.5 top-2 h-3 w-3 text-brown-muted" />
+                                          <input
+                                            type="text"
+                                            autoFocus
+                                            value={slideSearchQuery}
+                                            onChange={(e) => {
+                                              const val = e.target.value;
+                                              setSlideSearchQuery(val);
+                                              fetchSlideProducts(val);
                                             }}
-                                            className="text-[11px] p-1.5 hover:bg-beige/20 rounded cursor-pointer truncate"
-                                          >
-                                            {prod.name} (#{prod.id})
+                                            placeholder="Type product name..."
+                                            className="w-full pl-7 pr-2 py-1.5 text-xs border border-border/60 rounded focus:outline-none focus:border-accent"
+                                          />
+                                        </div>
+                                        {slideSearching && <Loader2 className="h-4 w-4 animate-spin text-accent" />}
+                                      </div>
+
+                                      <div className="max-h-48 overflow-y-auto space-y-1 divide-y divide-border/20">
+                                        {slideSearchResults.length === 0 ? (
+                                          <div className="py-3 text-center text-xs text-brown-muted italic">
+                                            {slideSearching ? 'Searching products...' : 'No matching products found.'}
                                           </div>
-                                        ))}
+                                        ) : (
+                                          slideSearchResults.map((prod) => (
+                                            <div
+                                              key={prod.id}
+                                              onClick={() => {
+                                                updateSlideField(index, 'targetId', prod.id);
+                                                updateSlideField(index, 'resolvedProduct', prod);
+                                                setActiveSlideSearchIndex(null);
+                                              }}
+                                              className="flex items-center gap-2 p-1.5 hover:bg-accent/10 rounded cursor-pointer transition-colors pt-1.5"
+                                            >
+                                              {prod.thumbnailImage ? (
+                                                <img src={prod.thumbnailImage} alt={prod.name} className="w-6 h-6 object-cover rounded shrink-0" />
+                                              ) : (
+                                                <div className="w-6 h-6 bg-beige/30 rounded flex items-center justify-center text-[9px] text-brown-muted shrink-0">
+                                                  Img
+                                                </div>
+                                              )}
+                                              <div className="truncate text-xs flex-1">
+                                                <p className="font-semibold text-charcoal truncate">{prod.name}</p>
+                                                <p className="text-[10px] text-brown-muted">ID: #{prod.id}</p>
+                                              </div>
+                                            </div>
+                                          ))
+                                        )}
                                       </div>
                                     </div>
                                   )}
