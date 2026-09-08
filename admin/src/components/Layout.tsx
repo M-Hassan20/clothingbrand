@@ -69,6 +69,7 @@ export default function Layout() {
               key={item.name}
               to={item.path}
               onClick={handleLinkClick}
+              data-testid={`sidebar-link-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
               className={`flex items-center gap-3.5 px-4 py-3 rounded text-xs font-semibold uppercase tracking-wider transition-colors ${isActive
                   ? 'bg-accent text-white'
                   : 'text-text-secondary hover:bg-background hover:text-text-primary'

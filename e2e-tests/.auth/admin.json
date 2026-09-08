@@ -1,0 +1,18 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:3001",
+      "localStorage": [
+        {
+          "name": "admin_token",
+          "value": "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiQURNSU4iLCJ1c2VySWQiOjIsInN1YiI6ImhhdXNvZmhhZnNhQGdtYWlsLmNvbSIsImlhdCI6MTc4ODA4NTMwNSwiZXhwIjoxNzg4MTcxNzA1fQ.RLhiT_hh5AulTjOcv1h_DL86GmiVfGGjMNGWGVXbNvc"
+        },
+        {
+          "name": "admin_user",
+          "value": "{\"userId\":2,\"email\":\"hausofhafsa@gmail.com\",\"fullName\":\"Hafsa Iqbal\",\"role\":\"ADMIN\"}"
+        }
+      ]
+    }
+  ]
+}

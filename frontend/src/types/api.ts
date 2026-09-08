@@ -105,6 +105,7 @@ export interface OrderResponse {
   items: OrderItemResponse[];
   shippingAddress: AddressResponse;
   createdAt: string;
+  guestToken?: string;
 }
 
 export interface DiscountValidateRequest {

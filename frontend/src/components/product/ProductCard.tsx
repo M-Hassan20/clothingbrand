@@ -191,7 +191,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       : `Rs. ${(minSalePrice ?? minPrice).toFixed(2)} - Rs. ${(maxSalePrice ?? maxPrice).toFixed(2)}`;
 
   return (
-    <div className="group relative block w-full">
+    <div className="group relative block w-full" data-testid={`product-card-${id}`}>
       <motion.div
         whileHover={{ y: -4 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}

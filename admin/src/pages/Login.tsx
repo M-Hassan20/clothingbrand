@@ -105,6 +105,7 @@ export default function Login() {
               <input
                 type="email"
                 disabled={submitting}
+                data-testid="login-email-input"
                 placeholder="admin@hausofhafsah.com"
                 className="w-full pl-9 pr-3 py-2 text-sm bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-text-primary disabled:opacity-50"
                 {...register('email')}
@@ -132,6 +133,7 @@ export default function Login() {
               <input
                 type="password"
                 disabled={submitting}
+                data-testid="login-password-input"
                 placeholder="••••••••"
                 className="w-full pl-9 pr-3 py-2 text-sm bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-text-primary disabled:opacity-50"
                 {...register('password')}
@@ -145,6 +147,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={submitting}
+            data-testid="login-submit-button"
             className="w-full flex justify-center items-center py-2.5 px-4 bg-accent hover:bg-accent/90 text-white rounded text-xs font-semibold uppercase tracking-wider transition-colors disabled:opacity-50 mt-6"
           >
             {submitting ? (

@@ -87,6 +87,7 @@ export default function PaymentStep({
         {/* Cash on Delivery */}
         <div
           onClick={() => onPaymentMethodChange('cod')}
+          data-testid="payment-method-cod"
           className={`flex items-start gap-4 p-4 rounded-md border cursor-pointer transition-all duration-200 ${
             paymentMethod === 'cod'
               ? 'border-accent bg-accent/5 ring-1 ring-accent'
@@ -110,6 +111,7 @@ export default function PaymentStep({
         {/* Credit/Debit Card & Digital Payments via SafePay */}
         <div
           onClick={() => onPaymentMethodChange('card')}
+          data-testid="payment-method-card"
           className={`flex items-start gap-4 p-4 rounded-md border cursor-pointer transition-all duration-200 ${
             paymentMethod === 'card'
               ? 'border-accent bg-accent/5 ring-1 ring-accent'
@@ -143,6 +145,7 @@ export default function PaymentStep({
                       <div
                         key={opt.id}
                         onClick={() => onCardIntentChange(opt.id)}
+                        data-testid={`payment-channel-${opt.id.toLowerCase()}`}
                         className={`p-3 rounded-md border text-xs cursor-pointer transition-all duration-200 ${
                           isSelected
                             ? 'border-accent bg-accent/10 shadow-xs ring-1 ring-accent/60'
@@ -169,6 +172,7 @@ export default function PaymentStep({
                     );
                   })}
                 </div>
+                </div>
                 <div className="mt-2 flex items-center gap-2 text-[10px] text-accent font-medium pt-1">
                   <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
                   <span>256-bit Bank Grade Encrypted SSL Payment via SafePay</span>
@@ -184,6 +188,7 @@ export default function PaymentStep({
         <Button
           type="submit"
           disabled={loading}
+          data-testid="checkout-place-order-button"
           className="w-full bg-accent text-background hover:bg-accent/90 py-3 rounded-md font-sans text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm"
         >
           {loading ? (

@@ -2,13 +2,10 @@ import { ApiResponse } from '@/types/api';
 import { useAuthStore } from '../stores/auth-store';
 
 const getBaseUrl = (): string => {
-  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
-    return process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (typeof window !== 'undefined') {
+    return '/api';
   }
-  if (typeof window !== 'undefined' && window.location?.hostname) {
-    return `http://${window.location.hostname}:8080/api`;
-  }
-  return 'http://localhost:8080/api';
+  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api';
 };
 
 export class ApiError extends Error {
@@ -43,6 +40,7 @@ async function request<T>(
   const config: RequestInit = {
     ...options,
     headers,
+    credentials: 'include',
   };
   
   let response: Response;
@@ -130,6 +128,7 @@ export async function downloadInvoice(orderId: number): Promise<Blob> {
     response = await fetch(url, {
       method: 'GET',
       headers,
+      credentials: 'include',
     });
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : 'Network error';
