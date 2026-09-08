@@ -40,5 +40,14 @@ public class Order extends BaseEntity {
 
     @ManyToOne
     private Address shippingAddress;
+
+    private String trackingNumber;
+
+    private String courierName;
+
+    private String postexStatus;
+
+    private String pickupAddressCode;
 }
+
 

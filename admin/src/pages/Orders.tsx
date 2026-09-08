@@ -13,6 +13,10 @@ import {
   ClipboardList,
   Filter,
   Download,
+  Truck,
+  PackageCheck,
+  FileText,
+  ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -48,6 +52,10 @@ interface Order {
   shippingAddress?: Address;
   items?: OrderItem[];
   createdAt: string;
+  trackingNumber?: string;
+  courierName?: string;
+  postexStatus?: string;
+  pickupAddressCode?: string;
 }
 
 interface PaginatedResponse<T> {
@@ -79,6 +87,63 @@ export default function Orders() {
   const [loadingItems, setLoadingItems] = useState(false);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  // PostEx Courier States
+  const [bookingPostex, setBookingPostex] = useState(false);
+  const [trackingModalOpen, setTrackingModalOpen] = useState(false);
+  const [trackingDetails, setTrackingDetails] = useState<any>(null);
+  const [loadingTracking, setLoadingTracking] = useState(false);
+
+  const handleBookPostEx = async (orderId: number) => {
+    try {
+      setBookingPostex(true);
+      const res = await api.post<Order>(`/admin/postex/book/${orderId}`);
+      toast.success('Shipment booked with PostEx successfully!');
+      if (res) {
+        setSelectedOrder((prev) => (prev ? { ...prev, ...res } : res));
+      }
+      fetchOrders();
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to book shipment with PostEx'));
+    } finally {
+      setBookingPostex(false);
+    }
+  };
+
+  const handlePrintAirwayBill = async (trackingNumber: string) => {
+    try {
+      const token = localStorage.getItem('admin_token');
+      const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : 'localhost';
+      const response = await fetch(`http://${host}:8080/api/admin/postex/airway-bill/${trackingNumber}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to retrieve airway bill PDF');
+      }
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to download PostEx Airway Bill PDF'));
+    }
+  };
+
+  const handleFetchTracking = async (trackingNumber: string) => {
+    try {
+      setLoadingTracking(true);
+      setTrackingModalOpen(true);
+      setTrackingDetails(null);
+      const res = await api.get<any>(`/admin/postex/track/${trackingNumber}`);
+      setTrackingDetails(res);
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to fetch PostEx tracking details'));
+    } finally {
+      setLoadingTracking(false);
+    }
+  };
+
 
   const fetchOrders = async () => {
     try {
@@ -492,6 +557,84 @@ export default function Orders() {
                 </div>
               </div>
 
+              {/* PostEx Shipping Logistics Panel */}
+              <div className="bg-surface border border-accent/20 p-4 rounded-md space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Truck className="h-4 w-4 text-accent" />
+                    <span className="font-serif font-semibold text-text-primary text-xs uppercase tracking-wider">
+                      PostEx Courier Logistics
+                    </span>
+                  </div>
+                  {selectedOrder.trackingNumber ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-bold">
+                      <PackageCheck className="h-3 w-3" />
+                      Tracking #{selectedOrder.trackingNumber}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-text-secondary italic">No Shipment Booked</span>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-border/40 text-xs">
+                  {selectedOrder.trackingNumber ? (
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <span className="text-[10px] text-text-secondary block">PostEx Status</span>
+                        <span className="font-semibold text-text-primary uppercase">{selectedOrder.postexStatus || 'Booked'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-text-secondary block">Pickup Code</span>
+                        <span className="font-mono text-text-primary font-semibold">{selectedOrder.pickupAddressCode || '001'}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-text-secondary">
+                      Pickup Address Code: <strong className="font-mono text-text-primary">001 (Karachi Warehouse)</strong>
+                    </p>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {!selectedOrder.trackingNumber ? (
+                      <button
+                        disabled={bookingPostex}
+                        onClick={() => handleBookPostEx(selectedOrder.id)}
+                        className="flex items-center gap-1.5 bg-accent hover:bg-accent/90 text-white px-3.5 py-1.5 rounded text-xs font-semibold uppercase transition-colors disabled:opacity-50"
+                      >
+                        {bookingPostex ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <span>Booking...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Truck className="h-3.5 w-3.5" />
+                            <span>Book with PostEx</span>
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handlePrintAirwayBill(selectedOrder.trackingNumber!)}
+                          className="flex items-center gap-1.5 border border-border bg-background hover:bg-surface text-text-primary px-3 py-1 rounded text-xs font-semibold uppercase transition-colors"
+                        >
+                          <FileText className="h-3.5 w-3.5 text-accent" />
+                          <span>Print Airway Bill (PDF)</span>
+                        </button>
+                        <button
+                          onClick={() => handleFetchTracking(selectedOrder.trackingNumber!)}
+                          className="flex items-center gap-1.5 border border-accent/40 bg-accent/10 hover:bg-accent/20 text-accent px-3 py-1 rounded text-xs font-semibold uppercase transition-colors"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          <span>Live Tracking</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {/* Order Status Action Panel */}
               <div className="bg-surface border border-border p-4 rounded-md flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
                 <div className="space-y-1">
@@ -604,6 +747,107 @@ export default function Orders() {
               <button
                 onClick={() => setSelectedOrder(null)}
                 className="px-4 py-2 border border-border rounded text-xs font-semibold uppercase hover:bg-surface transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PostEx Live Tracking Details Modal */}
+      {trackingModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-surface border border-border rounded-lg max-w-lg w-full p-6 space-y-4 shadow-2xl relative">
+            <button
+              onClick={() => setTrackingModalOpen(false)}
+              className="absolute top-4 right-4 text-text-secondary hover:text-text-primary"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-2 border-b border-border pb-3">
+              <Truck className="h-5 w-5 text-accent" />
+              <div>
+                <h3 className="font-serif font-bold text-text-primary">PostEx Live Shipment Tracking</h3>
+                <p className="text-[11px] text-text-secondary font-mono">
+                  {trackingDetails?.dist?.trackingNumber || 'Fetching...'}
+                </p>
+              </div>
+            </div>
+
+            {loadingTracking ? (
+              <div className="flex flex-col items-center justify-center py-10 space-y-2">
+                <Loader2 className="h-8 w-8 animate-spin text-accent" />
+                <p className="text-xs text-text-secondary">Retrieving latest status from PostEx API...</p>
+              </div>
+            ) : trackingDetails?.dist ? (
+              <div className="space-y-4 text-xs">
+                <div className="bg-background border border-border p-3 rounded grid grid-cols-2 gap-3">
+                  <div>
+                    <span className="text-[10px] text-text-secondary uppercase">Current Status</span>
+                    <p className="font-bold text-accent uppercase text-sm mt-0.5">
+                      {trackingDetails.dist.transactionStatus || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-text-secondary uppercase">Status Code</span>
+                    <p className="font-mono font-semibold text-text-primary mt-0.5">
+                      {trackingDetails.dist.transactionStatusId || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-text-secondary uppercase">Recipient</span>
+                    <p className="font-medium text-text-primary mt-0.5">
+                      {trackingDetails.dist.customerName || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-text-secondary uppercase">City</span>
+                    <p className="font-medium text-text-primary mt-0.5">
+                      {trackingDetails.dist.cityName || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+
+                {trackingDetails.dist.trackingHistory && trackingDetails.dist.trackingHistory.length > 0 ? (
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-text-primary border-b border-border/40 pb-1 text-[11px] uppercase">
+                      Tracking Event History
+                    </h4>
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {trackingDetails.dist.trackingHistory.map((history: any, idx: number) => (
+                        <div key={idx} className="bg-background/60 border border-border/60 p-2.5 rounded flex items-start gap-3">
+                          <div className="w-2 h-2 rounded-full bg-accent mt-1.5 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-center">
+                              <span className="font-bold text-text-primary">{history.status}</span>
+                              <span className="text-[10px] text-text-secondary">{history.statusDate}</span>
+                            </div>
+                            {history.comments && (
+                              <p className="text-[11px] text-text-secondary mt-0.5">{history.comments}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs italic text-text-secondary text-center py-2">
+                    Shipment created. Pending courier hub scanned events.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="py-6 text-center text-xs text-text-secondary">
+                No tracking information found or invalid tracking number.
+              </div>
+            )}
+
+            <div className="flex justify-end pt-3 border-t border-border">
+              <button
+                onClick={() => setTrackingModalOpen(false)}
+                className="px-4 py-1.5 border border-border rounded text-xs font-semibold uppercase hover:bg-surface"
               >
                 Close
               </button>

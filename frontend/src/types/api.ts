@@ -106,6 +106,10 @@ export interface OrderResponse {
   shippingAddress: AddressResponse;
   createdAt: string;
   guestToken?: string;
+  trackingNumber?: string;
+  courierName?: string;
+  postexStatus?: string;
+  pickupAddressCode?: string;
 }
 
 export interface DiscountValidateRequest {

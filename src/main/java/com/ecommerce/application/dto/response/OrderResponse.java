@@ -27,4 +27,8 @@ public class OrderResponse {
     private List<OrderItemResponse> items;
     private LocalDateTime createdAt;
     private String guestToken;
+    private String trackingNumber;
+    private String courierName;
+    private String postexStatus;
+    private String pickupAddressCode;
 }

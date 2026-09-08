@@ -71,6 +71,7 @@ public class SecurityConfig {
                                 "/api/page-config/**",
                                 "/api/announcement/**",
                                 "/api/discounts/**",
+                                "/api/tracking/**",
                                 "/api/payments/webhook/safepay",
                                 "/error"
                         ).permitAll()

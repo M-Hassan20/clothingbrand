@@ -172,7 +172,6 @@ export default function PaymentStep({
                     );
                   })}
                 </div>
-                </div>
                 <div className="mt-2 flex items-center gap-2 text-[10px] text-accent font-medium pt-1">
                   <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
                   <span>256-bit Bank Grade Encrypted SSL Payment via SafePay</span>

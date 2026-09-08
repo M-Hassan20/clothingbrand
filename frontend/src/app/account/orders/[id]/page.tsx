@@ -8,6 +8,7 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import { OrderResponse, OrderItemResponse } from '@/types/api';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { OrderTrackingCard } from '@/components/OrderTrackingCard';
 
 interface OrderDetailsPageProps {
   params: Promise<{ id: string }>;
@@ -182,6 +183,14 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
               ))}
             </div>
           </div>
+
+          {order.trackingNumber && (
+            <OrderTrackingCard
+              trackingNumber={order.trackingNumber}
+              courierName={order.courierName || 'PostEx'}
+              postexStatus={order.postexStatus}
+            />
+          )}
         </div>
 
         {/* Right Panel: Delivery & Summary */}

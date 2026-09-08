@@ -31,14 +31,13 @@ class ProductVariantServiceTest {
 
     @Test
     void decreaseStock_insufficientStock_throwsException() {
-        ProductVariant variant = ProductVariant.builder().id(1L).stockQuantity(5).build();
-        when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
+        when(productVariantRepository.decreaseStockAtomic(1L, 10)).thenReturn(0);
 
         assertThatThrownBy(() -> productVariantService.decreaseStock(1L, 10))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Insufficient Stock for Variant: 1");
 
-        verify(productVariantRepository, never()).save(any());
+        verify(productVariantRepository, never()).findById(any());
     }
 
     @Test
@@ -46,13 +45,13 @@ class ProductVariantServiceTest {
         Product product = Product.builder().id(100L).build();
         ProductVariant variant = ProductVariant.builder().id(1L).product(product).stockQuantity(15).build();
 
+        when(productVariantRepository.decreaseStockAtomic(1L, 5)).thenReturn(1);
         when(productVariantRepository.findById(1L)).thenReturn(Optional.of(variant));
-        when(productVariantRepository.save(variant)).thenReturn(variant);
 
         productVariantService.decreaseStock(1L, 5);
 
-        assertThat(variant.getStockQuantity()).isEqualTo(10);
-        verify(productVariantRepository).save(variant);
+        verify(productVariantRepository).decreaseStockAtomic(1L, 5);
+        verify(productVariantRepository).findById(1L);
         verify(revalidationService).revalidate("products", "product-100");
     }
 

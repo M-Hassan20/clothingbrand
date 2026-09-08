@@ -66,4 +66,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         List<Order> findByUserIdAndStatus(Long userId, OrderStatus status);
 
         List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+        java.util.Optional<Order> findByTrackingNumber(String trackingNumber);
 }
