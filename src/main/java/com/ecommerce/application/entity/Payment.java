@@ -31,4 +31,9 @@ public class Payment extends BaseEntity{
 
     @Enumerated(EnumType.STRING)
     private PaymentStatus paymentStatus;
+
+    @Builder.Default
+    private BigDecimal refundedAmount = BigDecimal.ZERO;
+
+    private String refundReason;
 }

@@ -17,6 +17,7 @@ import com.ecommerce.application.repository.OrderRepository;
 import com.ecommerce.application.enums.PaymentStatus;
 import com.ecommerce.application.repository.PaymentRepository;
 import com.ecommerce.application.security.JwtUtil;
+import com.ecommerce.application.repository.ProductVariantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,13 +29,17 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final PaymentRepository paymentRepository;
+    private final ProductVariantRepository productVariantRepository;
     private final ProductVariantServiceImpl productVariantService;
     private final AddressService addressService;
     private final DiscountService discountService;
@@ -348,6 +353,12 @@ public class OrderService {
             response.setEstimatedCourierFee(estFee);
             BigDecimal custShipping = response.getShippingFee() != null ? response.getShippingFee() : BigDecimal.ZERO;
             response.setCourierMargin(custShipping.subtract(estFee));
+            response.setReturnStatus(order.getReturnStatus());
+            response.setReturnReason(order.getReturnReason());
+            response.setReturnResolution(order.getReturnResolution());
+            response.setReturnBankDetails(order.getReturnBankDetails());
+            response.setRequestedSize(order.getRequestedSize());
+            response.setReturnRemarks(order.getReturnRemarks());
         }
         paymentRepository.findByOrderId(response.getId())
                 .ifPresentOrElse(
@@ -362,5 +373,148 @@ public class OrderService {
             responses.forEach(this::enrichOrderResponse);
         }
         return responses;
+    }
+
+    @Transactional
+    public OrderResponse requestReturn(Long orderId, com.ecommerce.application.dto.request.ReturnRequestDTO dto) {
+        Order order = getOrderEntityById(orderId);
+        if (order.getStatus() != OrderStatus.DELIVERED) {
+            throw new RuntimeException("Return requests can only be submitted for delivered orders.");
+        }
+        order.setReturnStatus("REQUESTED");
+        if (dto != null) {
+            if (dto.getReason() != null) order.setReturnReason(dto.getReason().trim());
+            if (dto.getResolution() != null) order.setReturnResolution(dto.getResolution().trim());
+            if (dto.getBankDetails() != null) order.setReturnBankDetails(dto.getBankDetails().trim());
+            if (dto.getRequestedSize() != null) order.setRequestedSize(dto.getRequestedSize().trim());
+            if (dto.getRemarks() != null) order.setReturnRemarks(dto.getRemarks().trim());
+
+            // Validate requested size stock availability for EXCHANGE requests
+            if ("EXCHANGE".equalsIgnoreCase(dto.getResolution()) && dto.getRequestedSize() != null && !dto.getRequestedSize().isBlank()) {
+                validateRequestedSizeStock(order, dto.getRequestedSize().trim());
+            }
+        }
+        Order saved = orderRepository.save(order);
+        emailService.sendAdminReturnRequestNotification(
+                saved.getId(),
+                saved.getUser() != null ? saved.getUser().getEmail() : "Guest Customer",
+                saved.getReturnReason(),
+                saved.getReturnResolution(),
+                saved.getReturnBankDetails(),
+                saved.getRequestedSize(),
+                saved.getReturnRemarks()
+        );
+        return enrichOrderResponse(orderMapper.toResponse(saved));
+    }
+
+    private void validateRequestedSizeStock(Order order, String requestedSize) {
+        List<OrderItem> items = orderItemRepository.findByOrder(order);
+        for (OrderItem item : items) {
+            if (item.getProductVariant() != null && item.getProductVariant().getProduct() != null) {
+                Product product = item.getProductVariant().getProduct();
+                List<ProductVariant> variants = productVariantRepository.findByProductId(product.getId());
+                if (variants != null && !variants.isEmpty()) {
+                    boolean matchingAvailable = variants.stream().anyMatch(v ->
+                            v.getSize() != null &&
+                            v.getSize().equalsIgnoreCase(requestedSize) &&
+                            v.getStockQuantity() != null &&
+                            v.getStockQuantity() > 0
+                    );
+                    if (!matchingAvailable) {
+                        throw new RuntimeException("Requested size '" + requestedSize + "' for '" + product.getName() + "' is currently out of stock. Please select an available size.");
+                    }
+                }
+            }
+        }
+    }
+
+    @Transactional
+    public OrderResponse updateReturnStatus(Long orderId, String returnStatus) {
+        Order order = getOrderEntityById(orderId);
+        String formattedStatus = returnStatus != null ? returnStatus.toUpperCase() : "COMPLETED";
+        order.setReturnStatus(formattedStatus);
+        Order saved = orderRepository.save(order);
+
+        Long replacementOrderId = null;
+
+        // Auto-create 0 payment & 0 COD size exchange replacement order when return request is APPROVED
+        if ("APPROVED".equalsIgnoreCase(formattedStatus) && "EXCHANGE".equalsIgnoreCase(saved.getReturnResolution())) {
+            replacementOrderId = createExchangeReplacementOrder(saved);
+        }
+
+        if (saved.getUser() != null && saved.getUser().getEmail() != null) {
+            emailService.sendCustomerReturnApprovalEmail(
+                    saved.getUser().getEmail(),
+                    saved.getUser().getFullName(),
+                    saved.getId(),
+                    formattedStatus,
+                    saved.getReturnResolution(),
+                    replacementOrderId
+            );
+        }
+
+        return enrichOrderResponse(orderMapper.toResponse(saved));
+    }
+
+    @Transactional
+    public Long createExchangeReplacementOrder(Order originalOrder) {
+        String exchangeCode = "EXCHANGE-REPLACEMENT-ORD-" + originalOrder.getId();
+
+        // Prevent duplicate creation if an exchange order already exists for this original order
+        if (originalOrder.getUser() != null) {
+            List<Order> userOrders = orderRepository.findByUser(originalOrder.getUser());
+            for (Order o : userOrders) {
+                if (exchangeCode.equalsIgnoreCase(o.getDiscountCode())) {
+                    log.info("Exchange replacement order already exists (id={}) for original order #{}", o.getId(), originalOrder.getId());
+                    return o.getId();
+                }
+            }
+        }
+
+        Order replacementOrder = Order.builder()
+                .user(originalOrder.getUser())
+                .shippingAddress(originalOrder.getShippingAddress())
+                .status(OrderStatus.PROCESSING)
+                .totalAmount(BigDecimal.ZERO)
+                .shippingFee(BigDecimal.ZERO)
+                .discountAmount(BigDecimal.ZERO)
+                .discountCode(exchangeCode)
+                .build();
+
+        Order savedReplacement = orderRepository.save(replacementOrder);
+
+        // Copy order items from original order to replacement order
+        List<OrderItem> originalItems = orderItemRepository.findByOrder(originalOrder);
+        for (OrderItem item : originalItems) {
+            OrderItem replacementItem = OrderItem.builder()
+                    .order(savedReplacement)
+                    .productVariant(item.getProductVariant())
+                    .quantity(item.getQuantity())
+                    .priceSnapshot(BigDecimal.ZERO)
+                    .productNameSnapshot(item.getProductNameSnapshot() != null ? item.getProductNameSnapshot() + " (Size Exchange)" : "Size Exchange Item")
+                    .build();
+            orderItemRepository.save(replacementItem);
+        }
+
+        // Record 0 payment in Payment repository so system treats it as fully satisfied / 0 COD
+        Payment payment = Payment.builder()
+                .order(savedReplacement)
+                .amount(BigDecimal.ZERO)
+                .paymentStatus(PaymentStatus.SUCCESS)
+                .stripePaymentIntentId("EXCHANGE-REPLACEMENT-" + savedReplacement.getId())
+                .build();
+        paymentRepository.save(payment);
+
+        log.info("Created 0 payment & 0 COD Exchange Replacement Order #{} for Original Order #{}", savedReplacement.getId(), originalOrder.getId());
+        return savedReplacement.getId();
+    }
+
+    @Transactional
+    public OrderResponse cancelGuestOrder(Long orderId, String email) {
+        Order order = getOrderEntityById(orderId);
+        if (order.getUser() != null && email != null && !order.getUser().getEmail().equalsIgnoreCase(email.trim())) {
+            throw new RuntimeException("Email does not match order record.");
+        }
+        return cancelOrder(orderId, order.getUser().getId());
     }
 }

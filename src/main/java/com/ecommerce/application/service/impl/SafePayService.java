@@ -2,6 +2,7 @@ package com.ecommerce.application.service.impl;
 
 import com.ecommerce.application.dto.payment.SafePayCheckoutResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.*;
@@ -17,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "payment.safepay.enabled", havingValue = "true", matchIfMissing = true)
@@ -222,6 +224,32 @@ public class SafePayService {
         } catch (Exception e) {
             System.err.println("Webhook signature verification failed: " + e.getMessage());
             return false;
+        }
+    }
+
+    public boolean refundPayment(String trackerToken, BigDecimal amount) {
+        String url = getBaseUrl() + "/order/payments/v3/refund";
+
+        long amountInPaisa = amount.multiply(BigDecimal.valueOf(100))
+                .setScale(0, RoundingMode.HALF_UP)
+                .longValueExact();
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("tracker", trackerToken);
+        body.put("amount", amountInPaisa);
+
+        try {
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, buildHeaders());
+            ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+            log.info("SafePay refund requested for tracker {}: status code {}", trackerToken, response.getStatusCode());
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (Exception e) {
+            log.error("Error executing SafePay refund for tracker {}: ", trackerToken, e);
+            if (sandboxMode) {
+                log.warn("Sandbox refund simulated for tracker Token: {}", trackerToken);
+                return true;
+            }
+            throw new RuntimeException("SafePay Refund API Error: " + e.getMessage(), e);
         }
     }
 

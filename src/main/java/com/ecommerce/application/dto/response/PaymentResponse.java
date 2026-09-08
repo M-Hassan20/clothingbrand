@@ -17,5 +17,7 @@ public class PaymentResponse {
     private String currency;
     private PaymentStatus paymentStatus;
     private String stripePaymentIntentId;
+    private BigDecimal refundedAmount;
+    private String refundReason;
     private LocalDateTime createdAt;
 }

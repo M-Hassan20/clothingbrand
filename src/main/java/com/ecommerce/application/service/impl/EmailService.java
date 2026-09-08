@@ -162,6 +162,40 @@ public class EmailService {
     }
 
     /**
+     * Send admin notification for customer return/exchange request
+     */
+    public void sendAdminReturnRequestNotification(Long orderId, String customerEmail, String returnReason, String returnResolution, String returnBankDetails, String requestedSize, String remarks) {
+        Map<String, Object> model = Map.of(
+                "orderId", orderId,
+                "customerEmail", customerEmail != null ? customerEmail : "N/A",
+                "returnReason", returnReason != null ? returnReason : "Not Specified",
+                "returnResolution", returnResolution != null ? returnResolution : "REFUND",
+                "returnBankDetails", returnBankDetails != null ? returnBankDetails : "N/A (Card Pay)",
+                "requestedSize", requestedSize != null ? requestedSize : "N/A",
+                "remarks", remarks != null ? remarks : "None",
+                "adminUrl", "https://admin.hausofhafsah.com/orders/" + orderId
+        );
+
+        sendTemplateEmail(adminEmail, "Action Required: Return Request for Order #" + orderId, "admin-return-request", model);
+    }
+
+    /**
+     * Send customer email notification when return request status is updated (APPROVED / COMPLETED)
+     */
+    public void sendCustomerReturnApprovalEmail(String to, String userName, Long orderId, String returnStatus, String returnResolution, Long replacementOrderId) {
+        Map<String, Object> model = new java.util.HashMap<>();
+        model.put("userName", userName != null ? userName : "Valued Client");
+        model.put("orderId", orderId);
+        model.put("returnStatus", returnStatus != null ? returnStatus.toUpperCase() : "APPROVED");
+        model.put("returnResolution", returnResolution != null ? returnResolution.toUpperCase() : "REFUND");
+        model.put("replacementOrderId", replacementOrderId);
+        model.put("orderUrl", "https://hausofhafsah.com/account/orders/" + orderId);
+
+        String subject = "Return Request Update (" + (returnStatus != null ? returnStatus.toUpperCase() : "APPROVED") + ") - Order #" + orderId;
+        sendTemplateEmail(to, subject, "customer-return-approval", model);
+    }
+
+    /**
      * Send contact form inquiry to admin
      */
     public void sendContactInquiryEmail(String name, String email, String subject, String messageText) {

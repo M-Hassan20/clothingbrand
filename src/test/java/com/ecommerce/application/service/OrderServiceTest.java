@@ -12,6 +12,7 @@ import com.ecommerce.application.mapper.OrderMapper;
 import com.ecommerce.application.repository.OrderItemRepository;
 import com.ecommerce.application.repository.OrderRepository;
 import com.ecommerce.application.repository.PaymentRepository;
+import com.ecommerce.application.repository.ProductVariantRepository;
 import com.ecommerce.application.security.JwtUtil;
 import com.ecommerce.application.service.impl.*;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,7 @@ class OrderServiceTest {
     @Mock private OrderRepository orderRepository;
     @Mock private OrderItemRepository orderItemRepository;
     @Mock private PaymentRepository paymentRepository;
+    @Mock private ProductVariantRepository productVariantRepository;
     @Mock private ProductVariantServiceImpl productVariantService;
     @Mock private AddressService addressService;
     @Mock private DiscountService discountService;
@@ -169,5 +171,45 @@ class OrderServiceTest {
         assertThat(result.getGuestToken()).isEqualTo("guest-jwt-token");
         verify(userService).findOrCreateGuestUser("guest@test.com", "Guest", "123");
         verify(addressService).createAddress(eq(15L), any());
+    }
+
+    @Test
+    void requestReturn_orderNotDelivered_throwsException() {
+        Order order = Order.builder().id(100L).status(OrderStatus.SHIPPED).build();
+        when(orderRepository.findById(100L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.requestReturn(100L, null))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Return requests can only be submitted for delivered orders.");
+    }
+
+    @Test
+    void requestReturn_orderDelivered_setsReturnStatus() {
+        Order order = Order.builder().id(100L).status(OrderStatus.DELIVERED).build();
+        when(orderRepository.findById(100L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(i -> i.getArgument(0));
+        when(orderMapper.toResponse(any(Order.class))).thenReturn(new OrderResponse());
+
+        orderService.requestReturn(100L, null);
+
+        verify(orderRepository).save(argThat(o -> "REQUESTED".equals(o.getReturnStatus())));
+        verify(emailService).sendAdminReturnRequestNotification(eq(100L), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void updateReturnStatus_approvedExchange_createsReplacementOrderAndSendsCustomerEmail() {
+        User user = User.builder().id(1L).email("client@test.com").fullName("Client").build();
+        Order order = Order.builder().id(100L).status(OrderStatus.DELIVERED).returnStatus("REQUESTED").returnResolution("EXCHANGE").user(user).build();
+        when(orderRepository.findById(100L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(i -> {
+            Order o = i.getArgument(0);
+            if (o.getId() == null) o.setId(200L);
+            return o;
+        });
+        when(orderMapper.toResponse(any(Order.class))).thenReturn(new OrderResponse());
+
+        orderService.updateReturnStatus(100L, "APPROVED");
+
+        verify(emailService).sendCustomerReturnApprovalEmail(eq("client@test.com"), eq("Client"), eq(100L), eq("APPROVED"), eq("EXCHANGE"), eq(200L));
     }
 }

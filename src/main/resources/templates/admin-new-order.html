@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Order Alert - Haus of Hafsah Admin</title>
+    <title>New Order Received - Haus of Hafsah Admin</title>
     <style>
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #FAF7F2;
-            color: #2B2622;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #FBF9F5;
+            color: #1C1917;
             margin: 0;
             padding: 0;
             line-height: 1.6;
@@ -16,163 +16,142 @@
         }
         .wrapper {
             width: 100%;
-            background-color: #FAF7F2;
+            background-color: #FBF9F5;
             padding: 40px 15px;
             box-sizing: border-box;
         }
         .container {
-            max-width: 600px;
+            max-width: 580px;
             margin: 0 auto;
             background-color: #FFFFFF;
-            border-radius: 8px;
+            border-radius: 4px;
             overflow: hidden;
-            border: 1px solid #E8DFD3;
-            box-shadow: 0 4px 16px rgba(43, 38, 34, 0.04);
+            border: 1px solid #E7E5E4;
+            box-shadow: 0 4px 20px rgba(28, 25, 23, 0.03);
         }
         .header {
-            background-color: #2B2622;
+            background-color: #1C1917;
             padding: 32px 20px;
             text-align: center;
         }
         .brand-title {
-            font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-            color: #FAF7F2;
-            font-size: 24px;
-            font-weight: 700;
+            font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+            color: #FBF9F5;
+            font-size: 22px;
+            font-weight: 600;
             letter-spacing: 4px;
             margin: 0;
             text-transform: uppercase;
         }
         .brand-subtitle {
-            color: #B08968;
-            font-size: 11px;
-            letter-spacing: 2px;
+            color: #8C6D53;
+            font-size: 10px;
+            letter-spacing: 2.5px;
             text-transform: uppercase;
             margin-top: 6px;
-        }
-        .banner {
-            background-color: #F4F7F4;
-            border-bottom: 1px solid #E8DFD3;
-            padding: 18px 20px;
-            text-align: center;
-        }
-        .banner-title {
-            font-family: 'Playfair Display', Georgia, serif;
-            color: #5C7A5C;
-            font-size: 18px;
-            font-weight: 600;
-            margin: 0;
+            font-weight: 500;
         }
         .content {
             padding: 36px 32px;
         }
-        .greeting {
-            font-size: 16px;
+        .section-title {
+            font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+            font-size: 20px;
             font-weight: 600;
-            color: #2B2622;
-            margin-bottom: 16px;
+            color: #1C1917;
+            margin: 0 0 16px 0;
         }
-        .message {
-            font-size: 14px;
-            color: #4A423A;
-            margin-bottom: 24px;
+        .info-card {
+            background-color: #F4EFEA;
+            border: 1px solid #E7E5E4;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 20px 0;
         }
-        .order-card {
-            background-color: #FAF7F2;
-            border: 1px solid #E8DFD3;
-            border-left: 4px solid #5C7A5C;
-            border-radius: 6px;
-            padding: 20px 24px;
-            margin: 24px 0;
+        .info-row {
+            margin-bottom: 12px;
         }
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-        .summary-row:last-child {
+        .info-row:last-child {
             margin-bottom: 0;
         }
-        .summary-label {
-            color: #8A7B6C;
-        }
-        .summary-value {
-            color: #2B2622;
+        .info-label {
+            color: #78716C;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 1px;
             font-weight: 600;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .info-value {
+            color: #1C1917;
+            font-weight: 600;
+            font-size: 14px;
         }
         .cta-container {
             text-align: center;
-            margin: 32px 0 24px 0;
+            margin: 32px 0 16px 0;
         }
         .button {
             display: inline-block;
-            padding: 14px 36px;
-            background-color: #B08968;
-            color: #FFFFFF !important;
+            padding: 13px 32px;
+            background-color: #1C1917;
+            color: #FBF9F5 !important;
             text-decoration: none;
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 600;
-            letter-spacing: 1.5px;
+            letter-spacing: 2px;
             text-transform: uppercase;
-            border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(176, 137, 104, 0.25);
-            transition: background-color 0.2s ease;
+            border-radius: 2px;
         }
         .footer {
-            background-color: #FAF7F2;
-            border-top: 1px solid #E8DFD3;
-            padding: 24px 20px;
+            background-color: #FBF9F5;
+            border-top: 1px solid #E7E5E4;
+            padding: 24px;
             text-align: center;
-            font-size: 12px;
-            color: #8A7B6C;
-        }
-        .footer p {
-            margin: 4px 0;
+            font-size: 11px;
+            color: #78716C;
         }
     </style>
 </head>
 <body>
-<div class="wrapper">
-    <div class="container">
-        <div class="header">
-            <h1 class="brand-title">Haus of Hafsah</h1>
-            <div class="brand-subtitle">Admin Control Portal</div>
-        </div>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                <h1 class="brand-title">HAUS OF HAFSAH</h1>
+                <div class="brand-subtitle">STORE OPERATIONS NOTIFICATION</div>
+            </div>
 
-        <div class="banner">
-            <h2 class="banner-title">🎉 New Customer Order Placed</h2>
-        </div>
+            <div class="content">
+                <h2 class="section-title">New Order Received</h2>
+                <p style="font-size: 13px; color: #44403C; margin-bottom: 20px;">
+                    A new order has been placed on the storefront. Details are outlined below for processing.
+                </p>
 
-        <div class="content">
-            <p class="greeting">Hello Admin,</p>
-
-            <p class="message">A new checkout order has been placed on the storefront!</p>
-
-            <div class="order-card">
-                <div class="summary-row">
-                    <span class="summary-label">Order ID:</span>
-                    <span class="summary-value">#<span th:text="${orderId}">12345</span></span>
+                <div class="info-card">
+                    <div class="info-row">
+                        <span class="info-label">Order Number</span>
+                        <div class="info-value" style="font-size: 18px; font-weight: 700; color: #1C1917;" th:text="'#' + ${orderId}">#1001</div>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Customer Email</span>
+                        <div class="info-value" th:text="${customerEmail}">customer@example.com</div>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Total Amount</span>
+                        <div class="info-value" style="color: #8C6D53; font-weight: 700;" th:text="'Rs. ' + ${orderTotal}">Rs. 15,500.00</div>
+                    </div>
                 </div>
-                <div class="summary-row">
-                    <span class="summary-label">Customer Email:</span>
-                    <span class="summary-value"><span th:text="${customerEmail}">customer@email.com</span></span>
-                </div>
-                <div class="summary-row">
-                    <span class="summary-label">Order Total:</span>
-                    <span class="summary-value">Rs. <span th:text="${orderTotal}">0.00</span></span>
+
+                <div class="cta-container">
+                    <a th:href="${orderUrl}" class="button">Fulfill Order in Admin</a>
                 </div>
             </div>
 
-            <div class="cta-container">
-                <a th:href="${orderUrl}" class="button">View Order Details</a>
+            <div class="footer">
+                &copy; Haus of Hafsah Admin Control System
             </div>
-        </div>
-
-        <div class="footer">
-            <p>&copy; 2026 Haus of Hafsah Admin Management</p>
         </div>
     </div>
-</div>
 </body>
 </html>

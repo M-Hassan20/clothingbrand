@@ -54,3 +54,14 @@ export async function cancelOrder(id: number, userId: string): Promise<OrderResp
 export async function downloadOrderInvoice(orderId: number): Promise<Blob> {
   return dlInvoice(orderId);
 }
+
+export async function requestReturn(
+  orderId: number,
+  body: { reason: string; resolution: string; bankDetails?: string; requestedSize?: string; remarks?: string }
+): Promise<OrderResponse> {
+  return apiPost<OrderResponse>(`/orders/${orderId}/return-request`, body);
+}
+
+export async function cancelGuestOrder(orderId: number, email: string): Promise<OrderResponse> {
+  return apiPatch<OrderResponse>(`/orders/${orderId}/cancel-guest?email=${encodeURIComponent(email)}`);
+}

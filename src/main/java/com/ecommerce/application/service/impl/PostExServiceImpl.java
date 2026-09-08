@@ -111,9 +111,14 @@ public class PostExServiceImpl implements PostExService {
                 .map(payment -> payment.getPaymentStatus() == PaymentStatus.SUCCESS)
                 .orElse(false);
 
-        BigDecimal invoicePayment = isPaidOnline
+        boolean isZeroAmountOrder = order.getTotalAmount() != null && order.getTotalAmount().compareTo(BigDecimal.ZERO) == 0;
+
+        BigDecimal invoicePayment = (isPaidOnline || isZeroAmountOrder)
                 ? BigDecimal.ZERO
                 : (order.getTotalAmount() != null ? order.getTotalAmount() : BigDecimal.ZERO);
+
+        boolean isExchangeReplacement = order.getDiscountCode() != null && order.getDiscountCode().contains("EXCHANGE-REPLACEMENT");
+        String orderType = isExchangeReplacement ? "Replacement" : "Normal";
 
         PostExBookingRequest request = PostExBookingRequest.builder()
                 .cityName(cityStr)
@@ -123,10 +128,10 @@ public class PostExServiceImpl implements PostExService {
                 .invoicePayment(invoicePayment)
                 .orderDetail(itemDetails)
                 .orderRefNumber("ORD-" + order.getId())
-                .orderType("Normal")
+                .orderType(orderType)
                 .pickupAddressCode(defaultPickupAddressCode)
                 .items(totalItemsCount)
-                .transactionNotes("Handle with care")
+                .transactionNotes(isExchangeReplacement ? "Size Exchange Replacement - 0 COD" : "Handle with care")
                 .build();
 
         HttpHeaders headers = new HttpHeaders();

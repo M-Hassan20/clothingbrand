@@ -51,6 +51,18 @@ public class Order extends BaseEntity {
 
     @Builder.Default
     private BigDecimal shippingFee = BigDecimal.ZERO;
+
+    private String returnStatus;
+
+    private String returnReason;
+
+    private String returnResolution;
+
+    private String returnBankDetails;
+
+    private String requestedSize;
+
+    private String returnRemarks;
 }
 
 

@@ -101,6 +101,7 @@ export interface OrderResponse {
   paymentStatus?: 'PENDING' | 'INITIATED' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'PARTIALLY_REFUNDED';
   totalAmount: number;
   discountAmount?: number;
+  shippingFee?: number;
   discountCode: string | null;
   items: OrderItemResponse[];
   shippingAddress: AddressResponse;

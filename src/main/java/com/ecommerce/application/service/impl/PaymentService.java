@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -114,4 +116,57 @@ public class PaymentService {
         return paymentMapper.toResponse(paymentRepository.save(payment));
     }
 
+    @Transactional
+    public PaymentResponse processRefund(Long orderId, com.ecommerce.application.dto.request.RefundRequest request) {
+        Order order = orderService.getOrderEntityById(orderId);
+        Payment payment = paymentRepository.findByOrderId(orderId)
+                .orElseGet(() -> Payment.builder()
+                        .order(order)
+                        .amount(order.getTotalAmount() != null ? order.getTotalAmount() : BigDecimal.ZERO)
+                        .currency("PKR")
+                        .paymentStatus(PaymentStatus.SUCCESS)
+                        .build());
+
+        BigDecimal currentRefunded = payment.getRefundedAmount() != null ? payment.getRefundedAmount() : BigDecimal.ZERO;
+        BigDecimal originalAmount = (payment.getAmount() != null && payment.getAmount().compareTo(BigDecimal.ZERO) > 0)
+                ? payment.getAmount()
+                : (order.getTotalAmount() != null ? order.getTotalAmount() : BigDecimal.ZERO);
+        BigDecimal remainingRefundable = originalAmount.subtract(currentRefunded);
+
+        if (remainingRefundable.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("This payment has already been fully refunded.");
+        }
+
+        BigDecimal refundAmount = (request != null && request.getAmount() != null && request.getAmount().compareTo(BigDecimal.ZERO) > 0)
+                ? request.getAmount()
+                : remainingRefundable;
+
+        if (refundAmount.compareTo(remainingRefundable) > 0) {
+            throw new RuntimeException("Refund amount (Rs. " + refundAmount + ") exceeds remaining refundable balance (Rs. " + remainingRefundable + ").");
+        }
+
+        boolean isManual = request != null && Boolean.TRUE.equals(request.getIsManualOverride());
+        if (!isManual && payment.getStripePaymentIntentId() != null && !payment.getStripePaymentIntentId().isBlank()) {
+            safePayService.refundPayment(payment.getStripePaymentIntentId(), refundAmount);
+        }
+
+        BigDecimal updatedRefundedAmount = currentRefunded.add(refundAmount);
+        payment.setRefundedAmount(updatedRefundedAmount);
+        if (request != null && request.getReason() != null && !request.getReason().isBlank()) {
+            payment.setRefundReason(request.getReason().trim());
+        }
+
+        if (updatedRefundedAmount.compareTo(originalAmount) >= 0) {
+            payment.setPaymentStatus(PaymentStatus.REFUNDED);
+            if (order.getStatus() != OrderStatus.CANCELLED) {
+                orderService.updateOrderStatus(orderId, OrderStatus.CANCELLED);
+            }
+        } else {
+            payment.setPaymentStatus(PaymentStatus.PARTIALLY_REFUNDED);
+        }
+
+        paymentRepository.save(payment);
+        log.info("Processed refund of Rs. {} for order ID {}. Final PaymentStatus: {}", refundAmount, orderId, payment.getPaymentStatus());
+        return paymentMapper.toResponse(payment);
+    }
 }

@@ -17,6 +17,7 @@ import {
   PackageCheck,
   FileText,
   ExternalLink,
+  RefreshCw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -52,6 +53,12 @@ interface Order {
   shippingFee?: number;
   estimatedCourierFee?: number;
   courierMargin?: number;
+  returnStatus?: string;
+  returnReason?: string;
+  returnResolution?: string;
+  returnBankDetails?: string;
+  requestedSize?: string;
+  returnRemarks?: string;
   shippingAddress?: Address;
   items?: OrderItem[];
   createdAt: string;
@@ -96,6 +103,47 @@ export default function Orders() {
   const [trackingModalOpen, setTrackingModalOpen] = useState(false);
   const [trackingDetails, setTrackingDetails] = useState<any>(null);
   const [loadingTracking, setLoadingTracking] = useState(false);
+
+  // Refund States
+  const [refundModalOpen, setRefundModalOpen] = useState(false);
+  const [refunding, setRefunding] = useState(false);
+  const [refundAmountInput, setRefundAmountInput] = useState('');
+  const [refundReasonInput, setRefundReasonInput] = useState('');
+  const [isManualRefund, setIsManualRefund] = useState(true);
+
+  const handleIssueRefund = async () => {
+    if (!selectedOrder) return;
+    try {
+      setRefunding(true);
+      const amt = refundAmountInput ? parseFloat(refundAmountInput) : undefined;
+      const res = await api.post<any>(`/admin/orders/${selectedOrder.id}/refund`, {
+        amount: amt,
+        reason: refundReasonInput.trim(),
+        isManualOverride: isManualRefund,
+      });
+      toast.success(`Refund processed successfully! Payment Status: ${res.paymentStatus || 'REFUNDED'}`);
+      setRefundModalOpen(false);
+      setSelectedOrder((prev) => (prev ? { ...prev, paymentStatus: res.paymentStatus || 'REFUNDED', status: 'CANCELLED' } : null));
+      fetchOrders();
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to process refund'));
+    } finally {
+      setRefunding(false);
+    }
+  };
+
+  const handleUpdateReturnStatus = async (orderId: number, status: string) => {
+    try {
+      const res = await api.patch<Order>(`/admin/orders/${orderId}/return-status?status=${encodeURIComponent(status)}`);
+      toast.success(`Return status updated to ${status}`);
+      if (res) {
+        setSelectedOrder((prev) => (prev ? { ...prev, ...res } : res));
+      }
+      fetchOrders();
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'Failed to update return status'));
+    }
+  };
 
   const handleBookPostEx = async (orderId: number) => {
     try {
@@ -197,15 +245,20 @@ export default function Orders() {
 
   const handleOpenOrderDetails = async (order: Order) => {
     setSelectedOrder(order);
-    setOrderItems([]);
+    setOrderItems(order.items || []);
     
     try {
       setLoadingItems(true);
-      // Fetch order items list
+      // Fetch order items list if available
       const items = await api.get<OrderItem[]>(`/orders/${order.id}/items`);
-      setOrderItems(items || []);
-    } catch (err) {
-      toast.error(getErrorMessage(err, 'Failed to load order items'));
+      if (Array.isArray(items) && items.length > 0) {
+        setOrderItems(items);
+      }
+    } catch {
+      // Fallback to order.items if API call fails
+      if (order.items && order.items.length > 0) {
+        setOrderItems(order.items);
+      }
     } finally {
       setLoadingItems(false);
     }
@@ -535,9 +588,24 @@ export default function Orders() {
                   </h4>
                   <p className="font-semibold text-text-primary">{selectedOrder.userFullName}</p>
                   <p className="text-[11px]">{selectedOrder.userEmail}</p>
-                  <p className="text-[11px] uppercase tracking-wider font-semibold text-text-secondary">
-                    Payment Method: COD
-                  </p>
+                  <div className="flex items-center justify-between pt-1 border-t border-border/40">
+                    <p className="text-[11px] uppercase tracking-wider font-semibold text-text-secondary">
+                      Payment Status: <span className="font-mono text-text-primary">{selectedOrder.paymentStatus || 'PENDING'}</span>
+                    </p>
+                    {selectedOrder.paymentStatus !== 'REFUNDED' && (
+                      <button
+                        onClick={() => {
+                          setRefundAmountInput(selectedOrder.totalAmount ? selectedOrder.totalAmount.toString() : '');
+                          setRefundReasonInput('');
+                          setIsManualRefund(true);
+                          setRefundModalOpen(true);
+                        }}
+                        className="px-2 py-0.5 text-[10px] uppercase font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded transition-colors"
+                      >
+                        Issue Refund
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="bg-background/40 border border-border/60 p-4 rounded space-y-2">
@@ -559,6 +627,60 @@ export default function Orders() {
                   )}
                 </div>
               </div>
+
+              {/* Customer Return Request Alert Panel */}
+              {selectedOrder.returnStatus && (
+                <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-md space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <RefreshCw className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      <span className="font-serif font-semibold text-amber-900 dark:text-amber-300 text-xs uppercase tracking-wider">
+                        Customer Return Request: {selectedOrder.returnStatus}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {selectedOrder.returnStatus === 'REQUESTED' && (
+                        <button
+                          onClick={() => handleUpdateReturnStatus(selectedOrder.id, 'APPROVED')}
+                          className="px-2.5 py-1 text-[10px] uppercase font-bold bg-amber-600 hover:bg-amber-700 text-white rounded transition-colors"
+                        >
+                          Approve Return
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleUpdateReturnStatus(selectedOrder.id, 'COMPLETED')}
+                        className="px-2.5 py-1 text-[10px] uppercase font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded transition-colors"
+                      >
+                        Mark Completed
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs pt-1 border-t border-amber-500/20">
+                    <div>
+                      <span className="text-text-secondary block text-[10px] uppercase font-semibold">Reason</span>
+                      <span className="font-semibold text-text-primary">{selectedOrder.returnReason || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="text-text-secondary block text-[10px] uppercase font-semibold">Resolution</span>
+                      <span className="font-semibold text-accent uppercase">{selectedOrder.returnResolution || 'REFUND'}</span>
+                    </div>
+                    <div>
+                      <span className="text-text-secondary block text-[10px] uppercase font-semibold">Desired Size</span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">{selectedOrder.requestedSize || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="text-text-secondary block text-[10px] uppercase font-semibold">IBFT Bank Details</span>
+                      <span className="font-mono text-text-primary font-semibold text-[10px]">{selectedOrder.returnBankDetails || 'N/A (Card Pay)'}</span>
+                    </div>
+                  </div>
+                  {selectedOrder.returnRemarks && (
+                    <div className="pt-2 border-t border-amber-500/20 text-xs">
+                      <span className="text-text-secondary block text-[10px] uppercase font-semibold">Customer Remarks / Preferences</span>
+                      <p className="italic text-text-primary bg-background/50 p-2 rounded border border-border/40 mt-1">{selectedOrder.returnRemarks}</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* PostEx Shipping Logistics Panel */}
               <div className="bg-surface border border-accent/20 p-4 rounded-md space-y-3">
@@ -743,10 +865,10 @@ export default function Orders() {
                               {item.quantity}
                             </td>
                             <td className="py-3 px-4 text-right text-text-secondary">
-                              Rs. {item.price.toFixed(2)}
+                              Rs. {Number(item.price || 0).toFixed(2)}
                             </td>
                             <td className="py-3 px-4 text-right font-semibold text-text-primary">
-                              Rs. {item.subtotal.toFixed(2)}
+                              Rs. {Number(item.subtotal || ((item.price || 0) * (item.quantity || 1)) || 0).toFixed(2)}
                             </td>
                           </tr>
                         ))}
@@ -875,6 +997,114 @@ export default function Orders() {
                 className="px-4 py-1.5 border border-border rounded text-xs font-semibold uppercase hover:bg-surface"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Refund Processing Modal */}
+      {refundModalOpen && selectedOrder && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface border border-border rounded-lg shadow-xl w-full max-w-md p-6 space-y-5 animate-in fade-in zoom-in-95">
+            <div className="flex justify-between items-center border-b border-border/60 pb-3">
+              <h3 className="font-serif font-semibold text-text-primary text-base">
+                Issue Refund — Order #{selectedOrder.id}
+              </h3>
+              <button onClick={() => setRefundModalOpen(false)} className="text-text-secondary hover:text-text-primary">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4 font-sans text-xs">
+              <div className="bg-background/60 border border-border/60 p-3 rounded space-y-1">
+                <div className="flex justify-between text-text-secondary">
+                  <span>Customer:</span>
+                  <span className="font-semibold text-text-primary">{selectedOrder.userFullName}</span>
+                </div>
+                <div className="flex justify-between text-text-secondary">
+                  <span>Order Total:</span>
+                  <span className="font-semibold text-text-primary font-mono">Rs. {selectedOrder.totalAmount}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold uppercase text-text-secondary mb-1">
+                  Refund Amount (PKR)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={refundAmountInput}
+                  onChange={(e) => setRefundAmountInput(e.target.value)}
+                  placeholder={`Full Amount: Rs. ${selectedOrder.totalAmount}`}
+                  className="w-full bg-background border border-border rounded px-3 py-2 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-accent"
+                />
+                <span className="text-[10px] text-text-secondary mt-1 block">
+                  Leave blank or enter {selectedOrder.totalAmount} for a full refund.
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold uppercase text-text-secondary mb-1">
+                  Refund Processing Method
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsManualRefund(true)}
+                    className={`px-3 py-2 rounded text-xs font-semibold border transition-colors ${
+                      isManualRefund
+                        ? 'border-accent bg-accent/15 text-accent'
+                        : 'border-border bg-background text-text-secondary'
+                    }`}
+                  >
+                    Manual IBFT / COD Cash
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsManualRefund(false)}
+                    className={`px-3 py-2 rounded text-xs font-semibold border transition-colors ${
+                      !isManualRefund
+                        ? 'border-accent bg-accent/15 text-accent'
+                        : 'border-border bg-background text-text-secondary'
+                    }`}
+                  >
+                    SafePay Auto API
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold uppercase text-text-secondary mb-1">
+                  Reason for Refund
+                </label>
+                <input
+                  type="text"
+                  value={refundReasonInput}
+                  onChange={(e) => setRefundReasonInput(e.target.value)}
+                  placeholder="e.g. Customer returned item, Defective product, Order cancelled"
+                  className="w-full bg-background border border-border rounded px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-accent"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setRefundModalOpen(false)}
+                disabled={refunding}
+                className="px-4 py-2 border border-border rounded text-xs font-semibold uppercase hover:bg-background"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleIssueRefund}
+                disabled={refunding}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded text-xs font-semibold uppercase flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {refunding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Confirm Refund'}
               </button>
             </div>
           </div>

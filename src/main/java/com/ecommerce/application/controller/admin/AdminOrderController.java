@@ -1,11 +1,14 @@
 package com.ecommerce.application.controller.admin;
 
+import com.ecommerce.application.dto.request.RefundRequest;
 import com.ecommerce.application.dto.response.ApiResponse;
 import com.ecommerce.application.dto.response.OrderResponse;
+import com.ecommerce.application.dto.response.PaymentResponse;
 import com.ecommerce.application.entity.Order;
 import com.ecommerce.application.enums.OrderStatus;
 import com.ecommerce.application.service.impl.InvoiceService;
 import com.ecommerce.application.service.impl.OrderService;
+import com.ecommerce.application.service.impl.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +34,7 @@ public class AdminOrderController {
 
     private final OrderService orderService;
     private final InvoiceService invoiceService;
+    private final PaymentService paymentService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<OrderResponse>>> getAllOrders(
@@ -113,5 +117,21 @@ public class AdminOrderController {
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(invoicePdf);
+    }
+
+    @PostMapping("/{id}/refund")
+    public ResponseEntity<ApiResponse<PaymentResponse>> refundOrder(
+            @PathVariable Long id,
+            @RequestBody(required = false) RefundRequest request) {
+        PaymentResponse response = paymentService.processRefund(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Refund processed successfully", response));
+    }
+
+    @PatchMapping("/{id}/return-status")
+    public ResponseEntity<ApiResponse<OrderResponse>> updateReturnStatus(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "COMPLETED") String status) {
+        OrderResponse order = orderService.updateReturnStatus(id, status);
+        return ResponseEntity.ok(ApiResponse.success("Return status updated successfully", order));
     }
 }

@@ -6,9 +6,9 @@
     <title>Welcome to Haus of Hafsah</title>
     <style>
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #FAF7F2;
-            color: #2B2622;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #FBF9F5;
+            color: #1C1917;
             margin: 0;
             padding: 0;
             line-height: 1.6;
@@ -16,161 +16,148 @@
         }
         .wrapper {
             width: 100%;
-            background-color: #FAF7F2;
+            background-color: #FBF9F5;
             padding: 40px 15px;
             box-sizing: border-box;
         }
         .container {
-            max-width: 600px;
+            max-width: 580px;
             margin: 0 auto;
             background-color: #FFFFFF;
-            border-radius: 8px;
+            border-radius: 4px;
             overflow: hidden;
-            border: 1px solid #E8DFD3;
-            box-shadow: 0 4px 16px rgba(43, 38, 34, 0.04);
+            border: 1px solid #E7E5E4;
+            box-shadow: 0 4px 20px rgba(28, 25, 23, 0.03);
         }
         .header {
-            background-color: #2B2622;
+            background-color: #1C1917;
             padding: 36px 20px;
             text-align: center;
         }
         .brand-title {
-            font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-            color: #FAF7F2;
-            font-size: 26px;
-            font-weight: 700;
+            font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+            color: #FBF9F5;
+            font-size: 24px;
+            font-weight: 600;
             letter-spacing: 4px;
             margin: 0;
             text-transform: uppercase;
         }
         .brand-subtitle {
-            color: #B08968;
-            font-size: 11px;
-            letter-spacing: 2px;
+            color: #8C6D53;
+            font-size: 10px;
+            letter-spacing: 2.5px;
             text-transform: uppercase;
             margin-top: 6px;
-        }
-        .banner {
-            background-color: #F5EFE6;
-            border-bottom: 1px solid #E8DFD3;
-            padding: 20px;
-            text-align: center;
-        }
-        .banner-title {
-            font-family: 'Playfair Display', Georgia, serif;
-            color: #2B2622;
-            font-size: 20px;
-            font-weight: 600;
-            margin: 0;
+            font-weight: 500;
         }
         .content {
-            padding: 36px 32px;
+            padding: 40px 36px;
         }
         .greeting {
-            font-size: 16px;
+            font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+            font-size: 22px;
             font-weight: 600;
-            color: #2B2622;
-            margin-bottom: 16px;
+            color: #1C1917;
+            margin: 0 0 16px 0;
         }
         .message {
             font-size: 14px;
-            color: #4A423A;
-            margin-bottom: 20px;
+            color: #44403C;
+            margin-bottom: 24px;
+            line-height: 1.7;
         }
-        .welcome-card {
-            background-color: #FAF7F2;
-            border: 1px solid #E8DFD3;
-            border-radius: 6px;
+        .luxury-card {
+            background-color: #F4EFEA;
+            border: 1px solid #E7E5E4;
+            border-radius: 4px;
             padding: 24px;
-            margin: 24px 0;
+            margin: 28px 0;
             text-align: center;
         }
-        .welcome-card-title {
-            font-family: 'Playfair Display', Georgia, serif;
-            font-size: 17px;
-            color: #2B2622;
-            margin: 0 0 10px 0;
+        .card-title {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 18px;
+            color: #1C1917;
+            margin: 0 0 8px 0;
+            font-weight: 600;
+        }
+        .card-text {
+            font-size: 12px;
+            color: #78716C;
+            margin: 0;
         }
         .cta-container {
             text-align: center;
-            margin: 32px 0 24px 0;
+            margin: 32px 0 16px 0;
         }
         .button {
             display: inline-block;
             padding: 14px 36px;
-            background-color: #B08968;
-            color: #FFFFFF !important;
+            background-color: #1C1917;
+            color: #FBF9F5 !important;
             text-decoration: none;
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 600;
-            letter-spacing: 1.5px;
+            letter-spacing: 2px;
             text-transform: uppercase;
-            border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(176, 137, 104, 0.25);
-            transition: background-color 0.2s ease;
-        }
-        .signoff {
-            font-size: 14px;
-            color: #8A7B6C;
-            border-top: 1px solid #E8DFD3;
-            padding-top: 24px;
-            margin-top: 32px;
-        }
-        .signoff strong {
-            color: #2B2622;
+            border-radius: 2px;
         }
         .footer {
-            background-color: #FAF7F2;
-            border-top: 1px solid #E8DFD3;
-            padding: 24px 20px;
+            background-color: #FBF9F5;
+            border-top: 1px solid #E7E5E4;
+            padding: 28px;
             text-align: center;
-            font-size: 12px;
-            color: #8A7B6C;
+            font-size: 11px;
+            color: #78716C;
         }
-        .footer p {
-            margin: 4px 0;
+        .footer-links {
+            margin-top: 12px;
+        }
+        .footer-links a {
+            color: #8C6D53;
+            text-decoration: none;
+            margin: 0 8px;
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
-<div class="wrapper">
-    <div class="container">
-        <div class="header">
-            <h1 class="brand-title">Haus of Hafsah</h1>
-            <div class="brand-subtitle">Luxury Clothing &amp; Accessories</div>
-        </div>
-
-        <div class="banner">
-            <h2 class="banner-title">Welcome to Our Community</h2>
-        </div>
-
-        <div class="content">
-            <p class="greeting">Hi <span th:text="${userName}">User</span>,</p>
-
-            <p class="message">Thank you for joining Haus of Hafsah! We're delighted to welcome you to our world of timeless elegance, premium fabrics, and handcrafted designs.</p>
-
-            <div class="welcome-card">
-                <div class="welcome-card-title">Discover The Latest Collection</div>
-                <p style="font-size: 13px; color: #8A7B6C; margin: 0;">Explore exclusive new arrivals, tailored formals, and everyday luxury essentials.</p>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                <h1 class="brand-title">HAUS OF HAFSAH</h1>
+                <div class="brand-subtitle">HAUTE COUTURE & LUXURY PRET</div>
             </div>
 
-            <div class="cta-container">
-                <a th:href="${websiteUrl}" class="button">Start Shopping</a>
+            <div class="content">
+                <h2 class="greeting" th:text="'Welcome, ' + ${userName}">Welcome, Valued Guest</h2>
+                
+                <p class="message">
+                    Thank you for joining <strong>Haus of Hafsah</strong>. We are delighted to welcome you to our exclusive world of timeless elegance, handcrafted couture, and refined Pakistani luxury pret.
+                </p>
+
+                <div class="luxury-card">
+                    <h3 class="card-title">Crafted with Perfection</h3>
+                    <p class="card-text">
+                        Discover curated collections crafted with rich fabrics, intricate embroideries, and immaculate tailoring designed to empower your signature style.
+                    </p>
+                </div>
+
+                <div class="cta-container">
+                    <a th:href="${websiteUrl}" class="button">Explore New Arrivals</a>
+                </div>
             </div>
 
-            <p class="message" style="font-size: 13px; color: #8A7B6C; text-align: center;">If you ever have questions or need assistance, our support team is always here for you.</p>
-
-            <div class="signoff">
-                Warmest regards,<br>
-                <strong>The Haus of Hafsah Team</strong>
+            <div class="footer">
+                <div>&copy; Haus of Hafsah • All Rights Reserved</div>
+                <div class="footer-links">
+                    <a href="https://hausofhafsah.com">Official Boutique</a> •
+                    <a href="https://hausofhafsah.com/shipping-returns">Shipping Policy</a> •
+                    <a href="mailto:support@hausofhafsah.com">Client Care</a>
+                </div>
             </div>
-        </div>
-
-        <div class="footer">
-            <p>&copy; 2026 Haus of Hafsah. All rights reserved.</p>
-            <p>Refined Elegance &amp; Timeless Couture</p>
         </div>
     </div>
-</div>
 </body>
 </html>

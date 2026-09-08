@@ -34,4 +34,10 @@ public class OrderResponse {
     private BigDecimal shippingFee;
     private BigDecimal estimatedCourierFee;
     private BigDecimal courierMargin;
+    private String returnStatus;
+    private String returnReason;
+    private String returnResolution;
+    private String returnBankDetails;
+    private String requestedSize;
+    private String returnRemarks;
 }

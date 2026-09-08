@@ -2,6 +2,7 @@ package com.ecommerce.application.controller;
 
 import com.ecommerce.application.dto.request.OrderCreateRequest;
 import com.ecommerce.application.dto.request.GuestCheckoutRequest;
+import com.ecommerce.application.dto.request.ReturnRequestDTO;
 import com.ecommerce.application.dto.response.ApiResponse;
 import com.ecommerce.application.dto.response.OrderItemResponse;
 import com.ecommerce.application.dto.response.OrderResponse;
@@ -73,6 +74,24 @@ public class OrderController {
 
         OrderResponse order = orderService.cancelOrder(id, userId);
         return ResponseEntity.ok(ApiResponse.success("Order cancelled successfully!", order));
+    }
+
+    @PatchMapping("/{id}/cancel-guest")
+    public ResponseEntity<ApiResponse<OrderResponse>> cancelGuestOrder(
+            @PathVariable Long id,
+            @RequestParam String email) {
+
+        OrderResponse order = orderService.cancelGuestOrder(id, email);
+        return ResponseEntity.ok(ApiResponse.success("Guest order cancelled successfully!", order));
+    }
+
+    @PostMapping("/{id}/return-request")
+    public ResponseEntity<ApiResponse<OrderResponse>> requestReturn(
+            @PathVariable Long id,
+            @RequestBody(required = false) ReturnRequestDTO dto) {
+
+        OrderResponse order = orderService.requestReturn(id, dto);
+        return ResponseEntity.ok(ApiResponse.success("Return request submitted successfully!", order));
     }
 
     @GetMapping("/status/{status}")

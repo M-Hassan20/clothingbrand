@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Return Request Update - Haus of Hafsah</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #FBF9F5;
+            color: #1C1917;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrapper {
+            width: 100%;
+            background-color: #FBF9F5;
+            padding: 40px 15px;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 580px;
+            margin: 0 auto;
+            background-color: #FFFFFF;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #E7E5E4;
+            box-shadow: 0 4px 20px rgba(28, 25, 23, 0.03);
+        }
+        .header {
+            background-color: #1C1917;
+            padding: 36px 20px;
+            text-align: center;
+        }
+        .brand-title {
+            font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+            color: #FBF9F5;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 4px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+        .brand-subtitle {
+            color: #8C6D53;
+            font-size: 10px;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            margin-top: 6px;
+            font-weight: 500;
+        }
+        .status-bar {
+            background-color: #ECFDF5;
+            border-bottom: 1px solid #A7F3D0;
+            padding: 14px 20px;
+            text-align: center;
+            color: #065F46;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+        .content {
+            padding: 40px 36px;
+        }
+        .greeting {
+            font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+            font-size: 22px;
+            font-weight: 600;
+            color: #1C1917;
+            margin: 0 0 12px 0;
+        }
+        .message {
+            font-size: 14px;
+            color: #44403C;
+            margin-bottom: 24px;
+            line-height: 1.7;
+        }
+        .info-card {
+            background-color: #F4EFEA;
+            border: 1px solid #E7E5E4;
+            border-radius: 4px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+        .info-row {
+            margin-bottom: 12px;
+        }
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+        .info-label {
+            color: #78716C;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 1px;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .info-value {
+            color: #1C1917;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .instructions-box {
+            background-color: #FFFFFF;
+            border: 1px solid #8C6D53;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 24px 0;
+            font-size: 12px;
+            color: #1C1917;
+            line-height: 1.8;
+        }
+        .instructions-title {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: #8C6D53;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .cta-container {
+            text-align: center;
+            margin: 32px 0 16px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 14px 36px;
+            background-color: #1C1917;
+            color: #FBF9F5 !important;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-radius: 2px;
+        }
+        .footer {
+            background-color: #FBF9F5;
+            border-top: 1px solid #E7E5E4;
+            padding: 28px;
+            text-align: center;
+            font-size: 11px;
+            color: #78716C;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                <h1 class="brand-title">HAUS OF HAFSAH</h1>
+                <div class="brand-subtitle">CLIENT CONCIERGE & RETURNS</div>
+            </div>
+
+            <div class="status-bar" th:text="'Return Request Status: ' + ${returnStatus}">
+                Return Request Status: APPROVED
+            </div>
+
+            <div class="content">
+                <h2 class="greeting" th:text="'Dear ' + ${userName}">Dear Valued Client</h2>
+                
+                <p class="message" th:if="${returnStatus == 'APPROVED'}">
+                    We are pleased to inform you that your return request for <strong>Order #<span th:text="${orderId}">1001</span></strong> has been <strong>APPROVED</strong>. Our client care team is ready to process your <span th:text="${returnResolution}">REFUND / EXCHANGE</span>.
+                </p>
+                <p class="message" th:if="${returnStatus == 'COMPLETED'}">
+                    Your return/exchange request for <strong>Order #<span th:text="${orderId}">1001</span></strong> has been marked as <strong>COMPLETED</strong>. Thank you for shopping with Haus of Hafsah.
+                </p>
+
+                <div class="info-card">
+                    <div class="info-row">
+                        <span class="info-label">Order Reference</span>
+                        <div class="info-value" style="font-size: 16px; font-weight: 700; color: #1C1917;" th:text="'#' + ${orderId}">#1001</div>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Approved Resolution</span>
+                        <div class="info-value" style="color: #8C6D53; font-weight: 700;" th:text="${returnResolution}">SIZE EXCHANGE</div>
+                    </div>
+                    <div class="info-row" th:if="${replacementOrderId != null}">
+                        <span class="info-label">Exchange Replacement Order Created</span>
+                        <div class="info-value" style="color: #059669; font-weight: 700;" th:text="'Order #' + ${replacementOrderId} + ' (Complimentary / 0 COD)'">Order #1002</div>
+                    </div>
+                </div>
+
+                <div class="instructions-box" th:if="${returnStatus == 'APPROVED'}">
+                    <div class="instructions-title">Return Dispatch Instructions</div>
+                    <p style="margin: 0 0 10px 0;">
+                        1. Package the items securely in their original boutique packaging with all security tags attached.<br>
+                        2. Send the package via any tracked courier service (PostEx, TCS, Leopard, M&P) to our central warehouse:<br>
+                    </p>
+                    <div style="background-color: #FAF7F2; padding: 12px; border-left: 3px solid #8C6D53; font-weight: 600; margin: 10px 0;">
+                        <strong>Haus of Hafsah Logistics & Returns Center</strong><br>
+                        Plot #42, Commercial Avenue, Phase 6, DHA<br>
+                        Karachi, Pakistan | Contact: +92 300 0000000
+                    </div>
+                    <p style="margin: 10px 0 0 0; font-size: 11px; color: #78716C;">
+                        * Note: For Size Exchange requests, your replacement parcel has been booked and will be delivered with 0 COD collection.
+                    </p>
+                </div>
+
+                <div class="cta-container">
+                    <a th:href="${orderUrl}" class="button">View Order Account Portal</a>
+                </div>
+            </div>
+
+            <div class="footer">
+                &copy; Haus of Hafsah • Boutique Returns Concierge Service
+            </div>
+        </div>
+    </div>
+</body>
+</html>

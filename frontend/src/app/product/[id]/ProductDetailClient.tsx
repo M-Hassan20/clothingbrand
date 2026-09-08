@@ -367,7 +367,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
             <div className="border-t border-border/60 pt-6 space-y-3.5 font-sans text-xs text-brown-muted">
               <div className="flex items-center gap-3">
                 <Truck className="h-4 w-4 text-accent" />
-                <span>Complimentary signature packaging & free global delivery.</span>
+                <span>Complimentary signature packaging & nationwide shipping.</span>
               </div>
               <div className="flex items-center gap-3">
                 <RotateCcw className="h-4 w-4 text-accent" />

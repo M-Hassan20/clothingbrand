@@ -151,6 +151,18 @@ export default function PublicTrackPage() {
           )}
         </div>
       )}
+
+      {/* Return & Order Support Banner */}
+      <div className="border-t border-border/40 pt-8 text-center text-xs text-brown-muted space-y-2">
+        <p className="font-serif text-sm font-semibold text-charcoal">Need to Cancel or Request a Return?</p>
+        <p className="max-w-lg mx-auto leading-relaxed">
+          Log in to your account to manage orders directly, or contact our Concierge Desk at{' '}
+          <a href="mailto:info@hausofhafsah.com" className="text-accent underline font-semibold">
+            info@hausofhafsah.com
+          </a>{' '}
+          / WhatsApp <strong className="text-charcoal font-semibold">+92 314 8730683</strong>.
+        </p>
+      </div>
     </div>
   );
 }
