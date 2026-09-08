@@ -109,7 +109,7 @@ function ShippingReturnsContent() {
             </div>
             <h3 className="font-serif text-sm font-semibold text-charcoal">Nationwide Shipping</h3>
             <p className="text-xs text-brown-muted leading-relaxed">
-              Fast delivery across Pakistan via TCS, Leopards Courier, and trackable logistics partners.
+              Fast delivery across Pakistan via PostEx Logistics & express courier partners.
             </p>
           </div>
 
@@ -157,7 +157,7 @@ function ShippingReturnsContent() {
                 2. Shipping Charges & Cash on Delivery (COD)
               </h2>
               <p>
-                We offer complimentary standard shipping across Pakistan on all orders amounting to <strong className="text-charcoal">Rs. 5,000</strong> or above. For orders under Rs. 5,000, a flat shipping fee of <strong className="text-charcoal">Rs. 250</strong> applies at checkout.
+                We offer complimentary standard shipping across Pakistan on all orders amounting to <strong className="text-charcoal">Rs. 5,000</strong> or above. For orders under Rs. 5,000, a flat shipping fee of <strong className="text-charcoal">Rs. 300</strong> applies at checkout.
               </p>
               <p>
                 Doorstep package verification and Cash on Delivery (COD) collection are enabled across eligible courier coverage areas.

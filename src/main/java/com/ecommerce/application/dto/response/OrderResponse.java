@@ -31,4 +31,7 @@ public class OrderResponse {
     private String courierName;
     private String postexStatus;
     private String pickupAddressCode;
+    private BigDecimal shippingFee;
+    private BigDecimal estimatedCourierFee;
+    private BigDecimal courierMargin;
 }

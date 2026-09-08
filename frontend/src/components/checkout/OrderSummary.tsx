@@ -27,7 +27,10 @@ export default function OrderSummary({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const cartItemCount = items.reduce((acc, item) => acc + item.quantity, 0);
-  const finalTotal = Math.max(0, totalPrice - discountAmount);
+  const netSubtotal = Math.max(0, totalPrice - discountAmount);
+  const isFreeShipping = netSubtotal >= 5000;
+  const shippingFee = cartItemCount > 0 ? (isFreeShipping ? 0 : 300) : 0;
+  const finalTotal = netSubtotal + shippingFee;
 
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,8 +155,12 @@ export default function OrderSummary({
           </div>
         )}
         <div className="flex justify-between">
-          <span>Shipping</span>
-          <span className="text-success font-semibold">Complimentary</span>
+          <span>Shipping Fee</span>
+          {isFreeShipping ? (
+            <span className="text-success font-semibold">FREE (Over Rs. 5,000)</span>
+          ) : (
+            <span className="text-charcoal font-medium">Rs. 300.00</span>
+          )}
         </div>
         <div className="flex justify-between">
           <span>Estimated Tax</span>

@@ -183,6 +183,12 @@ public class OrderService {
             totalAmount = discountService.applyDiscount(appliedDiscountCode, totalAmount);
         }
 
+        // Calculate Shipping Fee: Rs. 300 flat nationwide, FREE over Rs. 5000 subtotal
+        BigDecimal shippingFee = totalAmount.compareTo(new BigDecimal("5000")) >= 0
+                ? BigDecimal.ZERO
+                : new BigDecimal("300");
+        totalAmount = totalAmount.add(shippingFee);
+
         // Create order
         Order order = Order.builder()
                 .user(user)
@@ -190,6 +196,7 @@ public class OrderService {
                 .totalAmount(totalAmount)
                 .discountAmount(discountAmount)
                 .discountCode(appliedDiscountCode)
+                .shippingFee(shippingFee)
                 .build();
 
         // Set shipping address
@@ -318,6 +325,29 @@ public class OrderService {
         if (order != null) {
             response.setDiscountCode(order.getDiscountCode());
             response.setDiscountAmount(order.getDiscountAmount());
+            response.setShippingFee(order.getShippingFee() != null ? order.getShippingFee() : BigDecimal.ZERO);
+
+            // Internal PostEx Courier Estimation
+            int totalItems = 0;
+            if (response.getItems() != null && !response.getItems().isEmpty()) {
+                totalItems = response.getItems().stream().mapToInt(item -> item.getQuantity() != null ? item.getQuantity() : 1).sum();
+            } else if (order.getId() != null) {
+                List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
+                totalItems = items.stream().mapToInt(item -> item.getQuantity() != null ? item.getQuantity() : 1).sum();
+            }
+            if (totalItems == 0) totalItems = 1;
+
+            int billableWeightKg = (int) Math.ceil(totalItems * 0.5);
+            if (billableWeightKg < 1) billableWeightKg = 1;
+
+            String city = (order.getShippingAddress() != null && order.getShippingAddress().getCity() != null)
+                    ? order.getShippingAddress().getCity().trim() : "";
+            BigDecimal ratePerKg = city.equalsIgnoreCase("Karachi") ? new BigDecimal("250") : new BigDecimal("300");
+            BigDecimal estFee = ratePerKg.multiply(BigDecimal.valueOf(billableWeightKg));
+
+            response.setEstimatedCourierFee(estFee);
+            BigDecimal custShipping = response.getShippingFee() != null ? response.getShippingFee() : BigDecimal.ZERO;
+            response.setCourierMargin(custShipping.subtract(estFee));
         }
         paymentRepository.findByOrderId(response.getId())
                 .ifPresentOrElse(

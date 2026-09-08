@@ -48,6 +48,9 @@ public class Order extends BaseEntity {
     private String postexStatus;
 
     private String pickupAddressCode;
+
+    @Builder.Default
+    private BigDecimal shippingFee = BigDecimal.ZERO;
 }
 
 

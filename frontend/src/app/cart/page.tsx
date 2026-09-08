@@ -56,7 +56,11 @@ export default function CartPage() {
   const items = cart?.items || [];
   const totalPrice = cart?.totalPrice || 0;
   const cartItemCount = items.reduce((acc, item) => acc + item.quantity, 0);
-  const finalTotal = Math.max(0, totalPrice - (discountAmount || 0));
+  const netSubtotal = Math.max(0, totalPrice - (discountAmount || 0));
+  const isFreeShipping = netSubtotal >= 5000;
+  const shippingFee = cartItemCount > 0 ? (isFreeShipping ? 0 : 300) : 0;
+  const finalTotal = netSubtotal + shippingFee;
+  const amountForFreeShipping = Math.max(0, 5000 - netSubtotal);
 
   const handleApplyPromoCode = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -313,13 +317,28 @@ export default function CartPage() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>Shipping</span>
-                  <span className="text-success font-semibold">Complimentary</span>
+                  <span>Shipping Fee</span>
+                  {isFreeShipping ? (
+                    <span className="text-success font-semibold">FREE (Over Rs. 5,000)</span>
+                  ) : (
+                    <span className="text-charcoal font-medium">Rs. 300.00</span>
+                  )}
                 </div>
                 <div className="flex justify-between">
                   <span>Estimated Tax</span>
                   <span className="text-charcoal font-medium">Rs. 0.00</span>
                 </div>
+
+                {!isFreeShipping && cartItemCount > 0 && (
+                  <div className="bg-amber-500/10 border border-amber-500/20 text-amber-900 rounded p-2.5 text-[11px] font-sans text-center">
+                    Add <strong className="font-semibold">Rs. {amountForFreeShipping.toFixed(0)}</strong> more to get <strong className="text-success">FREE Delivery</strong>!
+                  </div>
+                )}
+                {isFreeShipping && cartItemCount > 0 && (
+                  <div className="bg-success/10 border border-success/20 text-success rounded p-2.5 text-[11px] font-sans text-center font-medium">
+                    🎉 Congratulations! You unlocked FREE Nationwide Delivery.
+                  </div>
+                )}
 
                 <div className="border-t border-border/40 pt-4 flex justify-between text-sm sm:text-base font-semibold text-charcoal">
                   <span>Total</span>

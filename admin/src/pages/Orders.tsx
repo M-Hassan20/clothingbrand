@@ -49,6 +49,9 @@ interface Order {
   status: OrderStatus;
   paymentStatus?: 'PENDING' | 'INITIATED' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'PARTIALLY_REFUNDED';
   totalAmount: number;
+  shippingFee?: number;
+  estimatedCourierFee?: number;
+  courierMargin?: number;
   shippingAddress?: Address;
   items?: OrderItem[];
   createdAt: string;
@@ -631,6 +634,28 @@ export default function Orders() {
                         </button>
                       </>
                     )}
+                  </div>
+                </div>
+
+                {/* Internal Courier Cost & Margin Estimation */}
+                <div className="mt-3 pt-2.5 border-t border-border/40 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                  <div className="bg-background/60 p-2.5 rounded border border-border/40 space-y-0.5">
+                    <span className="text-text-secondary block text-[10px] uppercase font-semibold">Customer Shipping</span>
+                    <span className="font-semibold text-text-primary font-mono">
+                      {selectedOrder.shippingFee && selectedOrder.shippingFee > 0 ? `Rs. ${selectedOrder.shippingFee}` : 'Free'}
+                    </span>
+                  </div>
+                  <div className="bg-background/60 p-2.5 rounded border border-border/40 space-y-0.5">
+                    <span className="text-text-secondary block text-[10px] uppercase font-semibold">Est. PostEx Cost</span>
+                    <span className="font-semibold text-amber-600 dark:text-amber-400 font-mono">
+                      Rs. {selectedOrder.estimatedCourierFee ?? 300}
+                    </span>
+                  </div>
+                  <div className="bg-background/60 p-2.5 rounded border border-border/40 space-y-0.5">
+                    <span className="text-text-secondary block text-[10px] uppercase font-semibold">Net Logistics Profit</span>
+                    <span className={`font-semibold font-mono ${(selectedOrder.courierMargin ?? 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
+                      Rs. {selectedOrder.courierMargin ?? 0}
+                    </span>
                   </div>
                 </div>
               </div>

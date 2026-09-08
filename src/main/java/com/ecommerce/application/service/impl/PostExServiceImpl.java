@@ -9,9 +9,11 @@ import com.ecommerce.application.entity.Address;
 import com.ecommerce.application.entity.Order;
 import com.ecommerce.application.entity.OrderItem;
 import com.ecommerce.application.enums.OrderStatus;
+import com.ecommerce.application.enums.PaymentStatus;
 import com.ecommerce.application.mapper.OrderMapper;
 import com.ecommerce.application.repository.OrderItemRepository;
 import com.ecommerce.application.repository.OrderRepository;
+import com.ecommerce.application.repository.PaymentRepository;
 import com.ecommerce.application.service.PostExService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,7 @@ public class PostExServiceImpl implements PostExService {
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final PaymentRepository paymentRepository;
     private final OrderMapper orderMapper;
     private final OrderService orderService;
     private final RestTemplate restTemplate = new RestTemplate();
@@ -104,7 +107,13 @@ public class PostExServiceImpl implements PostExService {
         String cityStr = (address != null && address.getCity() != null && !address.getCity().isBlank())
                 ? address.getCity() : defaultCity;
 
-        BigDecimal invoicePayment = order.getTotalAmount() != null ? order.getTotalAmount() : BigDecimal.ZERO;
+        boolean isPaidOnline = paymentRepository.findByOrderId(order.getId())
+                .map(payment -> payment.getPaymentStatus() == PaymentStatus.SUCCESS)
+                .orElse(false);
+
+        BigDecimal invoicePayment = isPaidOnline
+                ? BigDecimal.ZERO
+                : (order.getTotalAmount() != null ? order.getTotalAmount() : BigDecimal.ZERO);
 
         PostExBookingRequest request = PostExBookingRequest.builder()
                 .cityName(cityStr)
