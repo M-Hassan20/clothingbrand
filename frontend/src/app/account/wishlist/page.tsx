@@ -24,7 +24,7 @@ export default function AccountWishlistPage() {
   const userId = getEffectiveUserId(authUserId);
 
   useEffect(() => {
-    document.title = 'My Wishlist — Haus of Hafsah';
+    document.title = 'My Wishlist | Haus of Hafsah';
   }, []);
 
   const fetchWishlist = useCallback(async () => {

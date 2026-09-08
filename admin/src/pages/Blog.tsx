@@ -57,7 +57,7 @@ export default function Blog() {
   const { user, token } = useAuth();
 
   useEffect(() => {
-    document.title = 'Journal & Blog CMS — Haus of Hafsah Admin';
+    document.title = 'Journal & Blog CMS | Haus of Hafsah Admin';
   }, []);
   
   // View State: list or edit

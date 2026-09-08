@@ -35,9 +35,9 @@ export default async function Home({ searchParams }: HomeProps) {
       {/* 1. Hero Section (Split or Carousel depending on config) */}
       <Hero
         heroType={homepageConfig?.heroType || 'SPLIT'}
-        title={homepageConfig?.heroTitle}
-        subtitle={homepageConfig?.heroSubtitle}
-        imageUrl={homepageConfig?.heroImageUrl}
+        title={homepageConfig?.title}
+        subtitle={homepageConfig?.subtitle}
+        imageUrl={homepageConfig?.imageUrl}
         ctaText={homepageConfig?.ctaText}
         ctaLink={homepageConfig?.ctaLink}
         carouselIntervalSeconds={homepageConfig?.carouselIntervalSeconds || 5}

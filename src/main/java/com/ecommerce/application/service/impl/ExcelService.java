@@ -58,7 +58,7 @@ public class ExcelService {
                 try {
                     ProductImportRow importRow = parseProductRow(row, rowNum);
 
-                    if (importRow.getHasErrors()) {
+                    if (Boolean.TRUE.equals(importRow.getHasErrors())) {
                         result.setFailedImports(result.getFailedImports() + 1);
                         result.getErrors().add("Row " + rowNum + ": " + importRow.getErrorMessage());
                         result.getFailedRows().add(importRow);
@@ -84,6 +84,8 @@ public class ExcelService {
     private ProductImportRow parseProductRow(Row row, int rowNum) {
         ProductImportRow importRow = ProductImportRow.builder()
                 .rowNumber(rowNum)
+                .hasErrors(false)
+                .isActive(true)
                 .build();
 
         try {
@@ -111,8 +113,14 @@ public class ExcelService {
             if (importRow.getPrice() == null || importRow.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
                 errors.add("Valid price is required");
             }
+
+            // Auto generate SKU if missing
             if (importRow.getSku() == null || importRow.getSku().trim().isEmpty()) {
-                errors.add("SKU is required");
+                String prodPart = importRow.getProductName() != null ? importRow.getProductName().toLowerCase().replaceAll("[^a-z0-9]", "") : "prod";
+                if (prodPart.length() > 6) prodPart = prodPart.substring(0, 6);
+                String colorPart = importRow.getColor() != null ? importRow.getColor().toLowerCase().replaceAll("[^a-z0-9]", "") : "col";
+                String sizePart = importRow.getSize() != null ? importRow.getSize().toLowerCase().replaceAll("[^a-z0-9]", "") : "sz";
+                importRow.setSku("hoh-" + prodPart + "-" + colorPart + "-" + sizePart);
             }
 
             if (!errors.isEmpty()) {
@@ -132,6 +140,10 @@ public class ExcelService {
      * Import single product from row
      */
     private void importProduct(ProductImportRow importRow) {
+        String brandName = (importRow.getBrand() != null && !importRow.getBrand().trim().isEmpty())
+                ? importRow.getBrand()
+                : "Haus of Hafsah";
+
         // Find or create category
         Category category = categoryRepository.findByName(importRow.getCategoryName())
                 .orElseGet(() -> {
@@ -143,17 +155,24 @@ public class ExcelService {
         // Find or create product
         Product product = productRepository.findByNameAndBrand(
                 importRow.getProductName(),
-                importRow.getBrand()
+                brandName
         ).orElseGet(() -> {
             Product newProduct = Product.builder()
                     .name(importRow.getProductName())
-                    .description(importRow.getDescription())
-                    .brand(importRow.getBrand())
+                    .description(importRow.getDescription() != null && !importRow.getDescription().trim().isEmpty()
+                            ? importRow.getDescription()
+                            : importRow.getProductName())
+                    .brand(brandName)
                     .category(category)
                     .isActive(importRow.getIsActive() != null ? importRow.getIsActive() : true)
                     .build();
             return productRepository.save(newProduct);
         });
+
+        String size = importRow.getSize() != null && !importRow.getSize().trim().isEmpty() ? importRow.getSize() : "M";
+        String color = importRow.getColor() != null && !importRow.getColor().trim().isEmpty() ? importRow.getColor() : "Default";
+        Integer stock = importRow.getStockQuantity() != null ? importRow.getStockQuantity() : 10;
+        BigDecimal price = importRow.getPrice() != null ? importRow.getPrice() : BigDecimal.valueOf(99);
 
         // Check if variant with SKU already exists
         Optional<ProductVariant> existingVariant = productVariantRepository.findBySku(importRow.getSku());
@@ -161,19 +180,19 @@ public class ExcelService {
         if (existingVariant.isPresent()) {
             // Update existing variant
             ProductVariant variant = existingVariant.get();
-            variant.setSize(importRow.getSize());
-            variant.setColor(importRow.getColor());
-            variant.setPrice(importRow.getPrice());
-            variant.setStockQuantity(importRow.getStockQuantity());
+            variant.setSize(size);
+            variant.setColor(color);
+            variant.setPrice(price);
+            variant.setStockQuantity(stock);
             productVariantRepository.save(variant);
         } else {
             // Create new variant
             ProductVariant variant = ProductVariant.builder()
                     .product(product)
-                    .size(importRow.getSize())
-                    .color(importRow.getColor())
-                    .price(importRow.getPrice())
-                    .stockQuantity(importRow.getStockQuantity())
+                    .size(size)
+                    .color(color)
+                    .price(price)
+                    .stockQuantity(stock)
                     .sku(importRow.getSku())
                     .publicImageUrl("") // Will be updated later
                     .additionalImageUrls(new ArrayList<>())

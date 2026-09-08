@@ -69,6 +69,7 @@ public class SecurityConfig {
                                 "/api/blog/**",
                                 "/api/homepage/**",
                                 "/api/page-config/**",
+                                "/api/announcement/**",
                                 "/api/discounts/**",
                                 "/api/payments/webhook/safepay",
                                 "/error"

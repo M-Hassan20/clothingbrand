@@ -54,12 +54,16 @@ interface Product {
   description: string;
   brand: string;
   categoryId: number;
+  category?: { id: number; name: string };
   categoryName?: string;
   isActive: boolean;
   status?: string;
   minPrice?: number;
   maxPrice?: number;
   totalStock?: number;
+  totalVariants?: number;
+  inStockVariants?: number;
+  outOfStockVariants?: number;
   thumbnailImage?: string;
   additionalImages?: string[];
   variants?: ProductVariant[];
@@ -67,7 +71,7 @@ interface Product {
 
 export default function Products() {
   useEffect(() => {
-    document.title = 'Product Catalog — Haus of Hafsah Admin';
+    document.title = 'Product Catalog | Haus of Hafsah Admin';
   }, []);
 
   // Lists State
@@ -182,19 +186,35 @@ export default function Products() {
   const handleOpenEditDrawer = async (product: Product) => {
     try {
       setLoading(true);
-      // Fetch complete details including variants
-      const details = await api.get<Product>(`/products/${product.id}`);
+      // Fetch complete details including variants and category
+      const details = await api.get<any>(`/products/${product.id}`);
       setEditingProduct(details);
-      setName(details.name);
-      setDescription(details.description);
-      setBrand(details.brand);
-      setCategoryId(details.categoryId);
-      setIsActive(details.isActive);
+      setName(details.name || '');
+      setDescription(details.description || '');
+      setBrand(details.brand || 'Haus of Hafsah');
+
+      const catId = details.category?.id || details.categoryId || (typeof details.category === 'number' ? details.category : '');
+      setCategoryId(catId ? Number(catId) : '');
+
+      setIsActive(details.isActive ?? (details.status === 'ACTIVE'));
       setThumbnailImage(details.thumbnailImage || '');
       setAdditionalImages(details.additionalImages || []);
-      setVariants(details.variants && details.variants.length > 0 ? details.variants : [
+
+      const mappedVariants = (details.variants || []).map((v: any) => ({
+        id: v.id,
+        size: v.size || '',
+        color: v.color || '',
+        price: v.price != null ? Number(v.price) : 0,
+        stock: v.stockQuantity != null ? Number(v.stockQuantity) : (v.stock != null ? Number(v.stock) : 0),
+        sku: v.sku || '',
+        imageUrl: v.publicImageUrl || v.imageUrl || '',
+        imageUrls: v.additionalImageUrls || v.imageUrls || [],
+      }));
+
+      setVariants(mappedVariants.length > 0 ? mappedVariants : [
         { size: 'S', color: 'Black', price: 99, stock: 15, sku: '' }
       ]);
+
       // Fetch recommendations
       try {
         const recs = await api.get<Product[]>(`/admin/products/${product.id}/recommendations`);
@@ -377,6 +397,7 @@ export default function Products() {
         thumbnailImage,
         additionalImages,
         variants: variants.map(v => ({
+          id: v.id,
           size: v.size,
           color: v.color,
           price: Number(v.price),
@@ -593,16 +614,48 @@ export default function Products() {
                         <p className="font-semibold text-text-primary">{product.name}</p>
                         <p className="text-[10px] text-text-secondary mt-0.5">{product.brand}</p>
                       </td>
-                      <td className="py-3 px-4 text-text-secondary">
-                        {product.categoryName || 'Unassigned'}
+                      <td className="py-3 px-4 text-text-secondary font-medium">
+                        {product.category?.name || product.categoryName || 'Unassigned'}
                       </td>
                       <td className="py-3 px-4 font-semibold text-text-primary">
                         {minPrice === maxPrice ? `Rs. ${minPrice.toFixed(2)}` : `Rs. ${minPrice.toFixed(2)} - Rs. ${maxPrice.toFixed(2)}`}
                       </td>
-                      <td className="py-3 px-4 font-medium">
-                        <span className={product.totalStock && product.totalStock < 10 ? 'text-error' : 'text-text-primary'}>
-                          {product.totalStock ?? 0} units
-                        </span>
+                      <td className="py-3 px-4">
+                        {(() => {
+                          const total = product.totalStock ?? 0;
+                          const totalVar = product.totalVariants ?? 0;
+                          const inStock = product.inStockVariants ?? 0;
+                          const outOfStock = product.outOfStockVariants ?? 0;
+
+                          if (total === 0) {
+                            return (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                                Out of Stock (0 units)
+                              </span>
+                            );
+                          }
+
+                          return (
+                            <div className="space-y-0.5">
+                              <p className="font-semibold text-text-primary text-xs">
+                                {total} {total === 1 ? 'unit' : 'units'}
+                              </p>
+                              {totalVar > 0 && (
+                                <p className="text-[10px] font-medium">
+                                  {outOfStock > 0 ? (
+                                    <span className="text-amber-700 font-semibold">
+                                      {inStock}/{totalVar} variants ({outOfStock} out)
+                                    </span>
+                                  ) : (
+                                    <span className="text-emerald-700 font-semibold">
+                                      All {totalVar} variants in stock
+                                    </span>
+                                  )}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="py-3 px-4">
                         {(() => {

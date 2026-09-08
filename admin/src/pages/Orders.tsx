@@ -57,7 +57,7 @@ interface PaginatedResponse<T> {
 
 export default function Orders() {
   useEffect(() => {
-    document.title = 'Orders Ledger — Haus of Hafsah Admin';
+    document.title = 'Orders Ledger | Haus of Hafsah Admin';
   }, []);
 
   const [orders, setOrders] = useState<Order[]>([]);

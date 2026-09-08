@@ -6,6 +6,7 @@ import com.ecommerce.application.dto.request.ProductVariantRequest;
 import com.ecommerce.application.dto.request.ProductRecommendationRequest;
 import com.ecommerce.application.dto.response.ApiResponse;
 import com.ecommerce.application.dto.response.ImageUploadResponse;
+import com.ecommerce.application.dto.response.ProductDetailResponse;
 import com.ecommerce.application.dto.response.ProductResponse;
 import com.ecommerce.application.dto.response.ProductVariantResponse;
 import com.ecommerce.application.entity.Product;
@@ -81,6 +82,12 @@ public class AdminProductController {
         Pageable pageable = PageRequest.of(page, size, sort);
         Page<ProductResponse> products = productService.getAllProductsForAdmin(categoryId, search, status, pageable);
         return ResponseEntity.ok(ApiResponse.success("Products Retrieved", products));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<ProductDetailResponse>> getProductById(@PathVariable Long id) {
+        ProductDetailResponse product = productService.getProductDetailById(id);
+        return ResponseEntity.ok(ApiResponse.success("Product detail retrieved", product));
     }
 
     @PutMapping("/{id}")

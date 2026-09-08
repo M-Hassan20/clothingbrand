@@ -13,9 +13,14 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class ExcelImportResult {
-    private Integer totalRows;
-    private Integer successfulImports;
-    private Integer failedImports;
+    @Builder.Default
+    private Integer totalRows = 0;
+    @Builder.Default
+    private Integer successfulImports = 0;
+    @Builder.Default
+    private Integer failedImports = 0;
+    @Builder.Default
     private List<String> errors = new ArrayList<>();
+    @Builder.Default
     private List<ProductImportRow> failedRows = new ArrayList<>();
 }

@@ -13,7 +13,7 @@ export default function AccountOrdersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    document.title = 'Order History — Haus of Hafsah';
+    document.title = 'Order History | Haus of Hafsah';
   }, []);
 
   useEffect(() => {

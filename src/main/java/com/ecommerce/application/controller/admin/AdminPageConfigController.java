@@ -46,6 +46,11 @@ public class AdminPageConfigController {
         return ResponseEntity.ok(ApiResponse.success("Draft retrieved", service.getDraftForAdmin(pageKey)));
     }
 
+    @GetMapping("/{pageKey}/published")
+    public ResponseEntity<ApiResponse<PageConfigResponse>> getPublished(@PathVariable PageKey pageKey) {
+        return ResponseEntity.ok(ApiResponse.success("Published config retrieved", service.getPublishedForAdmin(pageKey)));
+    }
+
     @GetMapping("/preview-token")
     public ResponseEntity<ApiResponse<Map<String, String>>> getPreviewToken(Principal principal) {
         String email = principal != null ? principal.getName() : "admin";

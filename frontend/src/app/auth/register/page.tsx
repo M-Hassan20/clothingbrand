@@ -34,7 +34,7 @@ export default function RegisterPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
-    document.title = 'Create Account — Haus of Hafsah';
+    document.title = 'Create Account | Haus of Hafsah';
   }, []);
 
   const {

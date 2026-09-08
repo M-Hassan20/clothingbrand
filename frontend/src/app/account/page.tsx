@@ -8,7 +8,7 @@ export default function AccountOverviewPage() {
   const { fullName, email, role } = useAuthStore();
 
   useEffect(() => {
-    document.title = 'My Account — Haus of Hafsah';
+    document.title = 'My Account | Haus of Hafsah';
   }, []);
 
   return (

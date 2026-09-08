@@ -69,7 +69,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = 'Dashboard — Haus of Hafsah Admin';
+    document.title = 'Dashboard | Haus of Hafsah Admin';
   }, []);
 
   // Metrics States

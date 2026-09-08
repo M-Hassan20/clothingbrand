@@ -28,7 +28,7 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
-    document.title = 'Sign In — Haus of Hafsah';
+    document.title = 'Sign In | Haus of Hafsah';
   }, []);
 
   const {

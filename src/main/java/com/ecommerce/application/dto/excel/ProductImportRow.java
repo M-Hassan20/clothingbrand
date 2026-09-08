@@ -19,7 +19,8 @@ public class ProductImportRow {
     private String description;
     private String brand;
     private String categoryName;
-    private Boolean isActive;
+    @Builder.Default
+    private Boolean isActive = true;
 
     // Variant fields
     private String size;
@@ -29,6 +30,7 @@ public class ProductImportRow {
     private String sku;
 
     // Validation
+    @Builder.Default
     private Boolean hasErrors = false;
     private String errorMessage;
 }

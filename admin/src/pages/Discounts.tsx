@@ -50,7 +50,7 @@ interface DiscountFormData {
 
 export default function Discounts() {
   useEffect(() => {
-    document.title = 'Promotions & Discounts — Haus of Hafsah Admin';
+    document.title = 'Promotions & Discounts | Haus of Hafsah Admin';
   }, []);
 
   const [discounts, setDiscounts] = useState<Discount[]>([]);

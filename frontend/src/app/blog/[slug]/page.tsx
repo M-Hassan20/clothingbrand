@@ -40,7 +40,7 @@ export default function BlogDetailPage() {
 
   useEffect(() => {
     if (post?.title) {
-      document.title = `${post.title} — Haus of Hafsah`;
+      document.title = `${post.title} | Haus of Hafsah`;
     }
   }, [post]);
 

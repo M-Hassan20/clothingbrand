@@ -36,10 +36,15 @@ import {
   Layers,
   Sliders,
   Link as LinkIcon,
+  Megaphone,
+  Sparkles,
+  ToggleLeft,
+  ToggleRight,
+  Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export type PageKeyType = 'HOMEPAGE' | 'ABOUT' | 'CONTACT' | 'PRIVACY' | 'TERMS' | 'SHIPPING_RETURNS';
+export type PageKeyType = 'HOMEPAGE' | 'ABOUT' | 'CONTACT' | 'PRIVACY' | 'TERMS' | 'SHIPPING_RETURNS' | 'ANNOUNCEMENT';
 
 interface Product {
   id: number;
@@ -135,6 +140,13 @@ const TAB_CONFIGS: { key: PageKeyType; label: string; icon: React.ReactNode; all
     allowsImage: false,
     description: 'Configure shipping rates, delivery timelines, replacement guidelines, and return policy text.',
   },
+  {
+    key: 'ANNOUNCEMENT',
+    label: 'Announcement Modal',
+    icon: <Megaphone className="h-4 w-4" />,
+    allowsImage: true,
+    description: 'Configure promotional popup overlays (e.g. "Summer Sale is Live") with enable/disable controls and live preview.',
+  },
 ];
 
 export default function PageConfigManager() {
@@ -151,6 +163,7 @@ export default function PageConfigManager() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [copyingPublished, setCopyingPublished] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   // Form Fields
@@ -161,6 +174,8 @@ export default function PageConfigManager() {
   const [imageUrl, setImageUrl] = useState('');
   const [ctaText, setCtaText] = useState('');
   const [ctaLink, setCtaLink] = useState('');
+  const [announcementEnabled, setAnnouncementEnabled] = useState(false);
+  const [announcementDismissDays, setAnnouncementDismissDays] = useState(1);
 
   // Carousel specific state
   const [carouselIntervalSeconds, setCarouselIntervalSeconds] = useState<number>(5);
@@ -181,6 +196,16 @@ export default function PageConfigManager() {
       setContentHtml(editor.getHTML());
     },
   });
+
+  // Keep TipTap editor content in sync when editor instance is ready or tab changes
+  useEffect(() => {
+    if (editor && contentHtml !== undefined) {
+      const currentHTML = editor.getHTML();
+      if (currentHTML !== contentHtml) {
+        editor.commands.setContent(contentHtml || '');
+      }
+    }
+  }, [editor, contentHtml]);
 
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
@@ -203,7 +228,7 @@ export default function PageConfigManager() {
   const [slideSearchResults, setSlideSearchResults] = useState<Product[]>([]);
 
   useEffect(() => {
-    document.title = 'Store Config & Page CMS — Haus of Hafsah Admin';
+    document.title = 'Store Config & Page CMS | Haus of Hafsah Admin';
     fetchCategories();
   }, []);
 
@@ -232,6 +257,21 @@ export default function PageConfigManager() {
   const fetchPageConfig = async (key: PageKeyType) => {
     try {
       setLoading(true);
+      if (key === 'ANNOUNCEMENT') {
+        const res = await api.get<any>('/admin/announcement');
+        if (res) {
+          setStatus(res.status || 'DRAFT');
+          setAnnouncementEnabled(res.enabled ?? false);
+          setTitle(res.title || 'Summer Sale is Live');
+          setSubtitle(res.subtitle || 'Enjoy up to 40% off our curated luxury collection silhouettes.');
+          setImageUrl(res.imageUrl || '');
+          setCtaText(res.ctaText || 'Shop Sale Now');
+          setCtaLink(res.ctaLink || '/shop?collection=sale');
+          setAnnouncementDismissDays(res.dismissDays || 1);
+        }
+        return;
+      }
+
       const res = await api.get<PageConfigResponse>(`/admin/page-config/${key}`);
       if (res) {
         setStatus(res.status || 'DRAFT');
@@ -264,9 +304,75 @@ export default function PageConfigManager() {
     }
   };
 
+  const handleCopyPublishedContent = async () => {
+    try {
+      setCopyingPublished(true);
+      if (activeTab === 'ANNOUNCEMENT') {
+        const res = await api.get<any>('/admin/announcement/published');
+        if (res) {
+          setAnnouncementEnabled(res.enabled ?? false);
+          setTitle(res.title || '');
+          setSubtitle(res.subtitle || '');
+          setImageUrl(res.imageUrl || '');
+          setCtaText(res.ctaText || '');
+          setCtaLink(res.ctaLink || '');
+          setAnnouncementDismissDays(res.dismissDays || 1);
+          toast.success('Form populated with live published Announcement content!');
+        }
+        return;
+      }
+
+      const res = await api.get<PageConfigResponse>(`/admin/page-config/${activeTab}/published`);
+      if (res) {
+        setHeroType(res.heroType || 'SPLIT');
+        setTitle(res.title || '');
+        setSubtitle(res.subtitle || '');
+        setImageUrl(res.imageUrl || '');
+        setCtaText(res.ctaText || '');
+        setCtaLink(res.ctaLink || '');
+        setCarouselIntervalSeconds(res.carouselIntervalSeconds || 5);
+        setSlides(res.slides || []);
+
+        const html = res.contentHtml || '';
+        setContentHtml(html);
+        if (editor) {
+          editor.commands.setContent(html);
+        }
+        setContactEmail(res.contactEmail || '');
+        setContactPhone(res.contactPhone || '');
+        setContactAddress(res.contactAddress || '');
+        setWorkingHours(res.workingHours || '');
+        setMetaTitle(res.metaTitle || '');
+        setMetaDescription(res.metaDescription || '');
+        setFeaturedProducts(res.featuredProducts || []);
+        toast.success(`Form populated with live published ${currentTabConfig.label} content!`);
+      }
+    } catch (err) {
+      toast.error(`Failed to fetch published content: ${getErrorMessage(err)}`);
+    } finally {
+      setCopyingPublished(false);
+    }
+  };
+
   const handleSaveDraft = async () => {
     try {
       setSaving(true);
+      if (activeTab === 'ANNOUNCEMENT') {
+        const payload = {
+          enabled: announcementEnabled,
+          title,
+          subtitle,
+          imageUrl,
+          ctaText,
+          ctaLink,
+          dismissDays: announcementDismissDays,
+        };
+        const res = await api.put<any>('/admin/announcement', payload);
+        setStatus(res.status);
+        toast.success('Announcement draft saved successfully!');
+        return;
+      }
+
       const payload = {
         pageKey: activeTab,
         heroType,
@@ -303,6 +409,13 @@ export default function PageConfigManager() {
     try {
       setPublishing(true);
       await handleSaveDraft();
+      if (activeTab === 'ANNOUNCEMENT') {
+        const res = await api.patch<any>('/admin/announcement/publish');
+        setStatus(res.status);
+        toast.success('Announcement modal published live!');
+        return;
+      }
+
       const res = await api.patch<PageConfigResponse>(`/admin/page-config/${activeTab}/publish`);
       setStatus(res.status);
       toast.success(`${currentTabConfig.label} page published live!`);
@@ -321,7 +434,8 @@ export default function PageConfigManager() {
       setUploading(true);
       const formData = new FormData();
       formData.append('file', file);
-      const res = await api.post<{ fileUrl: string }>(`/admin/page-config/${activeTab}/image`, formData);
+      const endpoint = activeTab === 'ANNOUNCEMENT' ? '/admin/announcement/image' : `/admin/page-config/${activeTab}/image`;
+      const res = await api.post<{ fileUrl: string }>(endpoint, formData);
       setImageUrl(res.fileUrl);
       toast.success('Image uploaded successfully');
     } catch (err) {
@@ -366,6 +480,7 @@ export default function PageConfigManager() {
         PRIVACY: '/privacy',
         TERMS: '/terms',
         SHIPPING_RETURNS: '/shipping-returns',
+        ANNOUNCEMENT: '/',
       };
       const path = routeMap[activeTab] || '/';
       const previewUrl = `http://localhost:3000${path}?token=${res.previewToken}`;
@@ -486,6 +601,17 @@ export default function PageConfigManager() {
 
         <div className="flex items-center gap-2">
           <button
+            type="button"
+            onClick={handleCopyPublishedContent}
+            disabled={copyingPublished || loading}
+            className="px-3.5 py-2 text-xs font-semibold rounded border border-border/60 hover:bg-beige/20 text-charcoal flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs"
+            title="Populate form fields with current live published page content"
+          >
+            {copyingPublished ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4 text-accent" />}
+            <span>Copy Published Content</span>
+          </button>
+
+          <button
             onClick={handlePreview}
             className="px-3.5 py-2 text-xs font-semibold rounded border border-border/60 hover:bg-beige/20 text-charcoal flex items-center gap-1.5 cursor-pointer transition-colors"
           >
@@ -559,6 +685,182 @@ export default function PageConfigManager() {
       {loading ? (
         <div className="py-20 flex justify-center items-center">
           <Loader2 className="h-8 w-8 animate-spin text-accent" />
+        </div>
+      ) : activeTab === 'ANNOUNCEMENT' ? (
+        <div className="space-y-6">
+          {/* Announcement Global Enable/Disable Toggle */}
+          <div className="bg-white border border-border/60 rounded-md p-6 shadow-xs flex items-center justify-between">
+            <div>
+              <h3 className="font-serif text-sm font-semibold text-charcoal flex items-center gap-2">
+                <Megaphone className="h-4 w-4 text-accent" />
+                <span>Storefront Announcement Overlay Status</span>
+              </h3>
+              <p className="text-[11px] text-brown-muted mt-1">
+                Toggle whether this announcement modal appears live on the storefront when visitors arrive.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setAnnouncementEnabled(!announcementEnabled)}
+              className={`px-4 py-2 rounded-md font-semibold text-xs transition-all flex items-center gap-2 cursor-pointer ${
+                announcementEnabled
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'bg-neutral-200 text-neutral-600 hover:bg-neutral-300'
+              }`}
+            >
+              {announcementEnabled ? <ToggleRight className="h-5 w-5" /> : <ToggleLeft className="h-5 w-5" />}
+              <span>{announcementEnabled ? 'LIVE & ENABLED' : 'DISABLED (HIDDEN)'}</span>
+            </button>
+          </div>
+
+          {/* Form Fields & Preview Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left Form Controls */}
+            <div className="bg-white border border-border/60 rounded-md p-6 space-y-4 shadow-xs">
+              <h3 className="font-serif text-sm font-semibold text-charcoal border-b border-border/40 pb-2 flex items-center gap-1.5">
+                <Sparkles className="h-4 w-4 text-accent" />
+                <span>Announcement Content Details</span>
+              </h3>
+
+              <div>
+                <label className="block text-xs font-semibold text-charcoal mb-1">Headline Title</label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. Summer Sale is Live"
+                  className="w-full px-3 py-2 text-xs border border-border/60 rounded focus:outline-none focus:border-accent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-charcoal mb-1">Body Text / Subtitle</label>
+                <textarea
+                  rows={3}
+                  value={subtitle}
+                  onChange={(e) => setSubtitle(e.target.value)}
+                  placeholder="e.g. Enjoy up to 40% off on all autumn-winter outerwear."
+                  className="w-full px-3 py-2 text-xs border border-border/60 rounded focus:outline-none focus:border-accent"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-charcoal mb-1">CTA Button Text</label>
+                  <input
+                    type="text"
+                    value={ctaText}
+                    onChange={(e) => setCtaText(e.target.value)}
+                    placeholder="e.g. Shop Sale Now"
+                    className="w-full px-3 py-2 text-xs border border-border/60 rounded focus:outline-none focus:border-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-charcoal mb-1">CTA Button Link</label>
+                  <input
+                    type="text"
+                    value={ctaLink}
+                    onChange={(e) => setCtaLink(e.target.value)}
+                    placeholder="e.g. /shop?collection=sale"
+                    className="w-full px-3 py-2 text-xs border border-border/60 rounded focus:outline-none focus:border-accent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-charcoal mb-1">Dismissal Window Frequency</label>
+                <select
+                  value={announcementDismissDays}
+                  onChange={(e) => setAnnouncementDismissDays(parseInt(e.target.value))}
+                  className="w-full px-3 py-2 text-xs border border-border/60 rounded focus:outline-none focus:border-accent bg-white"
+                >
+                  <option value={1}>Show once every 1 day</option>
+                  <option value={3}>Show once every 3 days</option>
+                  <option value={7}>Show once every 7 days</option>
+                </select>
+                <p className="text-[11px] text-brown-muted mt-1">
+                  Once a visitor closes the overlay, it will stay hidden for this duration.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-charcoal mb-1">
+                  Optional Banner Image <span className="text-[11px] text-brown-muted font-normal ml-1">(Recommended: 1200 × 900 px, 4:3 ratio)</span>
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="relative w-20 h-14 bg-beige/20 border border-border/60 rounded overflow-hidden shrink-0">
+                    {imageUrl ? (
+                      <img src={imageUrl} alt="Banner" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[10px] text-brown-muted italic">
+                        No img
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    placeholder="https://... image URL"
+                    className="w-full px-3 py-2 text-xs border border-border/60 rounded focus:outline-none focus:border-accent"
+                  />
+                  <button
+                    type="button"
+                    onClick={triggerFileSelect}
+                    disabled={uploading}
+                    className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-colors shadow-xs"
+                  >
+                    {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                    <span>Upload</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Live Preview Box */}
+            <div className="bg-neutral-900 border border-neutral-800 rounded-md p-6 shadow-xl flex flex-col justify-between space-y-4">
+              <div>
+                <div className="flex items-center justify-between border-b border-neutral-800 pb-3 mb-4">
+                  <h4 className="text-xs font-semibold text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <Eye className="h-3.5 w-3.5 text-accent" />
+                    <span>Live Visual Storefront Preview</span>
+                  </h4>
+                  <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-mono">
+                    Modal Overlay
+                  </span>
+                </div>
+
+                <div className="relative bg-neutral-950 border border-white/10 rounded-xl overflow-hidden min-h-[300px] flex flex-col justify-end p-6 max-w-sm mx-auto shadow-2xl">
+                  {imageUrl ? (
+                    <div className="absolute inset-0 z-0">
+                      <img src={imageUrl} alt={title} className="w-full h-full object-cover object-center" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/70 to-neutral-950/40" />
+                    </div>
+                  ) : (
+                    <div className="absolute inset-0 z-0 bg-gradient-to-br from-neutral-900 via-neutral-950 to-black" />
+                  )}
+
+                  <div className="relative z-10 space-y-3 text-center">
+                    <h3 className="font-serif text-2xl text-white font-normal drop-shadow-md">{title || 'Summer Sale is Live'}</h3>
+                    <p className="text-xs text-neutral-200 font-sans leading-relaxed drop-shadow-sm">
+                      {subtitle || 'Enjoy up to 40% off our curated luxury collection silhouettes.'}
+                    </p>
+                    <div className="pt-1">
+                      <div className="w-full py-2.5 bg-white text-neutral-950 font-semibold text-xs uppercase tracking-widest text-center shadow-lg rounded-md">
+                        {ctaText || 'Shop Sale Now'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-neutral-400 text-center italic">
+                This preview reflects live edits in real-time. Click "Save Draft" or "Publish Live" above.
+              </p>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="space-y-6">
@@ -992,7 +1294,9 @@ export default function PageConfigManager() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-charcoal mb-1">Hero Banner Image</label>
+                    <label className="block text-xs font-semibold text-charcoal mb-1">
+                      Hero Banner Image <span className="text-[11px] text-brown-muted font-normal ml-1">(Recommended: 1600 × 900 px, 16:9 widescreen)</span>
+                    </label>
                     <div className="flex items-center gap-3">
                       <div className="relative w-16 h-12 bg-beige/20 border border-border/60 rounded overflow-hidden shrink-0">
                         {imageUrl ? (
@@ -1028,7 +1332,10 @@ export default function PageConfigManager() {
                 <div className="flex items-center gap-1 bg-beige/20 p-1 rounded border border-border/40">
                   <button
                     type="button"
-                    onClick={() => setEditorMode('wysiwyg')}
+                    onClick={() => {
+                      setEditorMode('wysiwyg');
+                      if (editor && contentHtml) editor.commands.setContent(contentHtml);
+                    }}
                     className={`px-2.5 py-1 text-[11px] font-semibold rounded transition-colors ${
                       editorMode === 'wysiwyg' ? 'bg-white text-charcoal shadow-xs' : 'text-brown-muted hover:text-charcoal'
                     }`}
@@ -1135,7 +1442,10 @@ export default function PageConfigManager() {
                     </button>
                   </div>
 
-                  <EditorContent editor={editor} className="p-4 min-h-[220px] text-xs font-sans prose prose-sm focus:outline-none" />
+                  <EditorContent
+                    editor={editor}
+                    className="p-4 min-h-[220px] text-xs font-sans cursor-text [&_.ProseMirror]:min-h-[220px] [&_.ProseMirror]:outline-none [&_.ProseMirror]:text-xs [&_.ProseMirror]:font-sans [&_.ProseMirror]:text-charcoal [&_.ProseMirror_p]:mb-2 [&_.ProseMirror_h2]:text-base [&_.ProseMirror_h2]:font-serif [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h2]:my-2 [&_.ProseMirror_h3]:text-sm [&_.ProseMirror_h3]:font-serif [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_h3]:my-2 [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-5 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-5 [&_.ProseMirror_blockquote]:border-l-2 [&_.ProseMirror_blockquote]:border-accent [&_.ProseMirror_blockquote]:pl-3 [&_.ProseMirror_blockquote]:italic"
+                  />
                 </div>
               ) : (
                 <div>

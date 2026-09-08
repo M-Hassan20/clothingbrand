@@ -21,7 +21,7 @@ export default function Login() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = 'Admin Login — Haus of Hafsah';
+    document.title = 'Admin Login | Haus of Hafsah';
   }, []);
 
   const {

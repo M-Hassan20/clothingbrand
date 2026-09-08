@@ -28,6 +28,10 @@ public class ProductResponse {
     private Long reviewCount;
     private Boolean isActive;
     private String status;
+    private Integer totalStock;
+    private Integer totalVariants;
+    private Integer inStockVariants;
+    private Integer outOfStockVariants;
     private List<String> skus;
     private LocalDateTime createdAt;
 }

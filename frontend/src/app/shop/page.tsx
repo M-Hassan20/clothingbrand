@@ -68,7 +68,7 @@ function ShopContent() {
   const [sortDir, setSortDir] = useState<'ASC' | 'DESC'>('DESC');
 
   useEffect(() => {
-    document.title = 'Shop Collections — Haus of Hafsah';
+    document.title = 'Shop Collections | Haus of Hafsah';
   }, []);
 
   // Load static filter parameters (Categories and Brands)

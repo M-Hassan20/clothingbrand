@@ -18,8 +18,10 @@ function ShippingReturnsContent() {
         const token = searchParams.get('token') || undefined;
         const res = await getPageConfig('SHIPPING_RETURNS', token);
         setConfig(res);
-        if (res?.metaTitle || res?.title) {
-          document.title = `${res.metaTitle || res.title} — Haus of Hafsah`;
+        if (res?.metaTitle) {
+          document.title = res.metaTitle;
+        } else if (res?.title) {
+          document.title = res.title.includes('Haus of Hafsah') ? res.title : `${res.title} — Haus of Hafsah`;
         } else {
           document.title = 'Shipping & Returns Policy — Haus of Hafsah';
         }

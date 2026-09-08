@@ -12,7 +12,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductVariantRequest {
-    @NotNull(message = "Product ID is required")
+    private Long id;
+
     private Long productId;
 
     @NotBlank(message = "Size is required")

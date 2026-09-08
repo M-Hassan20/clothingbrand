@@ -18,10 +18,12 @@ function PrivacyContent() {
         const token = searchParams.get('token') || undefined;
         const res = await getPageConfig('PRIVACY', token);
         setConfig(res);
-        if (res?.metaTitle || res?.title) {
-          document.title = `${res.metaTitle || res.title} — Haus of Hafsah`;
+        if (res?.metaTitle) {
+          document.title = res.metaTitle;
+        } else if (res?.title) {
+          document.title = res.title.includes('Haus of Hafsah') ? res.title : `${res.title} — Haus of Hafsah`;
         } else {
-          document.title = 'Privacy Policy — Haus of Hafsah';
+          document.title = 'Privacy Policy | Haus of Hafsah';
         }
       } catch (err) {
         console.error('Failed to load Privacy Policy config:', err);

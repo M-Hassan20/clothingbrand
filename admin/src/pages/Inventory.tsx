@@ -27,7 +27,7 @@ interface ProductVariantResponse {
 
 export default function Inventory() {
   useEffect(() => {
-    document.title = 'Stock Inventory — Haus of Hafsah Admin';
+    document.title = 'Stock Inventory | Haus of Hafsah Admin';
   }, []);
 
   const [variants, setVariants] = useState<ProductVariantResponse[]>([]);

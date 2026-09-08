@@ -32,6 +32,10 @@ public abstract class ProductMapper {
     @Mapping(target = "maxPrice", expression = "java(calculateMaxPrice(product))")
     @Mapping(target = "thumbnailImage", expression = "java(getFirstImage(product))")
     @Mapping(target = "status", expression = "java(determineStatus(product))")
+    @Mapping(target = "totalStock", expression = "java(calculateTotalStock(product))")
+    @Mapping(target = "totalVariants", expression = "java(calculateTotalVariants(product))")
+    @Mapping(target = "inStockVariants", expression = "java(calculateInStockVariants(product))")
+    @Mapping(target = "outOfStockVariants", expression = "java(calculateOutOfStockVariants(product))")
     @Mapping(target = "averageRating", ignore = true) // Set in service
     @Mapping(target = "reviewCount", ignore = true) // Set in service
     public abstract ProductResponse toResponse(Product product);
@@ -100,5 +104,34 @@ public abstract class ProductMapper {
             return product.getStatus().name();
         }
         return Boolean.TRUE.equals(product.getIsActive()) ? "ACTIVE" : "DRAFT";
+    }
+
+    protected Integer calculateTotalStock(Product product) {
+        if (product == null || product.getId() == null) return 0;
+        return productVariantRepository.findByProductId(product.getId()).stream()
+                .filter(v -> Boolean.TRUE.equals(v.getIsActive()))
+                .mapToInt(v -> v.getStockQuantity() != null ? v.getStockQuantity() : 0)
+                .sum();
+    }
+
+    protected Integer calculateTotalVariants(Product product) {
+        if (product == null || product.getId() == null) return 0;
+        return (int) productVariantRepository.findByProductId(product.getId()).stream()
+                .filter(v -> Boolean.TRUE.equals(v.getIsActive()))
+                .count();
+    }
+
+    protected Integer calculateInStockVariants(Product product) {
+        if (product == null || product.getId() == null) return 0;
+        return (int) productVariantRepository.findByProductId(product.getId()).stream()
+                .filter(v -> Boolean.TRUE.equals(v.getIsActive()) && v.getStockQuantity() != null && v.getStockQuantity() > 0)
+                .count();
+    }
+
+    protected Integer calculateOutOfStockVariants(Product product) {
+        if (product == null || product.getId() == null) return 0;
+        return (int) productVariantRepository.findByProductId(product.getId()).stream()
+                .filter(v -> Boolean.TRUE.equals(v.getIsActive()) && (v.getStockQuantity() == null || v.getStockQuantity() <= 0))
+                .count();
     }
 }

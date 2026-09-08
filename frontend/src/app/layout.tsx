@@ -6,6 +6,7 @@ import CartDrawer from "@/components/layout/CartDrawer";
 import Footer from "@/components/layout/Footer";
 import { Toaster } from "@/components/ui/sonner";
 import PageTransition from "@/components/layout/PageTransition";
+import AnnouncementModal from "@/components/common/AnnouncementModal";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -19,8 +20,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Haus of Hafsah — Luxury Clothing & Accessories",
-    template: "%s — Haus of Hafsah",
+    default: "Haus of Hafsah | Luxury Clothing & Accessories",
+    template: "%s | Haus of Hafsah",
   },
   description: "Customer-facing boutique storefront for Haus of Hafsah premium clothing brand.",
   icons: {
@@ -47,6 +48,7 @@ export default function RootLayout({
         <Footer />
         <CartDrawer />
         <Toaster position="bottom-right" duration={1400} />
+        <AnnouncementModal />
       </body>
     </html>
   );

@@ -27,8 +27,10 @@ function ContactContent() {
       try {
         const res = await getPageConfig('CONTACT', token);
         setPageConfig(res);
-        if (res?.metaTitle || res?.title) {
-          document.title = `${res.metaTitle || res.title} — Haus of Hafsah`;
+        if (res?.metaTitle) {
+          document.title = res.metaTitle;
+        } else if (res?.title) {
+          document.title = res.title.includes('Haus of Hafsah') ? res.title : `${res.title} — Haus of Hafsah`;
         } else {
           document.title = 'Contact Us — Haus of Hafsah';
         }
@@ -83,6 +85,12 @@ function ContactContent() {
         <p className="font-sans text-xs sm:text-sm text-brown-muted max-w-xl mx-auto leading-relaxed pt-2">
           {headerSubtitle}
         </p>
+        {pageConfig?.contentHtml && (
+          <div
+            className="font-sans text-xs sm:text-sm text-brown-muted max-w-2xl mx-auto leading-relaxed pt-3 border-t border-border/30 mt-4 [&_p]:mb-2 [&_h2]:font-serif [&_h2]:text-base [&_h2]:text-charcoal [&_h2]:font-semibold [&_h2]:mt-3"
+            dangerouslySetInnerHTML={{ __html: pageConfig.contentHtml }}
+          />
+        )}
       </section>
 
       {/* Grid Layout: Contact Info & Form */}

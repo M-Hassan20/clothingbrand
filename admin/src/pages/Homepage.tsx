@@ -54,7 +54,7 @@ export default function Homepage() {
   const [searching, setSearching] = useState(false);
 
   useEffect(() => {
-    document.title = 'Homepage CMS — Haus of Hafsah Admin';
+    document.title = 'Homepage CMS | Haus of Hafsah Admin';
   }, []);
 
   useEffect(() => {

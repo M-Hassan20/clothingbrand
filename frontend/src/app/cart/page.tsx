@@ -46,7 +46,7 @@ export default function CartPage() {
   }, [userId, setCart, setLoading]);
 
   useEffect(() => {
-    document.title = 'Shopping Bag — Haus of Hafsah';
+    document.title = 'Shopping Bag | Haus of Hafsah';
   }, []);
 
   useEffect(() => {

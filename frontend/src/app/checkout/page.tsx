@@ -66,7 +66,7 @@ export default function CheckoutPage() {
   }, [userId, setCart]);
 
   useEffect(() => {
-    document.title = 'Checkout — Haus of Hafsah';
+    document.title = 'Checkout | Haus of Hafsah';
   }, []);
 
   useEffect(() => {

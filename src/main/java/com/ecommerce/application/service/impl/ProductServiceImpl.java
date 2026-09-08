@@ -2,6 +2,7 @@ package com.ecommerce.application.service.impl;
 
 import com.ecommerce.application.dto.request.ProductCreateRequest;
 import com.ecommerce.application.dto.request.ProductUpdateRequest;
+import com.ecommerce.application.dto.request.ProductVariantRequest;
 import com.ecommerce.application.dto.response.ProductDetailResponse;
 import com.ecommerce.application.dto.response.ProductResponse;
 import com.ecommerce.application.dto.response.ProductVariantResponse;
@@ -23,14 +24,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -202,6 +203,7 @@ public class ProductServiceImpl implements ProductService{
     public ProductResponse updateProduct(Long id, ProductUpdateRequest request) {
         Product product = getProductEntityById(id);
         productMapper.updateEntityFromRequest(request, product);
+
         if (request.getIsActive() != null) {
             product.setIsActive(request.getIsActive());
             if (Boolean.TRUE.equals(request.getIsActive())) {
@@ -210,9 +212,88 @@ public class ProductServiceImpl implements ProductService{
                 product.setStatus(ProductStatus.DRAFT);
             }
         }
+
+        if (request.getThumbnailImage() != null && !request.getThumbnailImage().trim().isEmpty()) {
+            product.setThumbnailImage(request.getThumbnailImage());
+        }
+
+        // Update variants if supplied
+        if (request.getVariants() != null) {
+            List<ProductVariant> existingVariants = productVariantRepository.findByProductId(id);
+            Map<Long, ProductVariant> existingMap = existingVariants.stream()
+                    .collect(Collectors.toMap(ProductVariant::getId, v -> v));
+
+            Set<Long> processedVariantIds = new HashSet<>();
+
+            for (ProductVariantRequest vReq : request.getVariants()) {
+                ProductVariant variant = null;
+
+                // 1. Match by ID if present
+                if (vReq.getId() != null && existingMap.containsKey(vReq.getId())) {
+                    variant = existingMap.get(vReq.getId());
+                } 
+                // 2. Match by size and color if ID not present or not matched
+                else if (vReq.getSize() != null && vReq.getColor() != null) {
+                    variant = existingVariants.stream()
+                            .filter(v -> vReq.getSize().equalsIgnoreCase(v.getSize()) && vReq.getColor().equalsIgnoreCase(v.getColor()))
+                            .findFirst()
+                            .orElse(null);
+                }
+
+                if (variant == null) {
+                    variant = new ProductVariant();
+                    variant.setProduct(product);
+                }
+
+                variant.setSize(vReq.getSize());
+                variant.setColor(vReq.getColor());
+                variant.setPrice(vReq.getPrice() != null ? vReq.getPrice() : BigDecimal.ZERO);
+                variant.setStockQuantity(vReq.getStockQuantity() != null ? vReq.getStockQuantity() : 0);
+
+                if (vReq.getSku() != null && !vReq.getSku().trim().isEmpty()) {
+                    variant.setSku(vReq.getSku());
+                } else if (variant.getSku() == null || variant.getSku().trim().isEmpty()) {
+                    String colorClean = vReq.getColor() != null ? vReq.getColor().toLowerCase().replaceAll("[^a-z0-9]", "") : "col";
+                    String sizeClean = vReq.getSize() != null ? vReq.getSize().toLowerCase().replaceAll("[^a-z0-9]", "") : "sz";
+                    variant.setSku("hoh-" + id + "-" + colorClean + "-" + sizeClean);
+                }
+
+                if (vReq.getPublicImageUrl() != null && !vReq.getPublicImageUrl().trim().isEmpty()) {
+                    variant.setPublicImageUrl(vReq.getPublicImageUrl());
+                }
+                if (vReq.getAdditionalImageUrls() != null) {
+                    variant.setAdditionalImageUrls(vReq.getAdditionalImageUrls());
+                }
+                variant.setIsActive(vReq.getIsActive() != null ? vReq.getIsActive() : true);
+
+                ProductVariant savedVariant = productVariantRepository.save(variant);
+                if (savedVariant.getId() != null) {
+                    processedVariantIds.add(savedVariant.getId());
+                }
+            }
+
+            // Deactivate any variants removed during edit
+            for (ProductVariant existing : existingVariants) {
+                if (!processedVariantIds.contains(existing.getId())) {
+                    existing.setIsActive(false);
+                    productVariantRepository.save(existing);
+                }
+            }
+        }
+
+        // Set fallback thumbnail from first variant if empty
+        if (product.getThumbnailImage() == null || product.getThumbnailImage().trim().isEmpty()) {
+            if (request.getVariants() != null && !request.getVariants().isEmpty()) {
+                String firstImg = request.getVariants().get(0).getPublicImageUrl();
+                if (firstImg != null && !firstImg.trim().isEmpty()) {
+                    product.setThumbnailImage(firstImg);
+                }
+            }
+        }
+
         Product updated = productRepository.save(product);
         revalidationService.revalidate("products", "product-" + id);
-        return productMapper.toResponse(updated);
+        return populateSalePrices(productMapper.toResponse(updated), updated);
     }
 
     @Transactional

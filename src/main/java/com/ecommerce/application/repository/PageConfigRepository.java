@@ -11,6 +11,7 @@ import java.util.Optional;
 
 @Repository
 public interface PageConfigRepository extends JpaRepository<PageConfig, Long> {
-    Optional<PageConfig> findByPageKeyAndStatus(PageKey pageKey, PageConfigStatus status);
+    Optional<PageConfig> findFirstByPageKeyAndStatusOrderByIdDesc(PageKey pageKey, PageConfigStatus status);
+    List<PageConfig> findByPageKeyAndStatus(PageKey pageKey, PageConfigStatus status);
     List<PageConfig> findByPageKey(PageKey pageKey);
 }
