@@ -5,6 +5,7 @@ import Hero from '@/components/home/Hero';
 import CategoryTiles from '@/components/home/CategoryTiles';
 import FeaturedProducts from '@/components/home/FeaturedProducts';
 import NewsletterSignup from '@/components/home/NewsletterSignup';
+import FeatureBar from '@/components/home/FeatureBar';
 import UrlSanitizer from '@/components/common/UrlSanitizer';
 
 export const revalidate = 3600; // revalidate every hour
@@ -56,6 +57,9 @@ export default async function Home({ searchParams }: HomeProps) {
 
       {/* 4. Editorial Newsletter Section */}
       <NewsletterSignup />
+
+      {/* 5. Minimal Brand Feature Bar (Order Tracking & Returns) */}
+      <FeatureBar />
     </div>
   );
 }

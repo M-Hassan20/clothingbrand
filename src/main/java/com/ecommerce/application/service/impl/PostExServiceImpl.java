@@ -140,7 +140,33 @@ public class PostExServiceImpl implements PostExService {
     }
 
     @Override
-    public PostExTrackingResponse trackShipment(String trackingNumber) {
+    public PostExTrackingResponse trackShipment(String queryStr) {
+        String trackingNumber = queryStr != null ? queryStr.trim() : "";
+
+        // If query is an Order ID (numeric or ORD-prefix), look up the order first
+        if (trackingNumber.matches("\\d+") || trackingNumber.toUpperCase().startsWith("ORD-")) {
+            String cleanId = trackingNumber.toUpperCase().replace("ORD-", "").trim();
+            try {
+                Long orderId = Long.parseLong(cleanId);
+                Order order = orderRepository.findById(orderId).orElse(null);
+                if (order != null) {
+                    if (order.getTrackingNumber() != null && !order.getTrackingNumber().isBlank()) {
+                        trackingNumber = order.getTrackingNumber();
+                    } else {
+                        // Order exists but hasn't been booked with courier yet
+                        PostExTrackingResponse.TrackingDistData dist = new PostExTrackingResponse.TrackingDistData();
+                        dist.setOrderRefNumber("ORD-" + order.getId());
+                        dist.setTransactionStatus("ORDER " + order.getStatus().toString() + " (Pending Courier Dispatch)");
+                        dist.setTransactionStatusId(order.getStatus().toString());
+                        dist.setCustomerName(order.getUser() != null ? order.getUser().getFullName() : "Customer");
+                        dist.setCityName(order.getShippingAddress() != null ? order.getShippingAddress().getCity() : defaultCity);
+                        dist.setInvoicePayment(order.getTotalAmount());
+                        return new PostExTrackingResponse("200", "Order Found", dist);
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
         HttpHeaders headers = new HttpHeaders();
         headers.set("token", apiToken);
         HttpEntity<Void> entity = new HttpEntity<>(headers);
@@ -154,7 +180,6 @@ public class PostExServiceImpl implements PostExService {
             PostExTrackingResponse trackingResponse = response.getBody();
             if (trackingResponse != null && trackingResponse.getDist() != null) {
                 String latestStatus = trackingResponse.getDist().getTransactionStatus();
-                // Optionally update DB order if matching tracking number found
                 orderRepository.findByTrackingNumber(trackingNumber).ifPresent(order -> {
                     if (latestStatus != null && !latestStatus.isBlank()) {
                         order.setPostexStatus(latestStatus);
