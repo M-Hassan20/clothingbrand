@@ -1,0 +1,33 @@
+{
+  "cookies": [
+    {
+      "name": "token",
+      "value": "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiQ1VTVE9NRVIiLCJ1c2VySWQiOjEsInN1YiI6ImphbmVAZXhhbXBsZS5jb20iLCJpYXQiOjE3ODgwODUzMDcsImV4cCI6MTc4ODE3MTcwN30.0vM8Niu2pHpEbLS8HYoT7T3_FHIv_F7lF3PSx5YxHbs",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1788690107.662353,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "http://localhost:3000",
+      "localStorage": [
+        {
+          "name": "haus-of-hafsah-auth",
+          "value": "{\"state\":{\"token\":null,\"userId\":1,\"email\":\"jane@example.com\",\"fullName\":\"Jane Doe\",\"role\":\"CUSTOMER\",\"isAuthenticated\":true},\"version\":0}"
+        },
+        {
+          "name": "haus-of-hafsah-cart-metadata",
+          "value": "{\"state\":{\"guestUserId\":\"0a2ee3a1-3bbc-43d4-bc22-fa500a740b8a\",\"appliedDiscountCode\":null,\"discountAmount\":0},\"version\":0}"
+        },
+        {
+          "name": "haus-of-hafsah-wishlist",
+          "value": "{\"state\":{\"wishlistVariantIds\":[],\"guestWishlistItems\":[]},\"version\":0}"
+        }
+      ]
+    }
+  ]
+}

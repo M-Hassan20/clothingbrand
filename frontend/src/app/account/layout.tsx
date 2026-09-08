@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { User, ShoppingBag, MapPin, Heart, LogOut, ChevronRight, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { logout } from '@/lib/api/auth';
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -37,9 +38,15 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     return null;
   }
 
-  const handleLogout = () => {
-    clearAuth();
-    router.push('/');
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error('Failed to log out on server:', err);
+    } finally {
+      clearAuth();
+      router.push('/');
+    }
   };
 
   const navItems = [

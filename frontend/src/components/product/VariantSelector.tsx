@@ -61,6 +61,7 @@ export default function VariantSelector({
             return (
               <button
                 key={color}
+                data-testid={`product-color-${color.toLowerCase()}`}
                 onClick={() => available && onSelectColor(color)}
                 className={`font-sans text-xs py-2 px-4 rounded-md border transition-all duration-200 ${
                   isSelected
@@ -89,6 +90,7 @@ export default function VariantSelector({
             return (
               <button
                 key={size}
+                data-testid={`product-size-${size}`}
                 onClick={() => available && onSelectSize(size)}
                 className={`font-sans text-xs min-w-[44px] h-[38px] flex items-center justify-center rounded-md border transition-all duration-200 ${
                   isSelected

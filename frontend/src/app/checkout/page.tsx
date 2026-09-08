@@ -179,7 +179,12 @@ export default function CheckoutPage() {
 
       if (paymentMethod === 'card') {
         toast.loading(`Redirecting to SafePay (${cardIntent})...`);
-        const session = await initiateSafePayCheckout(order.id, cardIntent);
+        const session = await initiateSafePayCheckout(order.id, cardIntent, order.guestToken);
+        
+        // Save the guest token in sessionStorage to verify payment on return
+        if (order.guestToken) {
+          sessionStorage.setItem(`guest_token_order_${order.id}`, order.guestToken);
+        }
         
         // Redirect browser to SafePay checkout (Cart is preserved until backend confirms payment)
         window.location.href = session.checkoutUrl;
@@ -344,6 +349,7 @@ export default function CheckoutPage() {
                             <input
                               type="text"
                               value={guestInfo.guestName}
+                              data-testid="checkout-guest-name"
                               onChange={(e) => setGuestInfo({ ...guestInfo, guestName: e.target.value })}
                               className="w-full rounded-md border border-border px-3 py-2 text-xs focus:border-accent focus:outline-none bg-background text-charcoal"
                               placeholder="Your full name"
@@ -356,6 +362,7 @@ export default function CheckoutPage() {
                             <input
                               type="email"
                               value={guestInfo.guestEmail}
+                              data-testid="checkout-guest-email"
                               onChange={(e) => setGuestInfo({ ...guestInfo, guestEmail: e.target.value })}
                               className="w-full rounded-md border border-border px-3 py-2 text-xs focus:border-accent focus:outline-none bg-background text-charcoal"
                               placeholder="your.email@example.com"
@@ -368,6 +375,7 @@ export default function CheckoutPage() {
                             <input
                               type="text"
                               value={guestInfo.guestPhone}
+                              data-testid="checkout-guest-phone"
                               onChange={(e) => setGuestInfo({ ...guestInfo, guestPhone: e.target.value })}
                               className="w-full rounded-md border border-border px-3 py-2 text-xs focus:border-accent focus:outline-none bg-background text-charcoal"
                               placeholder="e.g. +123456789"
@@ -386,6 +394,7 @@ export default function CheckoutPage() {
                             <input
                               type="text"
                               value={guestInfo.shippingStreet}
+                              data-testid="checkout-guest-street"
                               onChange={(e) => setGuestInfo({ ...guestInfo, shippingStreet: e.target.value })}
                               className="w-full rounded-md border border-border px-3 py-2 text-xs focus:border-accent focus:outline-none bg-background text-charcoal"
                               placeholder="Street name, apartment, suite, etc."
@@ -398,6 +407,7 @@ export default function CheckoutPage() {
                             <input
                               type="text"
                               value={guestInfo.shippingCity}
+                              data-testid="checkout-guest-city"
                               onChange={(e) => setGuestInfo({ ...guestInfo, shippingCity: e.target.value })}
                               className="w-full rounded-md border border-border px-3 py-2 text-xs focus:border-accent focus:outline-none bg-background text-charcoal"
                               placeholder="City"
@@ -410,6 +420,7 @@ export default function CheckoutPage() {
                             <input
                               type="text"
                               value={guestInfo.shippingZipCode}
+                              data-testid="checkout-guest-zipcode"
                               onChange={(e) => setGuestInfo({ ...guestInfo, shippingZipCode: e.target.value })}
                               className="w-full rounded-md border border-border px-3 py-2 text-xs focus:border-accent focus:outline-none bg-background text-charcoal"
                               placeholder="Postal / Zip Code"
@@ -422,6 +433,7 @@ export default function CheckoutPage() {
                             <input
                               type="text"
                               value={guestInfo.shippingCountry}
+                              data-testid="checkout-guest-country"
                               onChange={(e) => setGuestInfo({ ...guestInfo, shippingCountry: e.target.value })}
                               className="w-full rounded-md border border-border px-3 py-2 text-xs focus:border-accent focus:outline-none bg-background text-charcoal"
                               placeholder="Country"
@@ -453,6 +465,7 @@ export default function CheckoutPage() {
                         }
                         setStep('payment');
                       }}
+                      data-testid="checkout-continue-payment-button"
                       className="bg-accent text-background hover:bg-accent/90 text-xs font-semibold px-6 py-2.5 rounded-md"
                     >
                       Continue to Payment

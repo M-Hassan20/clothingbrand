@@ -159,7 +159,7 @@ export default function CartDrawer() {
           ) : (
             <div className="space-y-6">
               {items.map((item) => (
-                <div key={item.productVariantId} className="flex gap-4 border-b border-border/40 pb-5">
+                <div key={item.productVariantId} data-testid={`cart-item-${item.productVariantId}`} className="flex gap-4 border-b border-border/40 pb-5">
                   {/* Product Image */}
                   {item.productId ? (
                     <Link
@@ -241,16 +241,18 @@ export default function CartDrawer() {
                         <button
                           onClick={() => handleUpdateQuantity(item.productVariantId, item.quantity, -1)}
                           disabled={loading}
+                          data-testid="cart-item-qty-minus"
                           className="p-1 px-2 text-brown-muted hover:text-charcoal disabled:opacity-50"
                         >
                           <Minus className="h-3 w-3" />
                         </button>
-                        <span className="px-2 text-xs font-sans font-semibold text-charcoal">
+                        <span data-testid="cart-item-qty" className="px-2 text-xs font-sans font-semibold text-charcoal">
                           {item.quantity}
                         </span>
                         <button
                           onClick={() => handleUpdateQuantity(item.productVariantId, item.quantity, 1)}
                           disabled={loading}
+                          data-testid="cart-item-qty-plus"
                           className="p-1 px-2 text-brown-muted hover:text-charcoal disabled:opacity-50"
                         >
                           <Plus className="h-3 w-3" />
@@ -261,6 +263,7 @@ export default function CartDrawer() {
                       <button
                         onClick={() => handleRemoveItem(item.productVariantId)}
                         disabled={loading}
+                        data-testid="cart-item-remove"
                         className="text-brown-muted hover:text-error transition-colors p-1"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -278,7 +281,7 @@ export default function CartDrawer() {
           <SheetFooter className="border-t border-border bg-beige/10 px-6 py-6 flex flex-col space-y-4">
             <div className="flex items-center justify-between text-sm">
               <span className="font-sans text-brown-muted font-medium">Subtotal</span>
-              <span className="font-sans text-lg font-semibold text-charcoal">
+              <span data-testid="cart-subtotal" className="font-sans text-lg font-semibold text-charcoal">
                 Rs. {totalPrice.toFixed(2)}
               </span>
             </div>
@@ -288,7 +291,7 @@ export default function CartDrawer() {
 
             <div className="space-y-3">
               <Link href="/checkout" onClick={() => setIsOpen(false)} passHref>
-                <Button className="w-full bg-accent text-background hover:bg-accent/90 py-3 rounded-md font-sans text-sm font-semibold flex items-center justify-center gap-2">
+                <Button data-testid="cart-checkout-button" className="w-full bg-accent text-background hover:bg-accent/90 py-3 rounded-md font-sans text-sm font-semibold flex items-center justify-center gap-2">
                   Proceed to Checkout
                   <ArrowRight className="h-4 w-4" />
                 </Button>

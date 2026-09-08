@@ -58,7 +58,7 @@ public class ExcelService {
                 try {
                     ProductImportRow importRow = parseProductRow(row, rowNum);
 
-                    if (importRow.getHasErrors()) {
+                    if (Boolean.TRUE.equals(importRow.getHasErrors())) {
                         result.setFailedImports(result.getFailedImports() + 1);
                         result.getErrors().add("Row " + rowNum + ": " + importRow.getErrorMessage());
                         result.getFailedRows().add(importRow);
