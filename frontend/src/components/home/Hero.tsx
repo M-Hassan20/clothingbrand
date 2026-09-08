@@ -31,7 +31,7 @@ export default function Hero({
   }
 
   const displaySubtitle = subtitle || "A curated capsule wardrobe constructed with soft beige palettes, luxurious cashmere knits, and editorial outerwear silhouettes designed for modern living.";
-  const displayImage = imageUrl || "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1200";
+  const displayImage = imageUrl || "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200";
   const displayCtaText = ctaText || "Shop the Collection";
   const displayCtaLink = ctaLink || "/shop";
 

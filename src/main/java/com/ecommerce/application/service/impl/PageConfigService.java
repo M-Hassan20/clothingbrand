@@ -424,8 +424,8 @@ public class PageConfigService {
 
     private String getDefaultImageUrl(PageKey pageKey) {
         return switch (pageKey) {
-            case HOMEPAGE -> "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1600";
-            case ABOUT -> "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1600";
+            case HOMEPAGE -> "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1600";
+            case ABOUT -> "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?q=80&w=1600";
             default -> "";
         };
     }
@@ -518,7 +518,7 @@ public class PageConfigService {
         if (pageKey == PageKey.HOMEPAGE) {
             List<CarouselSlideResponse> defaultSlides = new ArrayList<>();
             defaultSlides.add(CarouselSlideResponse.builder()
-                    .imageUrl("https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1200")
+                    .imageUrl("https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200")
                     .title("Autumn Editorial Collection")
                     .subtitle("Curated luxury silhouettes crafted from wool and Mongolian cashmere.")
                     .ctaText("Explore Collection")
@@ -526,12 +526,20 @@ public class PageConfigService {
                     .displayOrder(0)
                     .build());
             defaultSlides.add(CarouselSlideResponse.builder()
-                    .imageUrl("https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1200")
+                    .imageUrl("https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?q=80&w=1200")
                     .title("Minimalist Outerwear Edit")
                     .subtitle("Double-breasted trench coats and double-faced virgin wool wrap coats.")
                     .ctaText("Shop Outerwear")
                     .linkType(CarouselLinkType.NONE)
                     .displayOrder(1)
+                    .build());
+            defaultSlides.add(CarouselSlideResponse.builder()
+                    .imageUrl("https://images.unsplash.com/photo-1434389677669-e08b4cac3105?q=80&w=1200")
+                    .title("Essential Cashmere & Knits")
+                    .subtitle("Timeless basics designed for refined everyday capsule styling.")
+                    .ctaText("Shop Knits")
+                    .linkType(CarouselLinkType.NONE)
+                    .displayOrder(2)
                     .build());
             return defaultSlides;
         }

@@ -106,5 +106,16 @@ public class DataSeeder implements CommandLineRunner {
                 "(6005, 106, 'M', 'Charcoal', 240.00, 4, 'https://images.unsplash.com/photo-1574164904299-3a102b110380?q=80&w=600', 'HOH-WWC-CH-M', true, NOW(), NOW())");
 
         System.out.println("Mock database data successfully seeded!");
+
+        // Update default hero and slide images to high quality clothing photographs if using legacy placeholder links
+        try {
+            jdbcTemplate.execute("UPDATE page_configs SET image_url = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1600' WHERE page_key = 'HOMEPAGE' AND (image_url IS NULL OR image_url = '' OR image_url LIKE '%515886657613%' OR image_url LIKE '%539571696357%')");
+            jdbcTemplate.execute("UPDATE page_configs SET image_url = 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?q=80&w=1600' WHERE page_key = 'ABOUT' AND (image_url IS NULL OR image_url = '' OR image_url LIKE '%539571696357%')");
+            jdbcTemplate.execute("UPDATE homepage_carousel_slides SET image_url = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200' WHERE display_order = 0 AND (image_url LIKE '%515886657613%' OR image_url LIKE '%539571696357%')");
+            jdbcTemplate.execute("UPDATE homepage_carousel_slides SET image_url = 'https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?q=80&w=1200' WHERE display_order = 1 AND (image_url LIKE '%515886657613%' OR image_url LIKE '%539571696357%')");
+            jdbcTemplate.execute("UPDATE announcement_configs SET enabled = false WHERE enabled = true AND (title = 'Summer Sale is Live' OR title IS NULL)");
+        } catch (Exception e) {
+            // Ignore if tables do not exist yet
+        }
     }
 }

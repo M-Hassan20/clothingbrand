@@ -36,15 +36,15 @@ function AnnouncementModalContent({ previewToken: explicitToken }: AnnouncementM
         const data = await apiGet<AnnouncementResponse>(`/announcement${query}`);
         if (!data) return;
 
-        // If preview mode is active, always display
+        // If disabled, don't display
+        if (!data.enabled) return;
+
+        // If preview mode is active, always display (bypass dismissal window)
         if (data.isPreview) {
           setAnnouncement(data);
           setIsOpen(true);
           return;
         }
-
-        // If disabled, don't display
-        if (!data.enabled) return;
 
         // Check dismissal in localStorage
         const dismissedKey = 'announcement_dismissed_timestamp';

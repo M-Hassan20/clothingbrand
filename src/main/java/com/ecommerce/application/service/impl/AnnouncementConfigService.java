@@ -25,7 +25,7 @@ public class AnnouncementConfigService {
         AnnouncementConfig published = repository.findFirstByStatusOrderByIdDesc(PageConfigStatus.PUBLISHED)
                 .orElseGet(() -> AnnouncementConfig.builder()
                         .status(PageConfigStatus.PUBLISHED)
-                        .enabled(true)
+                        .enabled(false)
                         .title("Summer Sale is Live")
                         .subtitle("Enjoy up to 40% off our curated luxury collection silhouettes.")
                         .ctaText("Shop Sale Now")
@@ -89,7 +89,7 @@ public class AnnouncementConfigService {
             return toResponse(pubOpt.get(), false);
         }
         return AnnouncementConfigResponse.builder()
-                .enabled(true)
+                .enabled(false)
                 .status(PageConfigStatus.PUBLISHED)
                 .title("Summer Sale is Live")
                 .subtitle("Enjoy up to 40% off our curated luxury collection silhouettes.")

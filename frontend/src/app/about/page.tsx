@@ -47,7 +47,7 @@ function AboutContent() {
 
   const title = config?.title || 'About Haus of Hafsah';
   const subtitle = config?.subtitle || 'Crafting a Legacy of Quiet Luxury';
-  const bannerImage = config?.imageUrl || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=1600';
+  const bannerImage = config?.imageUrl || 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?q=80&w=1600';
   const contentHtml = config?.contentHtml;
 
   return (
