@@ -13,13 +13,14 @@ import {
   CheckCircle2,
   XCircle,
   Hash,
+  Truck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Discount {
   id: number;
   code?: string;
-  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING';
   discountValue: number;
   minOrderAmount?: number;
   maxDiscountAmount?: number;
@@ -35,7 +36,7 @@ interface Discount {
 
 interface DiscountFormData {
   code: string;
-  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING';
   discountValue: string;
   minOrderAmount: string;
   maxDiscountAmount: string;
@@ -143,7 +144,7 @@ export default function Discounts() {
       toast.error('Promo code is required for manually applied discounts');
       return;
     }
-    if (!formData.discountValue) {
+    if (formData.discountType !== 'FREE_SHIPPING' && !formData.discountValue) {
       toast.error('Discount value is required');
       return;
     }
@@ -153,7 +154,7 @@ export default function Discounts() {
       const payload = {
         code: formData.isAutoApplied ? (formData.code.trim().toUpperCase() || null) : formData.code.trim().toUpperCase(),
         discountType: formData.discountType,
-        discountValue: parseFloat(formData.discountValue),
+        discountValue: formData.discountType === 'FREE_SHIPPING' ? 0 : parseFloat(formData.discountValue),
         minOrderAmount: formData.minOrderAmount ? parseFloat(formData.minOrderAmount) : null,
         maxDiscountAmount: formData.maxDiscountAmount ? parseFloat(formData.maxDiscountAmount) : null,
         validFrom: formData.validFrom ? `${formData.validFrom}T00:00:00` : null,
@@ -317,7 +318,12 @@ export default function Discounts() {
                       )}
                     </td>
                     <td className="py-4 px-6 font-semibold text-text-primary">
-                      {discount.discountType === 'PERCENTAGE' ? (
+                      {discount.discountType === 'FREE_SHIPPING' ? (
+                        <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider text-[11px]">
+                          <Truck className="h-4 w-4" />
+                          FREE DELIVERY / FREE COD
+                        </span>
+                      ) : discount.discountType === 'PERCENTAGE' ? (
                         <span className="flex items-center gap-1 text-indigo-400 font-bold">
                           {discount.discountValue}% OFF
                         </span>
@@ -579,13 +585,15 @@ export default function Discounts() {
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        discountType: e.target.value as 'PERCENTAGE' | 'FIXED_AMOUNT',
+                        discountType: e.target.value as 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING',
+                        discountValue: e.target.value === 'FREE_SHIPPING' ? '0' : formData.discountValue,
                       })
                     }
                     className="w-full bg-background border border-border px-3 py-2 rounded font-semibold focus:outline-none focus:ring-1 focus:ring-accent text-text-primary"
                   >
                     <option value="PERCENTAGE">Percentage (%)</option>
                     <option value="FIXED_AMOUNT">Fixed Amount (Rs.)</option>
+                    <option value="FREE_SHIPPING">Free Delivery / Free COD (Rs. 0 Shipping)</option>
                   </select>
                 </div>
 
@@ -596,11 +604,18 @@ export default function Discounts() {
                   <input
                     type="number"
                     step="0.01"
-                    required
-                    placeholder={formData.discountType === 'PERCENTAGE' ? '10 (for 10%)' : '200 (for Rs. 200)'}
-                    value={formData.discountValue}
+                    required={formData.discountType !== 'FREE_SHIPPING'}
+                    disabled={formData.discountType === 'FREE_SHIPPING'}
+                    placeholder={
+                      formData.discountType === 'FREE_SHIPPING'
+                        ? 'Rs. 0.00 Shipping'
+                        : formData.discountType === 'PERCENTAGE'
+                        ? '10 (for 10%)'
+                        : '200 (for Rs. 200)'
+                    }
+                    value={formData.discountType === 'FREE_SHIPPING' ? '0' : formData.discountValue}
                     onChange={(e) => setFormData({ ...formData, discountValue: e.target.value })}
-                    className="w-full bg-background border border-border px-3 py-2 rounded font-semibold focus:outline-none focus:ring-1 focus:ring-accent text-text-primary"
+                    className="w-full bg-background border border-border px-3 py-2 rounded font-semibold focus:outline-none focus:ring-1 focus:ring-accent text-text-primary disabled:opacity-60"
                   />
                 </div>
               </div>

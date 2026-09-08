@@ -48,6 +48,7 @@ public class DiscountService {
         Discount discount = validateDiscountCode(code);
         BigDecimal discountAmount = calculateDiscount(discount, orderAmount);
         BigDecimal finalAmount = orderAmount.subtract(discountAmount);
+        boolean isFreeShipping = discount.getDiscountType() == DiscountType.FREE_SHIPPING;
 
         return DiscountValidateResponse.builder()
                 .valid(true)
@@ -56,7 +57,8 @@ public class DiscountService {
                 .discountValue(discount.getDiscountValue())
                 .discountAmount(discountAmount)
                 .finalAmount(finalAmount)
-                .message("Promo code applied successfully!")
+                .isFreeShipping(isFreeShipping)
+                .message(isFreeShipping ? "Free Delivery promo applied!" : "Promo code applied successfully!")
                 .build();
     }
 
@@ -78,10 +80,14 @@ public class DiscountService {
                             " to use this discount");
         }
 
+        if (DiscountType.FREE_SHIPPING.equals(discount.getDiscountType())) {
+            return BigDecimal.ZERO;
+        }
+
         BigDecimal discountAmount;
 
-        if (discount.getDiscountType().toString().equals("PERCENTAGE")) {
-            discountAmount = orderAmount.multiply(discount.getDiscountValue())
+        if (DiscountType.PERCENTAGE.equals(discount.getDiscountType())) {
+            discountAmount = orderAmount.multiply(discount.getDiscountValue() != null ? discount.getDiscountValue() : BigDecimal.ZERO)
                     .divide(BigDecimal.valueOf(100));
 
             // Apply maximum discount cap if exists
@@ -90,7 +96,7 @@ public class DiscountService {
                 discountAmount = discount.getMaxDiscountAmount();
             }
         } else { // FIXED_AMOUNT
-            discountAmount = discount.getDiscountValue();
+            discountAmount = discount.getDiscountValue() != null ? discount.getDiscountValue() : BigDecimal.ZERO;
         }
 
         // Ensure discount doesn't exceed order amount
@@ -99,6 +105,69 @@ public class DiscountService {
         }
 
         return discountAmount;
+    }
+
+    /**
+     * Check if a Free Shipping / Free COD promotion applies to an order
+     */
+    public boolean isFreeShippingApplicable(String code, List<com.ecommerce.application.entity.OrderItem> items, BigDecimal orderAmount) {
+        LocalDateTime now = LocalDateTime.now();
+
+        // 1. Check if applied promo code is a Free Shipping discount
+        if (code != null && !code.trim().isEmpty()) {
+            try {
+                Discount discount = validateDiscountCode(code);
+                if (DiscountType.FREE_SHIPPING.equals(discount.getDiscountType())) {
+                    if (discount.getMinOrderAmount() == null || orderAmount.compareTo(discount.getMinOrderAmount()) >= 0) {
+                        if (isDiscountApplicableToItems(discount, items)) {
+                            return true;
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // 2. Check active auto-applied Free Shipping promotions running for limited time
+        List<Discount> autoDiscounts = discountRepository.findActiveAutoDiscounts(now);
+        for (Discount discount : autoDiscounts) {
+            if (DiscountType.FREE_SHIPPING.equals(discount.getDiscountType())) {
+                if (discount.getMinOrderAmount() == null || orderAmount.compareTo(discount.getMinOrderAmount()) >= 0) {
+                    if (isDiscountApplicableToItems(discount, items)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean isDiscountApplicableToItems(Discount discount, List<com.ecommerce.application.entity.OrderItem> items) {
+        boolean hasCategoryRestrictions = discount.getApplicableCategories() != null && !discount.getApplicableCategories().isEmpty();
+        boolean hasProductRestrictions = discount.getApplicableProducts() != null && !discount.getApplicableProducts().isEmpty();
+
+        // If no product or category restrictions, applies to ALL products
+        if (!hasCategoryRestrictions && !hasProductRestrictions) {
+            return true;
+        }
+
+        if (items == null || items.isEmpty()) {
+            return true;
+        }
+
+        for (com.ecommerce.application.entity.OrderItem item : items) {
+            if (item.getProductVariant() != null && item.getProductVariant().getProduct() != null) {
+                Product product = item.getProductVariant().getProduct();
+                if (hasProductRestrictions && discount.getApplicableProducts().contains(product)) {
+                    return true;
+                }
+                if (hasCategoryRestrictions && product.getCategory() != null && discount.getApplicableCategories().contains(product.getCategory())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     // Apply discount to order

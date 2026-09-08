@@ -188,8 +188,9 @@ public class OrderService {
             totalAmount = discountService.applyDiscount(appliedDiscountCode, totalAmount);
         }
 
-        // Calculate Shipping Fee: Rs. 300 flat nationwide, FREE over Rs. 5000 subtotal
-        BigDecimal shippingFee = totalAmount.compareTo(new BigDecimal("5000")) >= 0
+        // Calculate Shipping Fee: Rs. 300 flat nationwide, FREE over Rs. 5000 subtotal OR Free Delivery Promo rule
+        boolean isFreeShippingPromo = discountService.isFreeShippingApplicable(appliedDiscountCode, orderItems, totalAmount);
+        BigDecimal shippingFee = (totalAmount.compareTo(new BigDecimal("5000")) >= 0 || isFreeShippingPromo)
                 ? BigDecimal.ZERO
                 : new BigDecimal("300");
         totalAmount = totalAmount.add(shippingFee);

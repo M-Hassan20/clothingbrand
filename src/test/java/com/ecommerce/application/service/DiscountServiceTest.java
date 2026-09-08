@@ -83,4 +83,16 @@ class DiscountServiceTest {
         assertThat(finalAmount).isEqualByComparingTo(BigDecimal.valueOf(90.00));
         verify(discountRepository).incrementUsageCount(1L);
     }
+
+    @Test
+    void calculateDiscount_freeShippingTypeReturnsZeroDiscountAmount() {
+        Discount discount = Discount.builder()
+                .discountType(DiscountType.FREE_SHIPPING)
+                .discountValue(BigDecimal.ZERO)
+                .minOrderAmount(BigDecimal.ZERO)
+                .build();
+
+        BigDecimal discountAmount = discountService.calculateDiscount(discount, BigDecimal.valueOf(100.00));
+        assertThat(discountAmount).isEqualByComparingTo(BigDecimal.ZERO);
+    }
 }

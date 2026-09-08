@@ -19,5 +19,6 @@ public class DiscountValidateResponse {
     private BigDecimal discountValue;
     private BigDecimal discountAmount;
     private BigDecimal finalAmount;
+    private Boolean isFreeShipping;
     private String message;
 }
