@@ -105,31 +105,105 @@ function PrivacyContent() {
         {contentHtml ? (
           <div className="policy-body font-sans text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: contentHtml }} />
         ) : (
-          <div className="space-y-12 font-sans text-sm leading-relaxed text-brown-muted">
+          <div className="space-y-10 font-sans text-sm leading-relaxed text-brown-muted">
             <section className="space-y-4">
               <p>
-                At <strong className="text-charcoal">Haus of Hafsah</strong>, we appreciate the trust you place in us. We are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy details how we collect, use, disclose, and safeguard your data when you visit our website, place an order, or engage with our services.
+                At <strong className="text-charcoal">Haus of Hafsah</strong>, we prioritize the confidentiality and protection of your personal information. This Privacy Policy details how we collect, store, utilize, and safeguard your data when you visit our website, place an order, or interact with our services within Pakistan.
               </p>
               <p>
-                This policy complies with standard electronic transaction laws and personal data protection regulations applicable to digital e-commerce operations in Pakistan.
-              </p>
-            </section>
-
-            <section className="space-y-4">
-              <h2 className="font-serif text-xl font-medium text-charcoal tracking-wide">
-                1. Information We Collect
-              </h2>
-              <p>
-                To fulfill your orders, deliver premium products, and provide a seamless shopping experience, we collect your full name, email address, shipping address, phone number, and payment preferences.
+                Our privacy framework complies with standard electronic data handling guidelines and digital commerce privacy regulations enforced in the Islamic Republic of Pakistan.
               </p>
             </section>
 
             <section className="space-y-4 pt-6 border-t border-border/40">
               <h2 className="font-serif text-xl font-medium text-charcoal tracking-wide">
-                2. Contact Us
+                1. Information We Collect
               </h2>
               <p>
-                For questions regarding our privacy policy, please reach out to us at: <a href="mailto:info@hausofhafsah.com" className="text-accent underline">info@hausofhafsah.com</a>.
+                To provide an efficient shopping and delivery experience, we collect information that identifies you or relates to your account:
+              </p>
+              <ul className="list-disc pl-5 space-y-2 text-brown-muted">
+                <li>
+                  <strong className="text-charcoal">Contact Details:</strong> Your full name, email address, Pakistani phone number, and WhatsApp contact for order updates.
+                </li>
+                <li>
+                  <strong className="text-charcoal">Delivery Address:</strong> Street address, city, province, and postal code within Pakistan to ensure accurate courier dispatch.
+                </li>
+                <li>
+                  <strong className="text-charcoal">Order & Transaction Details:</strong> Products purchased, cart items, order history, discount codes used, and payment method selection (Cash on Delivery / SafePay online).
+                </li>
+                <li>
+                  <strong className="text-charcoal">Technical Data:</strong> IP address, device type, browser specifications, and browsing session cookies for security and performance optimization.
+                </li>
+              </ul>
+            </section>
+
+            <section className="space-y-4 pt-6 border-t border-border/40">
+              <h2 className="font-serif text-xl font-medium text-charcoal tracking-wide">
+                2. How We Use Your Data
+              </h2>
+              <p>
+                Your personal data is strictly utilized for core business operations:
+              </p>
+              <ul className="list-disc pl-5 space-y-2 text-brown-muted">
+                <li>Processing, packing, and fulfilling your orders through authorized logistics partners in Pakistan.</li>
+                <li>Sending order confirmation SMS messages, email notifications, and dispatch tracking details.</li>
+                <li>Verifying Cash on Delivery (COD) orders before courier dispatch.</li>
+                <li>Providing responsive customer support and addressing inquiries or return/exchange requests.</li>
+                <li>Improving website layout, product recommendations, and digital security.</li>
+              </ul>
+            </section>
+
+            <section className="space-y-4 pt-6 border-t border-border/40">
+              <h2 className="font-serif text-xl font-medium text-charcoal tracking-wide">
+                3. Data Sharing & Third-Party Service Providers
+              </h2>
+              <p>
+                We do <strong className="text-charcoal">not</strong> sell, rent, trade, or monetize your personal information to third parties for marketing purposes. Your information is shared exclusively with trusted service providers strictly to perform operational duties:
+              </p>
+              <ul className="list-disc pl-5 space-y-2 text-brown-muted">
+                <li>
+                  <strong className="text-charcoal">Logistics & Courier Partners:</strong> Name, phone number, and delivery address are shared with reputable courier companies in Pakistan (e.g. TCS, CallCourier, Trax, Leopard) for doorstep delivery.
+                </li>
+                <li>
+                  <strong className="text-charcoal">Payment Gateways:</strong> SafePay payment gateway infrastructure processes online card payments under bank-grade PCI-DSS compliance. We never store raw credit/debit card numbers on our servers.
+                </li>
+              </ul>
+            </section>
+
+            <section className="space-y-4 pt-6 border-t border-border/40">
+              <h2 className="font-serif text-xl font-medium text-charcoal tracking-wide">
+                4. Data Security & Storage
+              </h2>
+              <p>
+                We employ SSL/TLS encryption, secure server architecture, and strict access controls to safeguard your data against unauthorized access, loss, or misuse. Account credentials and tokens are transmitted over encrypted HTTPS protocols.
+              </p>
+            </section>
+
+            <section className="space-y-4 pt-6 border-t border-border/40">
+              <h2 className="font-serif text-xl font-medium text-charcoal tracking-wide">
+                5. Cookies & Local Storage
+              </h2>
+              <p>
+                Our store utilizes essential cookies and browser local storage to maintain your active shopping bag, preserve login session tokens, and remember your site preferences. You may disable cookies in your browser settings, though certain checkout features may be affected.
+              </p>
+            </section>
+
+            <section className="space-y-4 pt-6 border-t border-border/40">
+              <h2 className="font-serif text-xl font-medium text-charcoal tracking-wide">
+                6. Your Rights & Data Preferences
+              </h2>
+              <p>
+                You have the right to access, update, or request the deletion of your personal account details stored with Haus of Hafsah at any time. You can manage your saved addresses in your account dashboard or email us to request account closure.
+              </p>
+            </section>
+
+            <section className="space-y-4 pt-6 border-t border-border/40">
+              <h2 className="font-serif text-xl font-medium text-charcoal tracking-wide">
+                7. Contact Us
+              </h2>
+              <p>
+                For questions or requests concerning this Privacy Policy, please contact our Privacy Data Officer at <a href="mailto:info@hausofhafsah.com" className="text-accent underline font-semibold">info@hausofhafsah.com</a>.
               </p>
             </section>
           </div>

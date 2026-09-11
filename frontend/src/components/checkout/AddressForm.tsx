@@ -9,11 +9,22 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AddressCreateRequest } from '@/types/api';
 
+const isPakistan = (val: string) => {
+  if (!val) return false;
+  const c = val.trim().toLowerCase();
+  return c === 'pakistan' || c === 'pk' || c === 'paakistan' || c.includes('pakistan');
+};
+
 const addressSchema = z.object({
   label: z.string().min(1, 'Label is required (e.g., Home, Office)'),
   street: z.string().min(1, 'Street address is required'),
   city: z.string().min(1, 'City is required'),
-  country: z.string().min(1, 'Country is required'),
+  country: z
+    .string()
+    .min(1, 'Country is required')
+    .refine((val) => isPakistan(val), {
+      message: 'We currently deliver within Pakistan only.',
+    }),
   zipCode: z.string().min(1, 'Zip/Postal code is required'),
   isDefault: z.boolean(),
 });
@@ -45,7 +56,7 @@ export default function AddressForm({
       label: '',
       street: '',
       city: '',
-      country: '',
+      country: 'Pakistan',
       zipCode: '',
       isDefault: false,
     },
@@ -126,17 +137,22 @@ export default function AddressForm({
 
         {/* Country */}
         <div>
-          <label className="block text-xs font-semibold text-brown-muted uppercase tracking-wider mb-1.5">
-            Country
-          </label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="block text-xs font-semibold text-brown-muted uppercase tracking-wider">
+              Country
+            </label>
+            <span className="text-[10px] text-amber-700 font-semibold">Pakistan Only</span>
+          </div>
           <Input
             type="text"
-            placeholder="Country"
+            placeholder="Pakistan"
             {...register('country')}
             className={errors.country ? 'border-error' : 'border-border'}
           />
-          {errors.country && (
+          {errors.country ? (
             <p className="text-[10px] text-error mt-1">{errors.country.message}</p>
+          ) : (
+            <p className="text-[10px] text-brown-muted mt-1">Delivery is currently supported within Pakistan only.</p>
           )}
         </div>
       </div>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, ChevronRight, ArrowLeft, Download, MapPin, Loader2 } from 'lucide-react';
+import { CheckCircle2, ChevronRight, ArrowLeft, Download, MapPin, Loader2, Globe } from 'lucide-react';
 import { useCartStore } from '@/lib/stores/cart-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { getAddresses, createAddress } from '@/lib/api/addresses';
@@ -17,6 +17,12 @@ import OrderSummary from '@/components/checkout/OrderSummary';
 import PaymentStep, { PaymentIntentType } from '@/components/checkout/PaymentStep';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+
+const isPakistan = (val?: string) => {
+  if (!val) return false;
+  const c = val.trim().toLowerCase();
+  return c === 'pakistan' || c === 'pk' || c === 'paakistan' || c.includes('pakistan');
+};
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -47,7 +53,7 @@ export default function CheckoutPage() {
     guestPhone: '',
     shippingStreet: '',
     shippingCity: '',
-    shippingCountry: '',
+    shippingCountry: 'Pakistan',
     shippingZipCode: '',
   });
 
@@ -134,15 +140,26 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
-    if (isAuthenticated && !selectedAddressId) {
-      toast.error('Please select a shipping address');
-      return;
+    if (isAuthenticated) {
+      if (!selectedAddressId) {
+        toast.error('Please select a shipping address');
+        return;
+      }
+      const selAddr = addresses.find((a) => a.id === selectedAddressId);
+      if (!selAddr || !isPakistan(selAddr.country)) {
+        toast.error('We currently only deliver within Pakistan. Please select or add an address in Pakistan.');
+        return;
+      }
     }
 
     if (!isAuthenticated) {
       const { guestName, guestEmail, guestPhone, shippingStreet, shippingCity, shippingCountry, shippingZipCode } = guestInfo;
       if (!guestName || !guestEmail || !guestPhone || !shippingStreet || !shippingCity || !shippingCountry || !shippingZipCode) {
         toast.error('Please fill in all shipping and contact details');
+        return;
+      }
+      if (!isPakistan(shippingCountry)) {
+        toast.error('We currently only deliver within Pakistan. Please enter a delivery address in Pakistan.');
         return;
       }
     }
@@ -307,6 +324,14 @@ export default function CheckoutPage() {
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 items-start">
           {/* Left Panel: Accordion steps */}
           <div className="lg:col-span-8 space-y-6">
+            {/* Delivery Notice Banner */}
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-md p-4 flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200">
+              <Globe className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-semibold">Domestic Delivery Only:</span> We currently deliver orders exclusively within <span className="font-semibold">Pakistan</span>. Please ensure your shipping address is located in Pakistan.
+              </div>
+            </div>
+
             {/* Step 1: Shipping Address */}
             <div className="border border-border/40 rounded-md p-6 bg-background space-y-6">
               <div className="flex items-center gap-3 border-b border-border/40 pb-4 justify-between">
@@ -427,17 +452,21 @@ export default function CheckoutPage() {
                             />
                           </div>
                           <div className="sm:col-span-2">
-                            <label className="block text-[10px] font-bold text-brown-muted uppercase tracking-wider mb-1">
-                              Country
-                            </label>
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="block text-[10px] font-bold text-brown-muted uppercase tracking-wider">
+                                Country
+                              </label>
+                              <span className="text-[10px] text-amber-700 font-semibold">Pakistan Only</span>
+                            </div>
                             <input
                               type="text"
                               value={guestInfo.shippingCountry}
                               data-testid="checkout-guest-country"
                               onChange={(e) => setGuestInfo({ ...guestInfo, shippingCountry: e.target.value })}
                               className="w-full rounded-md border border-border px-3 py-2 text-xs focus:border-accent focus:outline-none bg-background text-charcoal"
-                              placeholder="Country"
+                              placeholder="Pakistan"
                             />
+                            <p className="text-[10px] text-brown-muted mt-1">Delivery is currently supported within Pakistan only.</p>
                           </div>
                         </div>
                       </div>
@@ -451,6 +480,11 @@ export default function CheckoutPage() {
                             toast.error('Please select a shipping address');
                             return;
                           }
+                          const selAddr = addresses.find((a) => a.id === selectedAddressId);
+                          if (!selAddr || !isPakistan(selAddr.country)) {
+                            toast.error('We currently deliver within Pakistan only. Please select or add an address in Pakistan.');
+                            return;
+                          }
                         } else {
                           const { guestName, guestEmail, guestPhone, shippingStreet, shippingCity, shippingCountry, shippingZipCode } = guestInfo;
                           if (!guestName || !guestEmail || !guestPhone || !shippingStreet || !shippingCity || !shippingCountry || !shippingZipCode) {
@@ -460,6 +494,10 @@ export default function CheckoutPage() {
                           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                           if (!emailRegex.test(guestEmail)) {
                             toast.error('Please enter a valid email address');
+                            return;
+                          }
+                          if (!isPakistan(shippingCountry)) {
+                            toast.error('We currently deliver within Pakistan only. Please enter a delivery address in Pakistan.');
                             return;
                           }
                         }

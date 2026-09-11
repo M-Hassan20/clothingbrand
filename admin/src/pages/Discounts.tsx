@@ -7,9 +7,6 @@ import {
   Search,
   Loader2,
   X,
-  Calendar,
-  Percent,
-  DollarSign,
   CheckCircle2,
   XCircle,
   Hash,
@@ -193,7 +190,7 @@ export default function Discounts() {
   };
 
   const filteredDiscounts = discounts.filter((d) =>
-    d.code.toLowerCase().includes(searchQuery.toLowerCase())
+    (d.code || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const activeCount = discounts.filter((d) => d.isActive).length;
@@ -375,7 +372,7 @@ export default function Discounts() {
                     <td className="py-4 px-6 text-right">
                       {discount.isActive && (
                         <button
-                          onClick={() => handleDeactivate(discount.id, discount.code)}
+                          onClick={() => handleDeactivate(discount.id, discount.code || '')}
                           className="text-[11px] font-semibold text-error hover:underline"
                         >
                           Deactivate

@@ -219,8 +219,46 @@ public class ReviewService {
         }
 
         Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sortOrder);
-        return reviewRepository.findAllForAdmin(searchPattern, rating, verified, productId, startDate, endDate, pageable)
-                .map(reviewMapper::toResponse);
+
+        org.springframework.data.jpa.domain.Specification<Review> spec = (root, query, cb) -> {
+            java.util.List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+
+            if (searchPattern != null) {
+                jakarta.persistence.criteria.Join<Review, User> userJoin = root.join("user", jakarta.persistence.criteria.JoinType.LEFT);
+                jakarta.persistence.criteria.Join<Review, Product> productJoin = root.join("product", jakarta.persistence.criteria.JoinType.LEFT);
+
+                predicates.add(cb.or(
+                    cb.like(cb.lower(root.get("comment")), searchPattern),
+                    cb.like(cb.lower(userJoin.get("fullName")), searchPattern),
+                    cb.like(cb.lower(userJoin.get("email")), searchPattern),
+                    cb.like(cb.lower(productJoin.get("name")), searchPattern)
+                ));
+            }
+
+            if (rating != null) {
+                predicates.add(cb.equal(root.get("rating"), rating));
+            }
+
+            if (verified != null) {
+                predicates.add(cb.equal(root.get("isVerifiedPurchase"), verified));
+            }
+
+            if (productId != null) {
+                predicates.add(cb.equal(root.get("product").get("id"), productId));
+            }
+
+            if (startDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), startDate));
+            }
+
+            if (endDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), endDate));
+            }
+
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+
+        return reviewRepository.findAll(spec, pageable).map(reviewMapper::toResponse);
     }
 
     // Admin: Get overall review statistics across the entire store

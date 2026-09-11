@@ -396,7 +396,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
                   <option value="Wrong Size / Fit Issue">Wrong Size / Fit Issue</option>
                   <option value="Defective / Damaged Item Received">Defective / Damaged Item Received</option>
                   <option value="Item Color or Fabric Not as Described">Item Color or Fabric Not as Described</option>
-                  <option value="Changed Mind / Don't Want Item">Changed Mind / Don't Want Item</option>
+                  <option value="Changed Mind / Don't Want Item">Changed Mind / Don&apos;t Want Item</option>
                   <option value="Other">Other</option>
                 </select>
               </div>

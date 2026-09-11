@@ -4,7 +4,7 @@ import { ApiError } from '../api/client';
  * Extracts a descriptive human-readable error message from API calls or caught errors,
  * falling back to the provided default message if no specific message is available.
  */
-export function getErrorMessage(err: unknown, fallbackMessage: string): string {
+export function getErrorMessage(err: unknown, fallbackMessage: string = 'An unexpected error occurred'): string {
   if (err instanceof ApiError && err.message && err.message.trim()) {
     return err.message;
   }

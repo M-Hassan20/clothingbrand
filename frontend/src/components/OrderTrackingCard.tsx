@@ -10,9 +10,25 @@ interface OrderTrackingCardProps {
   postexStatus?: string;
 }
 
+interface TrackingHistoryItem {
+  status?: string;
+  statusDate?: string;
+  comments?: string;
+}
+
+interface PostExTrackingData {
+  dist?: {
+    trackingNumber?: string;
+    transactionStatus?: string;
+    customerName?: string;
+    cityName?: string;
+    trackingHistory?: TrackingHistoryItem[];
+  };
+}
+
 export function OrderTrackingCard({ trackingNumber, courierName = 'PostEx', postexStatus }: OrderTrackingCardProps) {
   const [loading, setLoading] = useState(false);
-  const [trackingData, setTrackingData] = useState<any>(null);
+  const [trackingData, setTrackingData] = useState<PostExTrackingData | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   const handleFetchTracking = async () => {
@@ -103,7 +119,7 @@ export function OrderTrackingCard({ trackingNumber, courierName = 'PostEx', post
 
               {trackingData.dist.trackingHistory && trackingData.dist.trackingHistory.length > 0 ? (
                 <div className="space-y-2 pt-2">
-                  {trackingData.dist.trackingHistory.map((item: any, idx: number) => (
+                  {trackingData.dist.trackingHistory.map((item, idx: number) => (
                     <div key={idx} className="flex gap-3 text-xs items-start border-l-2 border-accent/40 pl-3 py-1">
                       <div className="flex-1">
                         <p className="font-semibold text-charcoal">{item.status}</p>

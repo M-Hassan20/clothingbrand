@@ -483,7 +483,8 @@ export default function PageConfigManager() {
         ANNOUNCEMENT: '/',
       };
       const path = routeMap[activeTab] || '/';
-      const previewUrl = `http://localhost:3000${path}?token=${res.previewToken}`;
+      const storefrontBase = import.meta.env.VITE_STOREFRONT_URL || 'https://hausofhafsah.com';
+      const previewUrl = `${storefrontBase}${path}?token=${res.previewToken}`;
       window.open(previewUrl, '_blank');
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -1048,7 +1049,7 @@ export default function PageConfigManager() {
                           <input
                             type="file"
                             accept="image/*"
-                            ref={(el) => (slideFileInputRefs.current[index] = el)}
+                            ref={(el) => { slideFileInputRefs.current[index] = el; }}
                             onChange={(e) => handleSlideImageUpload(index, e)}
                             className="hidden"
                           />

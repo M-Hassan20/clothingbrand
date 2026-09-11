@@ -684,7 +684,7 @@ export default function Products() {
                       <td className="py-3 px-4 text-right">
                         <div className="flex justify-end gap-2.5">
                           <a
-                            href={`http://localhost:3000/product/${product.id}`}
+                            href={`${import.meta.env.VITE_STOREFRONT_URL || 'https://hausofhafsah.com'}/product/${product.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1 hover:text-accent text-text-secondary transition-colors"

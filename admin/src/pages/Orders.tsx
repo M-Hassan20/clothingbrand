@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../api/client';
+import { api, getBaseUrl } from '../api/client';
 import { getErrorMessage } from '../utils/error';
 import {
   Search,
@@ -8,7 +8,6 @@ import {
   Loader2,
   Printer,
   Calendar,
-  DollarSign,
   MapPin,
   ClipboardList,
   Filter,
@@ -164,8 +163,7 @@ export default function Orders() {
   const handlePrintAirwayBill = async (trackingNumber: string) => {
     try {
       const token = localStorage.getItem('admin_token');
-      const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : 'localhost';
-      const response = await fetch(`http://${host}:8080/api/admin/postex/airway-bill/${trackingNumber}`, {
+      const response = await fetch(`${getBaseUrl()}/admin/postex/airway-bill/${trackingNumber}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -287,9 +285,8 @@ export default function Orders() {
   const handlePrintInvoice = async (orderId: number) => {
     try {
       const token = localStorage.getItem('admin_token');
-      const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : 'localhost';
       // Fetch binary PDF file with authorization credentials
-      const response = await fetch(`http://${host}:8080/api/admin/orders/${orderId}/invoice`, {
+      const response = await fetch(`${getBaseUrl()}/admin/orders/${orderId}/invoice`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

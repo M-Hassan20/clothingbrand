@@ -5,10 +5,26 @@ import { Search, Truck, Package, Clock, CheckCircle2, AlertCircle, Loader2 } fro
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
+interface TrackingHistoryItem {
+  status?: string;
+  statusDate?: string;
+  comments?: string;
+}
+
+interface PostExTrackingData {
+  dist?: {
+    trackingNumber?: string;
+    transactionStatus?: string;
+    customerName?: string;
+    cityName?: string;
+    trackingHistory?: TrackingHistoryItem[];
+  };
+}
+
 export default function PublicTrackPage() {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [loading, setLoading] = useState(false);
-  const [trackingData, setTrackingData] = useState<any>(null);
+  const [trackingData, setTrackingData] = useState<PostExTrackingData | null>(null);
   const [searched, setSearched] = useState(false);
 
   useEffect(() => {
@@ -118,7 +134,7 @@ export default function PublicTrackPage() {
 
                 {trackingData.dist.trackingHistory && trackingData.dist.trackingHistory.length > 0 ? (
                   <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-accent/30">
-                    {trackingData.dist.trackingHistory.map((item: any, idx: number) => (
+                    {trackingData.dist.trackingHistory.map((item, idx: number) => (
                       <div key={idx} className="relative">
                         <div className="absolute -left-[21px] top-0.5 w-3 h-3 rounded-full bg-accent border-2 border-background" />
                         <div className="text-xs space-y-0.5">
@@ -145,7 +161,7 @@ export default function PublicTrackPage() {
               <AlertCircle className="h-8 w-8 text-warning mx-auto" />
               <h3 className="font-serif text-base font-medium text-charcoal">No details found</h3>
               <p className="text-xs text-brown-muted max-w-sm mx-auto">
-                We couldn't find tracking information for <strong>{trackingNumber}</strong>. Please check your tracking number or try again later.
+                We couldn&apos;t find tracking information for <strong>{trackingNumber}</strong>. Please check your tracking number or try again later.
               </p>
             </div>
           )}

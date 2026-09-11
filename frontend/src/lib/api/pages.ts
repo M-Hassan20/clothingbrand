@@ -1,5 +1,6 @@
 import { apiGet } from './client';
 import { CarouselSlideDTO } from '@/components/home/HeroCarousel';
+import { ProductResponse } from '@/types/api';
 
 export interface PageConfigDTO {
   id?: number;
@@ -21,7 +22,7 @@ export interface PageConfigDTO {
   metaTitle?: string;
   metaDescription?: string;
   featuredProductIds?: number[];
-  featuredProducts?: any[];
+  featuredProducts?: ProductResponse[];
   isPreview?: boolean;
 }
 

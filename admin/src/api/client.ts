@@ -20,7 +20,10 @@ export class ApiError extends Error {
   }
 }
 
-const getBaseUrl = (): string => {
+export const getBaseUrl = (): string => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
   if (typeof window !== 'undefined' && window.location?.hostname) {
     return `http://${window.location.hostname}:8080/api`;
   }
