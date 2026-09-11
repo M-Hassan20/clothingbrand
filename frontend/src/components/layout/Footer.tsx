@@ -1,9 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { Mail, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { apiPost } from '@/lib/api/client';
 
 const InstagramIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -42,10 +44,24 @@ const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 export default function Footer() {
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const [email, setEmail] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Non-functional stub for now
-    alert('Thank you for subscribing to our newsletter!');
+    if (!email.trim()) return;
+
+    setSubmitting(true);
+    try {
+      await apiPost('/newsletter/subscribe', { email: email.trim() });
+      toast.success('Thank you for subscribing to Haus of Hafsah!');
+      setEmail('');
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Subscription failed';
+      toast.error(errorMsg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -141,9 +157,16 @@ export default function Footer() {
                 type="email"
                 required
                 placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs text-charcoal placeholder-brown-muted focus:outline-none focus:ring-1 focus:ring-accent"
               />
-              <Button type="submit" size="icon" className="bg-accent text-background hover:bg-accent/90 shrink-0">
+              <Button
+                type="submit"
+                disabled={submitting}
+                size="icon"
+                className="bg-accent text-background hover:bg-accent/90 shrink-0"
+              >
                 <ArrowRight className="h-4 w-4" />
                 <span className="sr-only">Subscribe</span>
               </Button>

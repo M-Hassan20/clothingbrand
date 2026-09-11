@@ -15,6 +15,7 @@ import {
   Home,
   Star,
   Tag,
+  Mail,
 } from 'lucide-react';
 
 export default function Layout() {
@@ -32,6 +33,7 @@ export default function Layout() {
     { name: 'Reviews', path: '/reviews', icon: Star },
     { name: 'Blog', path: '/blog', icon: BookOpen },
     { name: 'Inventory & Alerts', path: '/inventory', icon: Boxes },
+    { name: 'Newsletter & Email', path: '/newsletter', icon: Mail },
   ];
 
   const handleLinkClick = () => {

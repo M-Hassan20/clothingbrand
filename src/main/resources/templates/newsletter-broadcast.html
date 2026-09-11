@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${subject}">Haus of Hafsah Newsletter</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #ECEEEF;
+            color: #1C1917;
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrapper {
+            width: 100%;
+            background-color: #ECEEEF;
+            padding: 40px 15px;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #FFFFFF;
+            border: 1px solid #DCDFE2;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        }
+        /* Top Editorial Header Bar */
+        .top-bar {
+            padding: 24px 36px 18px 36px;
+            border-bottom: 1px solid #1C1917;
+            text-align: center;
+        }
+        .brand-name {
+            font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: 5px;
+            color: #1C1917;
+            text-transform: uppercase;
+            margin: 0;
+        }
+        .accent-line {
+            width: 36px;
+            height: 2px;
+            background-color: #8C6D53;
+            margin: 12px auto 0 auto;
+        }
+        /* Main Body Content Container */
+        .content {
+            padding: 44px 40px;
+            font-size: 14px;
+            color: #292524;
+            line-height: 1.8;
+        }
+        .content h1, .content h2, .content h3 {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            color: #1C1917;
+            font-weight: 400;
+            margin-top: 24px;
+            margin-bottom: 14px;
+            line-height: 1.3;
+        }
+        .content h1 { font-size: 28px; text-align: center; }
+        .content h2 { font-size: 22px; }
+        .content h3 { font-size: 18px; }
+        .content p { margin-bottom: 18px; }
+        .content a {
+            color: #8C6D53;
+            text-decoration: underline;
+        }
+        .content blockquote {
+            text-align: center;
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 20px;
+            font-style: italic;
+            color: #1C1917;
+            margin: 32px 0;
+            padding: 0 16px;
+            border: none;
+        }
+        .content blockquote::after {
+            content: "";
+            display: block;
+            width: 28px;
+            height: 1.5px;
+            background-color: #8C6D53;
+            margin: 14px auto 0 auto;
+        }
+        /* Feature Highlight Box */
+        .highlight-box {
+            background-color: #F8F7F5;
+            border: 1px solid #EBE8E3;
+            padding: 24px 28px;
+            margin: 36px 0;
+            text-align: center;
+        }
+        .highlight-eyebrow {
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #8C6D53;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .highlight-link {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1C1917;
+            text-decoration: none !important;
+            border-bottom: 1px solid #1C1917;
+            padding-bottom: 2px;
+        }
+        /* Signature / Sign-off Block */
+        .signature-block {
+            padding: 28px 40px;
+            border-top: 1px solid #F0EFEF;
+        }
+        .sign-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1C1917;
+            margin: 0 0 2px 0;
+        }
+        .sign-title {
+            font-size: 10px;
+            color: #8C6D53;
+            margin: 0;
+            letter-spacing: 0.5px;
+        }
+        /* Minimal Footer */
+        .footer {
+            background-color: #F8F7F5;
+            border-top: 1px solid #DCDFE2;
+            padding: 36px 30px;
+            text-align: center;
+        }
+        .footer-brand {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 16px;
+            letter-spacing: 4px;
+            color: #1C1917;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .footer-tagline {
+            font-size: 10px;
+            font-style: italic;
+            color: #78716C;
+            margin-bottom: 16px;
+        }
+        .footer-address {
+            font-size: 10px;
+            color: #908A84;
+            margin-bottom: 12px;
+        }
+        .footer-links {
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .footer-links a {
+            color: #8C6D53;
+            text-decoration: none;
+            margin: 0 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <!-- Header Bar -->
+            <div class="top-bar">
+                <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td align="left" style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #78716C;">
+                            JOURNAL ISSUE
+                        </td>
+                        <td align="right" style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #78716C;">
+                            EDITORIAL DROP
+                        </td>
+                    </tr>
+                </table>
+                <div style="margin-top: 16px;">
+                    <h1 class="brand-name">HAUS OF HAFSAH</h1>
+                    <div class="accent-line"></div>
+                </div>
+            </div>
+
+            <!-- Dynamic Content Body -->
+            <div class="content" th:utext="${contentHtml}">
+                <!-- Dynamic Campaign Content -->
+            </div>
+
+            <!-- Highlight Action Box -->
+            <div style="padding: 0 40px 20px 40px;">
+                <div class="highlight-box">
+                    <div class="highlight-eyebrow">VISIT STOREFRONT</div>
+                    <a th:href="${websiteUrl}" class="highlight-link">Explore Haus of Hafsah Boutique &rarr;</a>
+                </div>
+            </div>
+
+            <!-- Signature Section -->
+            <div class="signature-block">
+                <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td width="50%" align="left" style="border-right: 1px solid #F0EFEF; padding-right: 15px;">
+                            <div class="sign-name">Haus of Hafsah</div>
+                            <div class="sign-title">Editorial & Design Team</div>
+                        </td>
+                        <td width="50%" align="left" style="padding-left: 20px;">
+                            <div class="sign-name">Client Care</div>
+                            <div class="sign-title">info@hausofhafsah.com</div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                <a th:href="${websiteUrl}">
+                    <img src="cid:logoHeader" alt="Haus of Hafsah Logo" style="height: 68px; width: auto; margin-bottom: 12px; display: inline-block;" />
+                </a>
+                <div class="footer-tagline">Minimal Design. Refined Luxury.</div>
+                <div class="footer-address">Haus of Hafsah • Karachi, Pakistan</div>
+                <div class="footer-links">
+                    <a th:href="${websiteUrl}">Storefront</a> •
+                    <a href="mailto:info@hausofhafsah.com">Contact</a> •
+                    <a th:href="${unsubscribeUrl}">Unsubscribe</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -14,6 +14,7 @@ import Discounts from './pages/Discounts';
 import Reviews from './pages/Reviews';
 import Blog from './pages/Blog';
 import Inventory from './pages/Inventory';
+import Newsletter from './pages/Newsletter';
 import { Toaster } from 'sonner';
 import './index.css';
 
@@ -42,6 +43,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="reviews" element={<Reviews />} />
             <Route path="blog" element={<Blog />} />
             <Route path="inventory" element={<Inventory />} />
+            <Route path="newsletter" element={<Newsletter />} />
           </Route>
         </Routes>
       </BrowserRouter>

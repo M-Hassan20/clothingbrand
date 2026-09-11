@@ -71,6 +71,17 @@ public class EmailService {
 
             helper.setText(htmlContent, true);
 
+            // Attach inline logo image (cid:logoHeader) for reliable rendering in all email clients
+            try {
+                org.springframework.core.io.ClassPathResource logoResource =
+                        new org.springframework.core.io.ClassPathResource("static/images/icon.png");
+                if (logoResource.exists()) {
+                    helper.addInline("logoHeader", logoResource, "image/png");
+                }
+            } catch (Exception ex) {
+                System.err.println("Could not attach inline logo resource: " + ex.getMessage());
+            }
+
             mailSender.send(message);
             System.out.println("Template email sent successfully to: " + to);
         } catch (MessagingException e) {
@@ -208,5 +219,33 @@ public class EmailService {
                 name, email, subject, messageText
         );
         sendSimpleEmail(adminEmail, "New Contact Inquiry: " + subject, content);
+    }
+
+    /**
+     * Send welcome email to newsletter subscriber
+     */
+    public void sendNewsletterWelcomeEmail(String to, String unsubscribeToken) {
+        String unsubscribeUrl = "https://hausofhafsah.com/unsubscribe?token=" + unsubscribeToken;
+        Map<String, Object> model = Map.of(
+                "websiteUrl", "https://hausofhafsah.com",
+                "unsubscribeUrl", unsubscribeUrl
+        );
+
+        sendTemplateEmail(to, "Welcome to the Haus of Hafsah Journal", "newsletter-welcome", model);
+    }
+
+    /**
+     * Send newsletter campaign broadcast email to a subscriber
+     */
+    public void sendNewsletterBroadcastEmail(String to, String subject, String contentHtml, String unsubscribeToken) {
+        String unsubscribeUrl = "https://hausofhafsah.com/unsubscribe?token=" + unsubscribeToken;
+        Map<String, Object> model = Map.of(
+                "subject", subject,
+                "contentHtml", contentHtml,
+                "websiteUrl", "https://hausofhafsah.com",
+                "unsubscribeUrl", unsubscribeUrl
+        );
+
+        sendTemplateEmail(to, subject, "newsletter-broadcast", model);
     }
 }

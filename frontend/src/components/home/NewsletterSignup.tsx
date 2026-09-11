@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { apiPost } from '@/lib/api/client';
 
 export default function NewsletterSignup() {
   const [email, setEmail] = useState('');
@@ -14,12 +15,16 @@ export default function NewsletterSignup() {
     if (!email.trim()) return;
 
     setSubmitting(true);
-    // Simulate API registration delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    setSubmitting(false);
-
-    toast.success('Thank you for subscribing to Haus of Hafsah!');
-    setEmail('');
+    try {
+      await apiPost('/newsletter/subscribe', { email: email.trim() });
+      toast.success('Thank you for subscribing to Haus of Hafsah!');
+      setEmail('');
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Subscription failed';
+      toast.error(errorMsg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

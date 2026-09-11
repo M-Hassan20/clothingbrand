@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Haus of Hafsah Newsletter</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #ECEEEF;
+            color: #1C1917;
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrapper {
+            width: 100%;
+            background-color: #ECEEEF;
+            padding: 40px 15px;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #FFFFFF;
+            border: 1px solid #DCDFE2;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        }
+        /* Top Editorial Header Bar */
+        .top-bar {
+            padding: 24px 36px 18px 36px;
+            border-bottom: 1px solid #1C1917;
+            text-align: center;
+        }
+        .top-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #78716C;
+            margin-bottom: 16px;
+        }
+        .brand-name {
+            font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: 5px;
+            color: #1C1917;
+            text-transform: uppercase;
+            margin: 0;
+        }
+        .accent-line {
+            width: 36px;
+            height: 2px;
+            background-color: #8C6D53;
+            margin: 12px auto 0 auto;
+        }
+        /* Main Body Content */
+        .content {
+            padding: 44px 40px;
+        }
+        .category-eyebrow {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: #8C6D53;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .main-title {
+            font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+            font-size: 32px;
+            line-height: 1.25;
+            font-weight: 400;
+            color: #1C1917;
+            text-align: center;
+            margin: 0 0 24px 0;
+        }
+        .main-title i {
+            font-style: italic;
+            color: #8C6D53;
+        }
+        .subtitle {
+            font-size: 13px;
+            color: #78716C;
+            text-align: center;
+            max-width: 440px;
+            margin: 0 auto 36px auto;
+            line-height: 1.6;
+        }
+        .divider {
+            height: 1px;
+            background-color: #F0EFEF;
+            margin: 32px 0;
+        }
+        /* Lead Highlight Paragraph with Left Accent */
+        .lead-quote {
+            border-left: 3px solid #8C6D53;
+            padding-left: 18px;
+            margin: 28px 0;
+            font-size: 14px;
+            color: #292524;
+        }
+        .lead-quote strong {
+            color: #1C1917;
+        }
+        .paragraph {
+            font-size: 14px;
+            color: #44403C;
+            margin-bottom: 20px;
+            line-height: 1.8;
+        }
+        /* Editorial Quote Block */
+        .quote-box {
+            text-align: center;
+            margin: 36px 0;
+            padding: 10px 20px;
+        }
+        .quote-text {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 21px;
+            font-style: italic;
+            color: #1C1917;
+            line-height: 1.5;
+            margin: 0 0 14px 0;
+        }
+        .quote-accent {
+            width: 28px;
+            height: 1.5px;
+            background-color: #8C6D53;
+            margin: 0 auto;
+        }
+        /* Feature Highlight Box */
+        .highlight-box {
+            background-color: #F8F7F5;
+            border: 1px solid #EBE8E3;
+            padding: 24px 28px;
+            margin: 36px 0;
+            text-align: center;
+        }
+        .highlight-eyebrow {
+            font-size: 9px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #8C6D53;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .highlight-link {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1C1917;
+            text-decoration: none;
+            border-bottom: 1px solid #1C1917;
+            padding-bottom: 2px;
+        }
+        /* Call to Action Banner */
+        .cta-section {
+            background-color: #F4F2EE;
+            border-top: 1px solid #EBE8E3;
+            padding: 36px 30px;
+            text-align: center;
+        }
+        .cta-title {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 22px;
+            color: #1C1917;
+            margin: 0 0 10px 0;
+        }
+        .cta-desc {
+            font-size: 12px;
+            color: #6B655F;
+            margin: 0 0 20px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 32px;
+            background-color: #1C1917;
+            color: #FFFFFF !important;
+            text-decoration: none;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+        }
+        /* Signature / Sign-off Block */
+        .signature-block {
+            padding: 28px 40px;
+            border-top: 1px solid #F0EFEF;
+            display: flex;
+            justify-content: space-between;
+        }
+        .signature-col {
+            width: 48%;
+        }
+        .sign-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1C1917;
+            margin: 0 0 2px 0;
+        }
+        .sign-title {
+            font-size: 10px;
+            color: #8C6D53;
+            margin: 0;
+            letter-spacing: 0.5px;
+        }
+        /* Minimal Footer */
+        .footer {
+            background-color: #F8F7F5;
+            border-top: 1px solid #DCDFE2;
+            padding: 36px 30px;
+            text-align: center;
+        }
+        .footer-brand {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 16px;
+            letter-spacing: 4px;
+            color: #1C1917;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .footer-tagline {
+            font-size: 10px;
+            font-style: italic;
+            color: #78716C;
+            margin-bottom: 16px;
+        }
+        .footer-address {
+            font-size: 10px;
+            color: #908A84;
+            margin-bottom: 12px;
+        }
+        .footer-links {
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .footer-links a {
+            color: #8C6D53;
+            text-decoration: none;
+            margin: 0 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <!-- Header Bar -->
+            <div class="top-bar">
+                <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td align="left" style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #78716C;">
+                            JOURNAL N° 01
+                        </td>
+                        <td align="right" style="font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #78716C;">
+                            HAUS SOCIETY
+                        </td>
+                    </tr>
+                </table>
+                <div style="margin-top: 16px;">
+                    <h1 class="brand-name">HAUS OF HAFSAH</h1>
+                    <div class="accent-line"></div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content">
+                <div class="category-eyebrow">EDITORIAL WELCOME</div>
+                
+                <h2 class="main-title">
+                    Timeless elegance.<br>
+                    Crafted for the <i>discerning.</i>
+                </h2>
+
+                <p class="subtitle">
+                    Thank you for subscribing to the Haus of Hafsah Journal. You are now part of our private clientele circle.
+                </p>
+
+                <div class="divider"></div>
+
+                <div class="lead-quote">
+                    <strong>Your invitation is confirmed.</strong> You will receive private previews, seasonal styling curations, and priority access to limited couture releases.
+                </div>
+
+                <p class="paragraph">
+                    At Haus of Hafsah, every garment embodies meticulous craftsmanship, premium fabrications, and refined silhouettes designed to seamlessly elevate your wardrobe.
+                </p>
+
+                <!-- Quote Block -->
+                <div class="quote-box">
+                    <p class="quote-text">
+                        "The goal was never to add complexity. It was to quietly curate true elegance."
+                    </p>
+                    <div class="quote-accent"></div>
+                </div>
+
+                <!-- Highlight Action Box -->
+                <div class="highlight-box">
+                    <div class="highlight-eyebrow">EXPLORE THE BOUTIQUE</div>
+                    <a th:href="${websiteUrl}" class="highlight-link">Discover Latest Pret Arrivals &rarr;</a>
+                </div>
+            </div>
+
+            <!-- Signature Section -->
+            <div class="signature-block">
+                <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td width="50%" align="left" style="border-right: 1px solid #F0EFEF; padding-right: 15px;">
+                            <div class="sign-name">Editorial Team</div>
+                            <div class="sign-title">Haus of Hafsah Journal</div>
+                        </td>
+                        <td width="50%" align="left" style="padding-left: 20px;">
+                            <div class="sign-name">Client Care</div>
+                            <div class="sign-title">info@hausofhafsah.com</div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                <a th:href="${websiteUrl}">
+                    <img src="cid:logoHeader" alt="Haus of Hafsah Logo" style="height: 68px; width: auto; margin-bottom: 12px; display: inline-block;" />
+                </a>
+                <div class="footer-tagline">Minimal Design. Refined Luxury.</div>
+                <div class="footer-address">Haus of Hafsah • Karachi, Pakistan</div>
+                <div class="footer-links">
+                    <a th:href="${websiteUrl}">Storefront</a> •
+                    <a href="mailto:info@hausofhafsah.com">Contact</a> •
+                    <a th:href="${unsubscribeUrl}">Unsubscribe</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
