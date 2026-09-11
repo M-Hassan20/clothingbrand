@@ -23,7 +23,6 @@ import java.io.IOException;
 @RequestMapping("/api/admin/blog")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-@CrossOrigin(origins = "*")
 public class AdminBlogController {
 
     private final BlogPostService blogPostService;

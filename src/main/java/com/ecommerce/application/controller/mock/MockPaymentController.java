@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/payments/mock")
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "payment.jazzcash.enabled", havingValue = "false", matchIfMissing = true)
-@CrossOrigin(origins = "*")
 public class MockPaymentController {
 
     private final PaymentRepository paymentRepository;

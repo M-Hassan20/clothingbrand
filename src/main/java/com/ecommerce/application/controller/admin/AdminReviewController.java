@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 @RequestMapping("/api/admin/reviews")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-@CrossOrigin(origins = "*")
 public class AdminReviewController {
 
     private final ReviewService reviewService;

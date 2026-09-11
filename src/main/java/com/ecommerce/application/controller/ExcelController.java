@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 @RequestMapping("/api/admin/excel")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-@CrossOrigin(origins = "*")
 public class ExcelController {
 
     private final ExcelService excelService;

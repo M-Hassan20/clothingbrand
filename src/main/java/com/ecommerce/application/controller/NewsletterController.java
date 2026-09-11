@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/newsletter")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class NewsletterController {
 
     private final NewsletterService newsletterService;

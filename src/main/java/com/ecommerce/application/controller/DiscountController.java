@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/discounts")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class DiscountController {
 
     private final DiscountService discountService;

@@ -32,7 +32,6 @@ import java.util.List;
 @RequestMapping("/api/admin/products")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-@CrossOrigin(origins = "*")
 public class AdminProductController {
 
     private final ProductServiceImpl productService;

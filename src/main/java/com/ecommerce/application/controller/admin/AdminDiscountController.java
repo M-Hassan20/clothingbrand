@@ -17,7 +17,6 @@ import java.util.List;
 @RequestMapping("/api/admin/discounts")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
-@CrossOrigin(origins = "*")
 public class AdminDiscountController {
 
     private final DiscountService discountService;
