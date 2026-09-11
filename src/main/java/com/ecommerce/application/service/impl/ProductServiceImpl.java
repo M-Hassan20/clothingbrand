@@ -103,12 +103,14 @@ public class ProductServiceImpl implements ProductService{
     }
 
     public Page<ProductResponse> searchProducts(String keyword, Pageable pageable) {
-        Page<Product> products = productRepository.searchProducts(keyword, pageable);
+        String pattern = (keyword != null && !keyword.trim().isEmpty()) ? "%" + keyword.trim().toLowerCase() + "%" : "%%";
+        Page<Product> products = productRepository.searchProducts(pattern, pageable);
         return products.map(product -> populateSalePrices(productMapper.toResponse(product), product));
     }
 
     public Page<ProductResponse> filterProducts(Long categoryId, String brand, BigDecimal minPrice, BigDecimal maxPrice, String keyword, Pageable pageable) {
-        Page<Product> products = productRepository.findByFilters(categoryId, brand, minPrice, maxPrice, keyword, pageable);
+        String pattern = (keyword != null && !keyword.trim().isEmpty()) ? "%" + keyword.trim().toLowerCase() + "%" : null;
+        Page<Product> products = productRepository.findByFilters(categoryId, brand, minPrice, maxPrice, pattern, pageable);
         return products.map(product -> populateSalePrices(productMapper.toResponse(product), product));
     }
 
@@ -347,7 +349,8 @@ public class ProductServiceImpl implements ProductService{
     @Override
     public Page<ProductResponse> getAllProductsForAdmin(Long categoryId, String search, String status, Pageable pageable) {
         String statusParam = (status != null && !status.trim().isEmpty()) ? status.trim().toUpperCase() : "DEFAULT";
-        Page<Product> products = productRepository.findAllForAdmin(categoryId, search, statusParam, pageable);
+        String searchPattern = (search != null && !search.trim().isEmpty()) ? "%" + search.trim().toLowerCase() + "%" : null;
+        Page<Product> products = productRepository.findAllForAdmin(categoryId, searchPattern, statusParam, pageable);
         return products.map(product -> populateSalePrices(productMapper.toResponse(product), product));
     }
 

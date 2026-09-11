@@ -34,7 +34,7 @@ public class BlogPost extends BaseEntity {
 
     private String coverImageUrl;
 
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "TEXT")
     private String contentHtml;
 
     private String authorName;

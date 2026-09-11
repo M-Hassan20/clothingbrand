@@ -204,7 +204,8 @@ public class ReviewService {
             int page,
             int size) {
 
-        String cleanedSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+        String cleanedSearch = (search != null && !search.trim().isEmpty()) ? search.trim().toLowerCase() : null;
+        String searchPattern = (cleanedSearch != null) ? "%" + cleanedSearch + "%" : null;
 
         org.springframework.data.domain.Sort sortOrder;
         if ("oldest".equalsIgnoreCase(sort)) {
@@ -218,7 +219,7 @@ public class ReviewService {
         }
 
         Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, sortOrder);
-        return reviewRepository.findAllForAdmin(cleanedSearch, rating, verified, productId, startDate, endDate, pageable)
+        return reviewRepository.findAllForAdmin(searchPattern, rating, verified, productId, startDate, endDate, pageable)
                 .map(reviewMapper::toResponse);
     }
 

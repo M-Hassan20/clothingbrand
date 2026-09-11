@@ -23,11 +23,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findByNameContainingIgnoreCaseAndIsActiveTrue(String name, Pageable pageable);
 
     @Query("SELECT DISTINCT p FROM Product p " +
-            "WHERE (LOWER(p.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
-            "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
-            "OR LOWER(p.brand) LIKE LOWER(CONCAT('%', :searchTerm, '%'))) " +
+            "WHERE (LOWER(p.name) LIKE :searchTermPattern " +
+            "OR LOWER(p.description) LIKE :searchTermPattern " +
+            "OR LOWER(p.brand) LIKE :searchTermPattern) " +
             "AND p.isActive = true")
-    Page<Product> searchProducts(@Param("searchTerm") String searchTerm, Pageable pageable);
+    Page<Product> searchProducts(@Param("searchTermPattern") String searchTermPattern, Pageable pageable);
 
     // Filter by price range (through variants) - FIXED ✅
     @Query("SELECT DISTINCT p FROM Product p " +
@@ -45,15 +45,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "AND (:brand IS NULL OR p.brand = :brand) " +
             "AND (:minPrice IS NULL OR pv.price >= :minPrice) " +
             "AND (:maxPrice IS NULL OR pv.price <= :maxPrice) " +
-            "AND (:searchTerm IS NULL OR " +
-            "     LOWER(p.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-            "     LOWER(p.description) LIKE LOWER(CONCAT('%', :searchTerm, '%'))) " +
+            "AND (:searchTermPattern IS NULL OR " +
+            "     LOWER(p.name) LIKE :searchTermPattern OR " +
+            "     LOWER(p.description) LIKE :searchTermPattern) " +
             "AND p.isActive = true")
     Page<Product> findByFilters(@Param("categoryId") Long categoryId,
                                 @Param("brand") String brand,
                                 @Param("minPrice") BigDecimal minPrice,
                                 @Param("maxPrice") BigDecimal maxPrice,
-                                @Param("searchTerm") String searchTerm,
+                                @Param("searchTermPattern") String searchTermPattern,
                                 Pageable pageable);
 
     // Featured/trending products - FIXED ✅
@@ -95,12 +95,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "     (:statusParam = 'ARCHIVED' AND p.status = com.ecommerce.application.enums.ProductStatus.ARCHIVED) OR " +
             "     (:statusParam = 'DEFAULT' AND (p.status IS NULL OR p.status != com.ecommerce.application.enums.ProductStatus.ARCHIVED))" +
             ") " +
-            "AND (:search IS NULL OR :search = '' OR " +
-            "     LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "     LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "     LOWER(p.brand) LIKE LOWER(CONCAT('%', :search, '%')))")
+            "AND (:searchPattern IS NULL OR " +
+            "     LOWER(p.name) LIKE :searchPattern OR " +
+            "     LOWER(p.description) LIKE :searchPattern OR " +
+            "     LOWER(p.brand) LIKE :searchPattern)")
     Page<Product> findAllForAdmin(@Param("categoryId") Long categoryId,
-                                  @Param("search") String search,
+                                  @Param("searchPattern") String searchPattern,
                                   @Param("statusParam") String statusParam,
                                   Pageable pageable);
 

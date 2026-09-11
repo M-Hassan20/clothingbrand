@@ -25,18 +25,15 @@ export async function getProductReviews(
       `/reviews/product/${productId}${queryStr}`
     );
     
-    let reviewList: ReviewResponse[] = [];
     if (data && 'content' in data && Array.isArray(data.content)) {
-      reviewList = data.content;
+      return data.content;
     } else if (Array.isArray(data)) {
-      reviewList = data;
+      return data;
     }
-
-    if (reviewList && reviewList.length > 0) return reviewList;
   } catch (err) {
-    console.warn(`Backend reviews fetch for product ${productId} failed, using fallback:`, err);
+    console.warn(`Backend reviews fetch for product ${productId} failed:`, err);
   }
-  return MOCK_REVIEWS[productId] || [];
+  return [];
 }
 
 export async function getProductReviewStats(productId: number): Promise<ReviewStats> {
@@ -44,9 +41,9 @@ export async function getProductReviewStats(productId: number): Promise<ReviewSt
     const data = await apiGet<ReviewStats>(`/reviews/product/${productId}/stats`);
     if (data) return data;
   } catch (err) {
-    console.warn(`Backend review stats fetch for product ${productId} failed, using fallback:`, err);
+    console.warn(`Backend review stats fetch for product ${productId} failed:`, err);
   }
-  return MOCK_REVIEW_STATS[productId] || {
+  return {
     averageRating: 0,
     reviewCount: 0,
     ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }

@@ -111,6 +111,9 @@ export interface OrderResponse {
   courierName?: string;
   postexStatus?: string;
   pickupAddressCode?: string;
+  returnStatus?: string;
+  returnReason?: string;
+  returnResolution?: string;
 }
 
 export interface DiscountValidateRequest {

@@ -51,14 +51,18 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     // Admin: Full filtered listing
     @Query("SELECT r FROM Review r WHERE " +
-           "(:search IS NULL OR LOWER(r.comment) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(r.user.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(r.user.email) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(r.product.name) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+           "(:searchPattern IS NULL OR " +
+           " LOWER(r.comment) LIKE :searchPattern OR " +
+           " LOWER(r.user.fullName) LIKE :searchPattern OR " +
+           " LOWER(r.user.email) LIKE :searchPattern OR " +
+           " LOWER(r.product.name) LIKE :searchPattern) AND " +
            "(:rating IS NULL OR r.rating = :rating) AND " +
            "(:verified IS NULL OR r.isVerifiedPurchase = :verified) AND " +
            "(:productId IS NULL OR r.product.id = :productId) AND " +
            "(:startDate IS NULL OR r.createdAt >= :startDate) AND " +
            "(:endDate IS NULL OR r.createdAt <= :endDate)")
     Page<Review> findAllForAdmin(
-            @Param("search") String search,
+            @Param("searchPattern") String searchPattern,
             @Param("rating") Integer rating,
             @Param("verified") Boolean verified,
             @Param("productId") Long productId,

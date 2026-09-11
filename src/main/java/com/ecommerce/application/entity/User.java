@@ -35,7 +35,7 @@ public class User extends BaseEntity {
     private String phone;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "ENUM('ADMIN', 'CUSTOMER')")  // ✅ Fixed enum
+    @Column(length = 20)
     private Role role;
 
     @Builder.Default

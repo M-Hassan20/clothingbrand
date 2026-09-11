@@ -50,9 +50,11 @@ function UnsubscribeContent() {
           <h1 className="font-serif text-2xl text-charcoal">Unsubscribed Successfully</h1>
           <p className="font-sans text-xs text-brown-muted leading-relaxed">{message}</p>
           <div className="pt-4">
-            <Button asChild className="bg-accent text-background hover:bg-accent/90 px-6 py-2.5 font-sans text-xs font-semibold">
-              <Link href="/">Return to Boutique</Link>
-            </Button>
+            <Link href="/">
+              <Button className="bg-accent text-background hover:bg-accent/90 px-6 py-2.5 font-sans text-xs font-semibold">
+                Return to Boutique
+              </Button>
+            </Link>
           </div>
         </div>
       )}
@@ -63,9 +65,11 @@ function UnsubscribeContent() {
           <h1 className="font-serif text-2xl text-charcoal">Unsubscribe Request Failed</h1>
           <p className="font-sans text-xs text-brown-muted leading-relaxed">{message}</p>
           <div className="pt-4">
-            <Button asChild className="bg-accent text-background hover:bg-accent/90 px-6 py-2.5 font-sans text-xs font-semibold">
-              <Link href="/">Return to Boutique</Link>
-            </Button>
+            <Link href="/">
+              <Button className="bg-accent text-background hover:bg-accent/90 px-6 py-2.5 font-sans text-xs font-semibold">
+                Return to Boutique
+              </Button>
+            </Link>
           </div>
         </div>
       )}

@@ -1,6 +1,5 @@
 import { ProductResponse, ProductDetailResponse, ProductVariantResponse } from '@/types/api';
 import { apiGet } from './client';
-import { MOCK_PRODUCTS } from './mockData';
 
 export interface PageParams {
   page?: number;
@@ -72,12 +71,11 @@ export async function getProducts(params?: PageParams): Promise<ProductResponse[
     const data = await apiGet<PageResponse<ProductResponse> | ProductResponse[]>(`/products${query}`, {
       next: { tags: ['products'], revalidate: 300 }
     });
-    const products = extractItems<ProductResponse>(data);
-    if (products.length > 0) return products;
+    return extractItems<ProductResponse>(data);
   } catch (err) {
-    console.warn('Backend products fetch failed, using fallback mock data:', err);
+    console.warn('Backend products fetch failed:', err);
+    return [];
   }
-  return MOCK_PRODUCTS.map(toProductResponse);
 }
 
 export async function getProductById(id: number): Promise<ProductDetailResponse> {
@@ -87,11 +85,9 @@ export async function getProductById(id: number): Promise<ProductDetailResponse>
     });
     if (data) return data;
   } catch (err) {
-    console.warn(`Backend fetch for product ${id} failed, using fallback mock data:`, err);
+    console.warn(`Backend fetch for product ${id} failed:`, err);
   }
-  const found = MOCK_PRODUCTS.find((p) => p.id === id);
-  if (!found) throw new Error(`Product with ID ${id} not found`);
-  return found;
+  throw new Error(`Product with ID ${id} not found`);
 }
 
 export async function getProductsByCategory(
@@ -103,12 +99,11 @@ export async function getProductsByCategory(
     const data = await apiGet<PageResponse<ProductResponse> | ProductResponse[]>(`/products/category/${categoryId}${query}`, {
       next: { tags: ['products'], revalidate: 300 }
     });
-    const products = extractItems<ProductResponse>(data);
-    if (products.length > 0) return products;
+    return extractItems<ProductResponse>(data);
   } catch (err) {
-    console.warn('Backend products by category fetch failed, using fallback:', err);
+    console.warn('Backend products by category fetch failed:', err);
+    return [];
   }
-  return MOCK_PRODUCTS.filter((p) => p.category.id === categoryId).map(toProductResponse);
 }
 
 export async function searchProducts(
@@ -118,15 +113,11 @@ export async function searchProducts(
   try {
     const query = buildQueryString({ query: queryText, ...params });
     const data = await apiGet<PageResponse<ProductResponse> | ProductResponse[]>(`/products/search${query}`);
-    const products = extractItems<ProductResponse>(data);
-    if (products.length > 0) return products;
+    return extractItems<ProductResponse>(data);
   } catch (err) {
-    console.warn('Backend search products fetch failed, using fallback:', err);
+    console.warn('Backend search products fetch failed:', err);
+    return [];
   }
-  const q = queryText.toLowerCase();
-  return MOCK_PRODUCTS.filter(
-    (p) => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)
-  ).map(toProductResponse);
 }
 
 export interface FilterParams extends PageParams {
@@ -141,40 +132,11 @@ export async function filterProducts(params: FilterParams): Promise<ProductRespo
   try {
     const query = buildQueryString({ ...params });
     const data = await apiGet<PageResponse<ProductResponse> | ProductResponse[]>(`/products/filter${query}`);
-    const products = extractItems<ProductResponse>(data);
-    if (products.length > 0) return products;
+    return extractItems<ProductResponse>(data);
   } catch (err) {
-    console.warn('Backend filter products fetch failed, using fallback:', err);
+    console.warn('Backend filter products fetch failed:', err);
+    return [];
   }
-  
-  let products = [...MOCK_PRODUCTS];
-  
-  if (params.categoryId) {
-    products = products.filter((p) => p.category.id === params.categoryId);
-  }
-  if (params.brand) {
-    products = products.filter((p) => p.brand.toLowerCase() === params.brand?.toLowerCase());
-  }
-  if (params.minPrice !== undefined) {
-    products = products.filter((p) => p.minPrice >= (params.minPrice ?? 0));
-  }
-  if (params.maxPrice !== undefined) {
-    products = products.filter((p) => p.minPrice <= (params.maxPrice ?? Infinity));
-  }
-  if (params.search) {
-    const s = params.search.toLowerCase();
-    products = products.filter((p) => p.name.toLowerCase().includes(s) || p.description.toLowerCase().includes(s));
-  }
-  
-  // Sort
-  if (params.sortBy === 'price') {
-    products.sort((a, b) => params.sortDir === 'DESC' ? b.minPrice - a.minPrice : a.minPrice - b.minPrice);
-  } else {
-    // Default by date
-    products.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
-  return products.map(toProductResponse);
 }
 
 export async function getBestSellers(params?: PageParams): Promise<ProductResponse[]> {
@@ -183,13 +145,11 @@ export async function getBestSellers(params?: PageParams): Promise<ProductRespon
     const data = await apiGet<PageResponse<ProductResponse> | ProductResponse[]>(`/products/best-sellers${query}`, {
       next: { tags: ['products'], revalidate: 300 }
     });
-    const products = extractItems<ProductResponse>(data);
-    if (products.length > 0) return products;
+    return extractItems<ProductResponse>(data);
   } catch (err) {
-    console.warn('Backend best sellers fetch failed, using fallback:', err);
+    console.warn('Backend best sellers fetch failed:', err);
+    return [];
   }
-  // Mock best sellers as first 3 items
-  return MOCK_PRODUCTS.slice(0, 3).map(toProductResponse);
 }
 
 export async function getNewArrivals(params?: PageParams): Promise<ProductResponse[]> {
@@ -198,13 +158,11 @@ export async function getNewArrivals(params?: PageParams): Promise<ProductRespon
     const data = await apiGet<PageResponse<ProductResponse> | ProductResponse[]>(`/products/new-arrivals${query}`, {
       next: { tags: ['products'], revalidate: 300 }
     });
-    const products = extractItems<ProductResponse>(data);
-    if (products.length > 0) return products;
+    return extractItems<ProductResponse>(data);
   } catch (err) {
-    console.warn('Backend new arrivals fetch failed, using fallback:', err);
+    console.warn('Backend new arrivals fetch failed:', err);
+    return [];
   }
-  // Mock new arrivals as last 3 items
-  return MOCK_PRODUCTS.slice(2, 5).map(toProductResponse);
 }
 
 export async function getRelatedProducts(
@@ -216,14 +174,11 @@ export async function getRelatedProducts(
     const data = await apiGet<PageResponse<ProductResponse> | ProductResponse[]>(`/products/${id}/related${query}`, {
       next: { tags: ['products'], revalidate: 300 }
     });
-    const products = extractItems<ProductResponse>(data);
-    if (products.length > 0) return products;
+    return extractItems<ProductResponse>(data);
   } catch (err) {
-    console.warn('Backend related products fetch failed, using fallback:', err);
+    console.warn('Backend related products fetch failed:', err);
+    return [];
   }
-  const found = MOCK_PRODUCTS.find((p) => p.id === id);
-  const categoryId = found?.category.id;
-  return MOCK_PRODUCTS.filter((p) => p.id !== id && p.category.id === categoryId).map(toProductResponse);
 }
 
 export async function getCompleteTheLook(id: number): Promise<ProductResponse[]> {
@@ -231,11 +186,11 @@ export async function getCompleteTheLook(id: number): Promise<ProductResponse[]>
     const data = await apiGet<ProductResponse[]>(`/products/${id}/complete-the-look`, {
       next: { tags: ['products', `product-${id}`], revalidate: 300 }
     });
-    if (data && data.length > 0) return data;
+    if (Array.isArray(data)) return data;
   } catch (err) {
-    console.warn('Backend complete-the-look fetch failed, using fallback:', err);
+    console.warn('Backend complete-the-look fetch failed:', err);
   }
-  return getRelatedProducts(id);
+  return [];
 }
 
 export async function getProductVariants(id: number): Promise<ProductVariantResponse[]> {
@@ -243,42 +198,39 @@ export async function getProductVariants(id: number): Promise<ProductVariantResp
     const data = await apiGet<ProductVariantResponse[]>(`/products/${id}/variants`, {
       next: { tags: ['products', `product-${id}`], revalidate: 300 }
     });
-    if (data && data.length > 0) return data;
+    if (Array.isArray(data)) return data;
   } catch (err) {
-    console.warn('Backend variants fetch failed, using fallback:', err);
+    console.warn('Backend variants fetch failed:', err);
   }
-  const found = MOCK_PRODUCTS.find((p) => p.id === id);
-  return found?.variants || [];
+  return [];
 }
 
 export async function getProductSizes(id: number): Promise<string[]> {
   try {
     const data = await apiGet<string[]>(`/products/${id}/sizes`);
-    if (data && data.length > 0) return data;
+    if (Array.isArray(data)) return data;
   } catch (err) {
-    console.warn('Backend sizes fetch failed, using fallback:', err);
+    console.warn('Backend sizes fetch failed:', err);
   }
-  const found = MOCK_PRODUCTS.find((p) => p.id === id);
-  return found?.availableSizes || [];
+  return [];
 }
 
 export async function getProductColors(id: number): Promise<string[]> {
   try {
     const data = await apiGet<string[]>(`/products/${id}/colors`);
-    if (data && data.length > 0) return data;
+    if (Array.isArray(data)) return data;
   } catch (err) {
-    console.warn('Backend colors fetch failed, using fallback:', err);
+    console.warn('Backend colors fetch failed:', err);
   }
-  const found = MOCK_PRODUCTS.find((p) => p.id === id);
-  return found?.availableColors || [];
+  return [];
 }
 
 export async function getBrands(): Promise<string[]> {
   try {
     const data = await apiGet<string[]>('/products/brands');
-    if (data && data.length > 0) return data;
+    if (Array.isArray(data)) return data;
   } catch (err) {
-    console.warn('Backend brands fetch failed, using fallback:', err);
+    console.warn('Backend brands fetch failed:', err);
   }
-  return Array.from(new Set(MOCK_PRODUCTS.map((p) => p.brand)));
+  return [];
 }

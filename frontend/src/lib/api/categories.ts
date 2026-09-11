@@ -1,6 +1,5 @@
 import { CategoryResponse, CategoryWithProductsResponse, ProductDetailResponse } from '@/types/api';
 import { apiGet } from './client';
-import { MOCK_CATEGORIES, MOCK_PRODUCTS } from './mockData';
 
 // Helper to convert ProductDetailResponse to ProductResponse
 function toProductResponse(p: ProductDetailResponse) {
@@ -57,13 +56,13 @@ export async function getCategories(): Promise<CategoryResponse[]> {
     const data = await apiGet<CategoryResponse[]>('/categories', {
       next: { tags: ['categories'], revalidate: 300 }
     });
-    if (data && data.length > 0) {
+    if (Array.isArray(data)) {
       return data.map(enrichCategory);
     }
   } catch (err) {
-    console.warn('Backend categories fetch failed, using fallback mock data:', err);
+    console.warn('Backend categories fetch failed:', err);
   }
-  return MOCK_CATEGORIES;
+  return [];
 }
 
 export async function getCategoryById(id: number): Promise<CategoryResponse> {
@@ -75,11 +74,9 @@ export async function getCategoryById(id: number): Promise<CategoryResponse> {
       return enrichCategory(data);
     }
   } catch (err) {
-    console.warn(`Backend fetch for category ${id} failed, using fallback:`, err);
+    console.warn(`Backend fetch for category ${id} failed:`, err);
   }
-  const found = MOCK_CATEGORIES.find((c) => c.id === id);
-  if (!found) throw new Error(`Category ${id} not found`);
-  return found;
+  throw new Error(`Category ${id} not found`);
 }
 
 export async function getCategoriesWithProducts(): Promise<CategoryWithProductsResponse[]> {
@@ -87,17 +84,14 @@ export async function getCategoriesWithProducts(): Promise<CategoryWithProductsR
     const data = await apiGet<CategoryWithProductsResponse[]>('/categories/with-products', {
       next: { tags: ['categories', 'products'], revalidate: 300 }
     });
-    if (data && data.length > 0) {
+    if (Array.isArray(data)) {
       return data.map((cat) => ({
         ...enrichCategory(cat),
         products: cat.products || [],
       }));
     }
   } catch (err) {
-    console.warn('Backend categories with products fetch failed, using fallback:', err);
+    console.warn('Backend categories with products fetch failed:', err);
   }
-  return MOCK_CATEGORIES.map((cat) => ({
-    ...cat,
-    products: MOCK_PRODUCTS.filter((p) => p.category.id === cat.id).map(toProductResponse),
-  }));
+  return [];
 }
