@@ -33,4 +33,6 @@ services:
   # Redis Cache Instance
   - type: redis
     name: hausofhafsah-redis
+    plan: free
     ipAllowList: []
+
