@@ -125,17 +125,24 @@ export default function Homepage() {
   };
 
   const handlePreview = async () => {
+    const previewWindow = window.open('about:blank', '_blank');
     try {
       const res = await api.get<{ previewToken: string }>('/admin/homepage/preview-token');
       const token = res?.previewToken || localStorage.getItem('admin_token') || '';
-      const storeHost = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : 'localhost';
-      const previewUrl = `http://${storeHost}:3000/preview/homepage?token=${encodeURIComponent(token)}`;
-      window.open(previewUrl, '_blank');
-    } catch {
-      const token = localStorage.getItem('admin_token') || '';
-      const storeHost = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : 'localhost';
-      const previewUrl = `http://${storeHost}:3000/preview/homepage?token=${encodeURIComponent(token)}`;
-      window.open(previewUrl, '_blank');
+      const storefrontBase = import.meta.env.VITE_STOREFRONT_URL
+        ? import.meta.env.VITE_STOREFRONT_URL.replace(/\/$/, '')
+        : (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            ? 'http://localhost:3000'
+            : 'https://hausofhafsah.com');
+      const previewUrl = `${storefrontBase}/?token=${encodeURIComponent(token)}`;
+      if (previewWindow) {
+        previewWindow.location.href = previewUrl;
+      } else {
+        window.open(previewUrl, '_blank');
+      }
+    } catch (err) {
+      if (previewWindow) previewWindow.close();
+      toast.error(getErrorMessage(err));
     }
   };
 

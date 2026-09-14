@@ -471,6 +471,7 @@ export default function PageConfigManager() {
   };
 
   const handlePreview = async () => {
+    const previewWindow = window.open('about:blank', '_blank');
     try {
       const res = await api.get<{ previewToken: string }>('/admin/page-config/preview-token');
       const routeMap: Record<PageKeyType, string> = {
@@ -483,10 +484,19 @@ export default function PageConfigManager() {
         ANNOUNCEMENT: '/',
       };
       const path = routeMap[activeTab] || '/';
-      const storefrontBase = import.meta.env.VITE_STOREFRONT_URL || 'https://hausofhafsah.com';
-      const previewUrl = `${storefrontBase}${path}?token=${res.previewToken}`;
-      window.open(previewUrl, '_blank');
+      const storefrontBase = import.meta.env.VITE_STOREFRONT_URL
+        ? import.meta.env.VITE_STOREFRONT_URL.replace(/\/$/, '')
+        : (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            ? 'http://localhost:3000'
+            : 'https://hausofhafsah.com');
+      const previewUrl = `${storefrontBase}${path}?token=${encodeURIComponent(res.previewToken)}`;
+      if (previewWindow) {
+        previewWindow.location.href = previewUrl;
+      } else {
+        window.open(previewUrl, '_blank');
+      }
     } catch (err) {
+      if (previewWindow) previewWindow.close();
       toast.error(getErrorMessage(err));
     }
   };
