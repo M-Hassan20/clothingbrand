@@ -60,7 +60,7 @@ function ContactContent() {
   const headerSubtitle = pageConfig?.subtitle || 'For order inquiries, bespoke sizing guidance, or collaborator discussions, reach out to our dedicated concierge.';
   const email = pageConfig?.contactEmail || 'info@hausofhafsah.com';
   const phone = pageConfig?.contactPhone || '+92 314 8730683';
-  const address = pageConfig?.contactAddress || 'Block 4, Clifton, Karachi, Pakistan';
+  const address = pageConfig?.contactAddress || 'Karachi, Pakistan';
   const hours = pageConfig?.workingHours || 'Monday to Friday, 9:00 AM – 6:00 PM (PKT)';
 
   return (

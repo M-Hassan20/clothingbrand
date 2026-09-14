@@ -45,11 +45,12 @@ public class DataSeeder implements CommandLineRunner {
             System.err.println("Could not seed default admin user: " + e.getMessage());
         }
 
-        // 2. Clean up any leftover mock data from previous test builds
+        // 2. Clean up any leftover mock data or stale page_configs from previous builds
         try {
             jdbcTemplate.execute("DELETE FROM product_variants WHERE product_id BETWEEN 101 AND 106");
             jdbcTemplate.execute("DELETE FROM products WHERE id BETWEEN 101 AND 106");
             jdbcTemplate.execute("DELETE FROM categories WHERE LOWER(name) LIKE '%test%' OR LOWER(name) LIKE '%dummy%'");
+            jdbcTemplate.execute("DELETE FROM page_configs");
         } catch (Exception e) {
             // Ignore if tables are empty
         }

@@ -85,7 +85,7 @@ export default function Footer() {
                 <FacebookIcon className="h-4 w-4" />
                 <span className="sr-only">Facebook</span>
               </a>
-              <a href="mailto:info.hausofhafsah@gmail.com" className="text-brown-muted hover:text-accent transition-colors">
+              <a href="mailto:info@hausofhafsah.com" className="text-brown-muted hover:text-accent transition-colors">
                 <Mail className="h-4 w-4" />
                 <span className="sr-only">Email</span>
               </a>

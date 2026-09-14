@@ -23,7 +23,7 @@ function ShippingReturnsContent() {
         } else if (res?.title) {
           document.title = res.title.includes('Haus of Hafsah') ? res.title : `${res.title} — Haus of Hafsah`;
         } else {
-          document.title = 'Shipping & Returns Policy — Haus of Hafsah';
+          document.title = 'Shipping & Returns Policy | Haus of Hafsah';
         }
       } catch (err) {
         console.error('Failed to load Shipping & Returns config:', err);
@@ -109,7 +109,7 @@ function ShippingReturnsContent() {
             </div>
             <h3 className="font-serif text-sm font-semibold text-charcoal">Nationwide Shipping</h3>
             <p className="text-xs text-brown-muted leading-relaxed">
-              Fast delivery across Pakistan via PostEx Logistics & express courier partners.
+              Fast delivery across Pakistan via PostEx Services Private Limited.
             </p>
           </div>
 
@@ -117,9 +117,9 @@ function ShippingReturnsContent() {
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/15 text-accent">
               <Clock className="h-4.5 w-4.5" />
             </div>
-            <h3 className="font-serif text-sm font-semibold text-charcoal">2–4 Business Days</h3>
+            <h3 className="font-serif text-sm font-semibold text-charcoal">2–5 Business Days</h3>
             <p className="text-xs text-brown-muted leading-relaxed">
-              Standard dispatch timeline for major urban cities including Karachi, Lahore, and Islamabad.
+              Standard delivery timeline for major metro regions including Karachi, Lahore, and Islamabad.
             </p>
           </div>
 
@@ -129,7 +129,7 @@ function ShippingReturnsContent() {
             </div>
             <h3 className="font-serif text-sm font-semibold text-charcoal">7-Day Replacement</h3>
             <p className="text-xs text-brown-muted leading-relaxed">
-              Hassle-free size exchanges and returns for unused items with original tags attached.
+              Hassle-free size exchanges and returns for unworn and unused items with original tags attached.
             </p>
           </div>
         </div>
@@ -141,48 +141,35 @@ function ShippingReturnsContent() {
           <div className="space-y-10 text-sm leading-relaxed text-brown-muted">
             <section className="space-y-4">
               <h2 className="font-serif text-xl font-medium text-charcoal tracking-wide">
-                1. Order Dispatch & Delivery Timelines
+                Nationwide Shipping Policy
               </h2>
               <p>
-                All Haus of Hafsah orders are carefully inspected, packaged, and dispatched from our primary fulfillment hub. 
-              </p>
-              <ul className="list-disc pl-5 space-y-2">
-                <li><strong className="text-charcoal">Major Metro Cities (Karachi, Lahore, Islamabad, Rawalpindi):</strong> Delivered within 2 to 4 business days following order confirmation.</li>
-                <li><strong className="text-charcoal">Other Regions across Pakistan:</strong> Delivered within 3 to 6 business days.</li>
-              </ul>
-            </section>
-
-            <section className="space-y-4">
-              <h2 className="font-serif text-xl font-medium text-charcoal tracking-wide">
-                2. Shipping Charges & Cash on Delivery (COD)
-              </h2>
-              <p>
-                We offer complimentary standard shipping across Pakistan on all orders amounting to <strong className="text-charcoal">Rs. 5,000</strong> or above. For orders under Rs. 5,000, a flat shipping fee of <strong className="text-charcoal">Rs. 300</strong> applies at checkout.
+                We deliver nationwide across Pakistan using PostEx Services Private Limited. Standard delivery timelines range between 2 to 5 business days for major metro regions including Karachi, Lahore, and Islamabad.
               </p>
               <p>
-                Doorstep package verification and Cash on Delivery (COD) collection are enabled across eligible courier coverage areas.
+                <strong className="text-charcoal">Note:</strong> We currently ship within Pakistan. Delivery to international destinations will be made available as announced.
               </p>
             </section>
 
             <section className="space-y-4">
               <h2 className="font-serif text-xl font-medium text-charcoal tracking-wide">
-                3. Returns & Size Exchanges
+                Returns, Exchanges & Refunds
               </h2>
-              <p>
-                If your item does not fit perfectly or if you receive a damaged product, you can request an exchange or return within <strong className="text-charcoal">7 days</strong> of delivery.
-              </p>
               <ul className="list-disc pl-5 space-y-2">
-                <li>Items must be unworn, unwashed, unaltered, and returned in original boutique packaging with all garment tags intact.</li>
-                <li>To initiate a exchange request, please contact our customer concierge at <a href="mailto:info@hausofhafsah.com" className="text-accent underline">info@hausofhafsah.com</a> or message our helpline at +92 314 8730683.</li>
+                <li><strong className="text-charcoal">Return Window:</strong> Eligible items may be returned or exchanged within 7 days of delivery.</li>
+                <li><strong className="text-charcoal">Eligibility Criteria:</strong> Items must be unworn, unwashed, unaltered, undamaged, and returned with original tags and packaging.</li>
+                <li><strong className="text-charcoal">Non-Returnable Items:</strong> Customized/tailored items, clearance/sale items, and hygienic/innerwear items are final sale.</li>
+                <li><strong className="text-charcoal">Return Shipping:</strong> Customers are responsible for sending return items back to our warehouse unless the return is due to a wrong or defective item sent by us.</li>
+                <li><strong className="text-charcoal">Refunds:</strong> Approved refunds for pre-paid orders will be processed via original payment method or store credit within 7–14 business days. COD refunds will be issued via Bank Transfer or JazzCash/EasyPaisa upon inspection of returned items.</li>
               </ul>
             </section>
 
             <section className="space-y-4 pt-6 border-t border-border/40">
               <h2 className="font-serif text-xl font-medium text-charcoal tracking-wide">
-                4. Customer Assistance
+                Customer Assistance
               </h2>
               <p>
-                For further clarification regarding your shipment status or return tracking, please reach out to our concierge desk.
+                For further clarification regarding your shipment status or return tracking, please reach out to our concierge desk at <a href="mailto:info@hausofhafsah.com" className="text-accent underline font-semibold">info@hausofhafsah.com</a>.
               </p>
             </section>
           </div>
