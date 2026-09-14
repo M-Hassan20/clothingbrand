@@ -29,6 +29,12 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
+      - key: SAFEPAY_SECRET_KEY
+        sync: false
+      - key: SAFEPAY_MERCHANT_API_KEY
+        sync: false
+      - key: SAFEPAY_WEBHOOK_SECRET
+        sync: false
 
   # Redis Cache Instance
   - type: redis
