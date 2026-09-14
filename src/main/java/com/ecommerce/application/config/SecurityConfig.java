@@ -129,7 +129,8 @@ public class SecurityConfig {
                 "http://127.0.0.1:*",
                 "https://*.hausofhafsah.com",
                 "https://hausofhafsah.com",
-                "https://*.vercel.app"
+                "https://*.vercel.app",
+                "https://*.onrender.com"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control", "Accept", "accept"));
